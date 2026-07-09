@@ -1,150 +1,169 @@
-# CJM 
+# CJM
 
 > Go-style JSON tags for Modern C++
 
-CJM is a build-time code generator that brings Go-style JSON tags to standard C++.
+**CJM** is a build-time code generator that brings Go-style JSON tags to standard C++.
 
-It generates ordinary C++ serialization code during the build process.
+Instead of writing repetitive serialization code or relying on macros and runtime reflection, CJM generates ordinary C++ code during the build process while keeping your source files valid, standard C++.
 
-No macros.
-No compiler plugins.
-No runtime reflection.
+> **Standard C++ in. Standard C++ out.**
 
-An open-source project by **CJM Labs**.
+---
 
-https://cjm-labs.org
+## Why CJM?
 
-A Clang-based C++ struct-to-JSON mapping code generator.
+Modern C++ still lacks a simple and ergonomic way to associate metadata with user-defined types.
 
-## Goal
+Other languages provide elegant solutions:
 
-`cxx-json-map` generates explicit JSON mapping code from annotated C++ structs.
+- **Go** → Struct Tags
+- **Rust** → Derive Macros
+- **C#** → Attributes
+- **Java** → Annotations
 
-Initial target:
+C++ developers often have to choose between:
 
-```text
-public aggregate struct
--> generated to_json/from_json code
--> first backend: nlohmann/json
-```
+- intrusive macros
+- handwritten serialization code
+- runtime reflection libraries
+- compiler-specific extensions
 
-The project starts with JSON only. The internal design should avoid needless
-JSON-only assumptions where practical, but non-JSON formats are out of scope
-for the MVP.
+CJM aims to provide a Go-like developer experience while remaining:
 
-## Why
+- Build-time only
+- Standard C++
+- Compiler independent from the user's perspective
+- Easy to integrate with existing CMake projects
 
-C++ does not currently have a standard Go-style struct tag mechanism for JSON
-mapping.
-
-This project explores a compiler-tooling approach:
-
-```text
-C++ source
--> Clang AST discovery
--> metadata model
--> generated JSON mapping code
-```
-
-The generated code should be readable, reviewable, and built by a normal C++
-compiler.
-
-## Initial Direction
-
-Preferred implementation strategy:
-
-```text
-standalone Clang LibTooling code generator
-```
-
-Not the first approach:
-
-- LLVM IR pass
-- Clang compiler plugin
-- handwritten C++ parser
-- generic serialization framework
-
-## MVP Scope
-
-Support first:
-
-- opt-in annotated structs
-- public aggregate fields
-- `to_json` generation
-- nlohmann/json backend
-- primitive scalar fields
-- `std::string`
-- simple nested supported structs
-- `std::vector<T>` where `T` is supported
-- golden-file tests
-
-Avoid initially:
-
-- private fields
-- inheritance
-- polymorphism
-- pointer graphs
-- cyclic references
-- XML/YAML/TOML support
-- future standard reflection dependency
+---
 
 ## Example
 
-Input:
+The target user experience is intentionally simple.
 
 ```cpp
-#include <cstdint>
-
-#include "cxx_json_map/annotations.hpp"
-
-struct [[cjm::json]] ConsumerLatency {
-  std::uint64_t consumer_id;
-  std::uint64_t count;
-  std::uint64_t p50_ns;
+struct User {
+    std::string name;   // json:"name"
+    int age;            // json:"age"
 };
 ```
 
-Generated output:
+Configure your project:
 
-```cpp
-inline void to_json(nlohmann::json &j, const ConsumerLatency &v) {
-  j = nlohmann::json{
-      {"consumer_id", v.consumer_id},
-      {"count", v.count},
-      {"p50_ns", v.p50_ns},
-  };
-}
+```cmake
+find_package(CJM REQUIRED)
+
+add_executable(app main.cpp)
+
+cjm_generate(
+    TARGET app
+    HEADERS
+        user.hpp
+)
 ```
 
-## Planned Layout
+During the build, CJM generates:
 
 ```text
-cxx-json-map/
-├── README.md
-├── CMakeLists.txt
-├── AGENTS.md
-├── docs/
-│   ├── design.md
-│   └── roadmap.md
-├── include/
-│   └── cxx_json_map/
-│       └── annotations.hpp
-├── tools/
-│   └── cxx-json-map/
-│       └── main.cpp
-├── examples/
-│   └── basic/
-│       ├── bench_result.hpp
-│       └── main.cpp
-└── tests/
-    └── golden/
-        ├── basic.input.hpp
-        └── basic.expected.hpp
+user.cjm.hpp
 ```
+
+which contains ordinary C++ serialization code.
+
+No macros.
+
+No compiler plugins.
+
+No runtime reflection.
+
+---
+
+## Design Philosophy
+
+CJM follows a few core principles:
+
+- Standard C++ in.
+- Standard C++ out.
+- Build-time code generation.
+- CMake-first workflow.
+- Keep implementation details hidden from users.
+- Make generated code readable and debuggable.
+
+---
+
+## Architecture
+
+```
+User C++ Source
+        │
+        ▼
+   CMake Build
+        │
+        ▼
+      CJM
+        │
+        ▼
+ Generated C++
+        │
+        ▼
+   Normal Compiler
+        │
+        ▼
+     Executable
+```
+
+The parser and code generator are implementation details.
+
+Users only interact with standard C++ source code and generated C++ files.
+
+---
+
+## Project Status
+
+Current status:
+
+- 🚧 Early development
+- Private development before the first public release
+- Initial target: **v0.1**
+
+---
+
+## Roadmap
+
+- v0.1 — Basic JSON code generation
+- v0.2 — Nested types and STL containers
+- v0.3 — Incremental generation
+- v0.4 — Performance optimizations
+- v1.0 — Production-ready release
+
+See [ROADMAP.md](ROADMAP.md) for details.
+
+---
 
 ## Documentation
 
-Start here:
+- Project Vision
+- Architecture
+- Branding
+- Philosophy
+- Design Notes
 
-- [Design](docs/design.md)
-- [Roadmap](docs/roadmap.md)
+(Documentation is under active development.)
+
+---
+
+## About
+
+CJM is an open-source project developed by **CJM Labs**.
+
+🌐 https://cjm-labs.org
+
+GitHub Organization:
+
+https://github.com/cjm-labs
+
+---
+
+## License
+
+MIT License

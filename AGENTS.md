@@ -1,165 +1,440 @@
 # AGENTS.md
 
-## Collaboration Goal
+# CJM Development Guide for AI Assistants
 
-This repository is both a compiler-tooling project and a learning vehicle.
+This document defines the engineering principles for AI assistants contributing to CJM.
 
-When assisting with this repository, optimize for:
+All implementation decisions should follow these rules.
 
-1. Correct implementation
-2. Engineering understanding
-3. Compiler-tooling fundamentals
-4. Incremental production-quality design
-5. Long-term skill development
-
-Do not optimize only for generating code quickly.
+> **This repository values long-term architecture over short-term implementation convenience.**
 
 ---
 
-## Project Mission
+# Project Overview
 
-`cxx-json-map` is a Clang-based C++ struct-to-JSON mapping code generator.
+CJM is a build-time code generation tool for Modern C++.
 
-The initial product goal is narrow:
+The initial goal is to provide Go-style JSON metadata and generate ordinary C++ serialization code.
 
-```text
-annotated public C++ aggregate structs
--> generated JSON mapping code
--> first backend: nlohmann/json
+The long-term goal is to become a production-quality build-time code generation platform for Modern C++.
+
+---
+
+## Repository Priority
+
+Before making architectural or implementation changes, always consult the following documents in order:
+
+1. AGENTS.md
+2. ARCHITECTURE.md
+3. docs/philosophy.md
+4. docs/vision.md
+5. docs/design/*
+6. ROADMAP.md
+
+Implementation must follow the documented architecture.
+---
+
+# Product Philosophy
+
+CJM follows one fundamental principle:
+
+> **Standard C++ in. Standard C++ out.**
+
+Users write ordinary C++.
+
+CJM generates ordinary C++.
+
+Everything else is an implementation detail.
+
+## Product Identity
+
+CJM is a product.
+
+Parser implementations, AST libraries, JSON libraries, and code generation techniques are implementation details.
+
+Users should think about CJM—not about the technologies used to implement it.
+
+---
+
+# Architecture
+
+
+The high-level architecture is:
+
+```
+User Source
+
+↓
+
+Parser
+
+↓
+
+Semantic Analysis
+
+↓
+
+Metadata Model
+
+↓
+
+Code Generator
+
+↓
+
+Generated C++
+
+↓
+
+User Compiler
 ```
 
-The long-term engineering goal is broader:
+Each layer has a single responsibility.
 
-```text
-C++ source model discovery
--> stable intermediate metadata model
--> backend emitters
+Responsibilities must never be mixed.
+
+## Architecture Is the Product
+
+This repository is architecture-driven.
+
+Architecture is considered part of the product.
+
+Implementation exists to realize the architecture—not to redefine it.
+
+When implementation convenience conflicts with architecture, architecture always wins.
+
+
+---
+
+# Architectural Rules
+
+The following rules are mandatory.
+
+## Parser
+
+Responsible for:
+
+- parsing source code
+- exposing syntax information
+- preserving source locations
+
+The parser must NOT:
+
+- validate metadata
+- generate code
+- resolve generation order
+- implement serialization logic
+
+---
+
+## Semantic Analysis
+
+Responsible for:
+
+- metadata validation
+- type resolution
+- dependency analysis
+- diagnostics
+- Metadata Model construction
+
+Semantic Analysis owns all business logic.
+
+---
+
+## Metadata Model
+
+The Metadata Model is the IR (Intermediate Representation) of CJM.
+
+All parser implementations produce it.
+
+All generators consume it.
+
+Never bypass the Metadata Model.
+
+Parser implementations and generators must never depend directly on each other.
+
+---
+
+## Code Generator
+
+Responsible only for:
+
+```
+Metadata Model
+
+↓
+
+Generated C++
 ```
 
-However, non-JSON formats are explicitly out of scope for the MVP.
+The generator must assume that semantic validation has already completed.
+
+The generator should never depend on parser-specific AST nodes.
 
 ---
 
-## Learning Style
+# Layering
 
-The user learns best through:
+Dependencies must always flow downward.
 
-```text
-problem
--> design
--> small implementation
--> test
--> observation
--> documentation
+```
+Parser
+
+↓
+
+Semantic Analysis
+
+↓
+
+Metadata Model
+
+↓
+
+Generator
 ```
 
-Prefer mentor-guided development over large unexplained code generation.
+Never introduce circular dependencies.
 
-When proposing changes:
+Never merge multiple stages into one implementation for convenience.
 
-1. Explain the problem being solved.
-2. Explain the design choice.
-3. Mention important trade-offs.
-4. Keep patches incremental.
-5. Suggest validation commands.
-6. Point out what should be understood from the change.
+## Metadata Model Is the Core
+
+The Metadata Model is the Intermediate Representation (IR) of CJM.
+
+Every parser produces it.
+
+Every generator consumes it.
+
+Never bypass the Metadata Model.
+
+Parser implementations and generators must never directly depend on each other.
 
 ---
 
-## Technical Direction
+# Build Philosophy
 
-Preferred architecture:
+CJM is CMake-first.
 
-```text
-standalone Clang LibTooling code generator
+The preferred workflow is:
+
+```
+Write C++
+
+↓
+
+Run CMake
+
+↓
+
+Build
+
+↓
+
+Done
 ```
 
-Do not start with:
-
-- LLVM IR pass
-- Clang compiler plugin
-- custom handwritten C++ parser
-- generic serialization framework
-
-Reasoning:
-
-- JSON mapping needs source-level C++ metadata: field names, types,
-  namespaces, attributes, and access information.
-- Clang AST is the right first layer for this information.
-- LLVM IR is too low-level and loses much of the C++ source model.
-- A standalone code generator keeps integration closer to protobuf,
-  flatbuffers, and capnproto.
+Users should never need to manually invoke internal tools during normal development.
 
 ---
 
-## MVP Scope
+# Public API
 
-The first version should support:
+The public API should remain small and stable.
 
-- opt-in annotated structs
-- public aggregate fields
-- `to_json` generation
-- nlohmann/json backend
-- primitive scalar fields
-- `std::string`
-- simple nested supported structs
-- `std::vector<T>` where `T` is supported
-- golden-file tests for generated output
+Current user-facing interfaces include:
 
-Do not support initially:
+- `cjm_generate(...)`
+- `cjm` CLI
+- `cjm::` namespace
+- `*.cjm.hpp` generated files
 
-- private fields
-- inheritance
-- polymorphism
-- pointer graphs
-- cyclic references
-- arbitrary templates
-- custom allocators
-- `std::variant`
-- full XML/YAML/TOML support
-- standard reflection integration
+Implementation details should never leak into the public API.
 
 ---
 
-## JSON vs Other Formats
+## Recommended Development Order (v0.1)
 
-The repository name and first product are JSON-specific.
+To minimize architectural churn, major components should be implemented in the following order.
 
-The internal design should avoid unnecessary JSON-only assumptions when doing
-so is cheap, but the project should not drift into a generic serialization
-framework too early.
+1. **Metadata Model**
+   - Define the core Intermediate Representation (IR).
+   - Keep it parser-independent and generator-independent.
+   - This is the foundation of the entire project.
 
-Good boundary:
+2. **Code Generator**
+   - Consume the Metadata Model.
+   - Produce deterministic, readable C++ code.
+   - Do not depend on parser-specific data structures.
 
-```text
-MVP: C++ struct -> nlohmann/json mapping
-Architecture: metadata model that could support other emitters later
-```
+3. **CLI**
+   - Establish the public command-line interface.
+   - Keep the CLI thin; business logic belongs in library components.
 
-Non-JSON formats such as XML, YAML, TOML, or MessagePack can be considered only
-after the JSON codegen path is useful and tested.
+4. **CMake Integration**
+   - Integrate the CLI into normal CMake workflows.
+   - Validate the complete build pipeline.
+
+5. **Parser**
+   - Parse standard C++ source.
+   - Expose syntax information only.
+   - Do not perform semantic validation.
+
+6. **Semantic Analysis**
+   - Transform parser output into the Metadata Model.
+   - Validate metadata.
+   - Resolve types and dependencies.
+
+7. **End-to-End Example**
+   - Demonstrate the complete workflow:
+     Source → Parser → Semantic Analysis → Metadata Model → Generator → Generated C++.
+
+Each stage should be functional and testable before moving to the next one.
+
+Avoid implementing multiple major stages simultaneously.
 
 ---
 
-## Documentation Expectations
+# Parser Independence
 
-For each meaningful feature, include:
+The parser implementation is replaceable.
 
-- What problem it solves
-- What C++/Clang concept it exercises
-- What limitation remains
-- How to test it
-- What the next logical step is
+Current implementation choices do not define the product.
 
-Prefer short design notes that explain trade-offs over vague roadmaps.
+Avoid exposing parser-specific types outside the parser layer.
+
+## Replaceable Components
+
+Implementation technologies are replaceable.
+
+Examples include:
+
+- parser implementation
+- AST representation
+- JSON backend
+- build integration internals
+
+The public developer experience should remain stable even if internal implementations evolve.
 
 ---
 
-## Avoid
+# Backend Independence
 
-- Large unexplained code dumps
-- Premature abstraction
-- Building a generic serialization framework before JSON works
-- Depending on future C++ standard reflection for the MVP
-- Hiding Clang/AST concepts behind too much magic
-- Adding XML/YAML/TOML before JSON is production-quality
+The initial backend may target `nlohmann/json`.
+
+However, CJM should not become permanently coupled to any third-party JSON library.
+
+Long-term architecture should support a native backend.
+
+## Native Backend Direction
+
+The first implementation may target a third-party JSON library.
+
+However, CJM should eventually provide a native backend to reduce dependency risk and strengthen long-term product stability.
+
+The MVP should prioritize validating the build-time code generation pipeline before introducing a native backend.
+
+---
+
+# Generated Code
+
+Generated code should be:
+
+- deterministic
+- readable
+- debuggable
+- inspectable
+
+Generated code is considered part of the product.
+
+Never intentionally generate unreadable code.
+
+---
+
+# Simplicity
+
+Prefer:
+
+- simple implementations
+- explicit ownership
+- deterministic behavior
+- maintainable code
+
+Avoid:
+
+- unnecessary templates
+- hidden magic
+- global state
+- premature optimization
+- parser-specific abstractions
+
+---
+
+# Documentation
+
+Architecture documentation is part of the implementation.
+
+When architectural changes are introduced:
+
+1. Update the relevant design documents.
+2. Then update the implementation.
+
+Documentation should remain consistent with the codebase.
+
+## Design Documents Are Source of Truth
+
+Design documents define the intended architecture.
+
+If implementation and documentation disagree:
+
+- verify whether the implementation is incomplete, or
+- update the documentation before changing architecture.
+
+Do not silently diverge from the documented design.
+
+---
+
+# Testing
+
+Every subsystem should be testable independently.
+
+Suggested layers:
+
+- parser tests
+- semantic analysis tests
+- metadata model tests
+- generator tests
+- integration tests
+- golden tests
+
+Golden tests are preferred for generated output.
+
+---
+
+# Long-Term Vision
+
+CJM is intended to become a production-quality developer tool.
+
+Short-term implementation convenience should never compromise:
+
+- architecture
+- maintainability
+- portability
+- developer experience
+
+When in doubt, optimize for long-term engineering quality.
+
+---
+
+# Decision Checklist
+
+Before implementing any non-trivial feature, verify:
+
+- Does it preserve the documented architecture?
+- Does it respect layer separation?
+- Does it improve the developer experience?
+- Does it keep the Metadata Model independent?
+- Does it preserve parser independence?
+- Does it keep generated code readable?
+- Does it follow "Standard C++ in. Standard C++ out."?
+
+If any answer is "No", redesign before implementing.

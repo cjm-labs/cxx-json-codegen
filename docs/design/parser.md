@@ -1,0 +1,154 @@
+# Parser
+
+The parser is responsible for transforming user C++ source code into an abstract syntax representation that can be analyzed by CJM.
+
+Parsing is an implementation detail.
+
+Users should never need to understand which parser CJM uses internally.
+
+---
+
+# Responsibilities
+
+The parser is responsible for:
+
+- parsing C++ source files
+- discovering declarations
+- preserving source locations
+- exposing parser-independent semantic information
+
+The parser is **not** responsible for code generation.
+
+---
+
+# Input
+
+The parser receives ordinary C++ source files.
+
+Example:
+
+```cpp
+struct User {
+    std::string name;   // json:"name"
+    int age;            // json:"age"
+};
+```
+
+The source code should remain valid standard C++.
+
+---
+
+# Output
+
+The parser does **not** generate C++.
+
+Instead it produces an intermediate representation suitable for semantic analysis.
+
+```
+Source
+
+↓
+
+Parser
+
+↓
+
+AST
+```
+
+The AST is an internal implementation detail.
+
+---
+
+# Parser Independence
+
+CJM does not expose parser-specific APIs.
+
+Possible parser implementations include:
+
+- Clang
+- Future parser implementations
+
+The public API should remain unchanged regardless of parser implementation.
+
+---
+
+# Source Locations
+
+The parser should preserve:
+
+- filename
+- line number
+- column
+
+These locations enable:
+
+- diagnostics
+- generated comments
+- debugging
+
+---
+
+# Templates
+
+The parser should identify template declarations.
+
+Template expansion is handled during semantic analysis.
+
+The parser should avoid making policy decisions.
+
+---
+
+# Namespaces
+
+Namespaces should be preserved exactly as written.
+
+Fully qualified names should remain available throughout the pipeline.
+
+---
+
+# Comments
+
+User metadata may appear inside comments.
+
+The parser should expose comment information to later stages without interpreting it.
+
+Example:
+
+```cpp
+std::string name; // json:"name"
+```
+
+Whether a comment represents metadata is determined by semantic analysis.
+
+---
+
+# Error Handling
+
+Parser errors should stop the generation process.
+
+Diagnostics should reference the user's original source code whenever possible.
+
+---
+
+# What the Parser Does NOT Do
+
+The parser should not:
+
+- validate metadata
+- build dependency graphs
+- generate code
+- perform serialization logic
+- determine generation order
+
+Those responsibilities belong to later stages.
+
+---
+
+# Design Principle
+
+The parser should remain as simple as possible.
+
+Its only responsibility is to understand C++ source code and expose enough information for later stages.
+
+Business logic should never live inside the parser.
