@@ -1,4 +1,18 @@
-# cxx-json-map
+# CJM 
+
+> Go-style JSON tags for Modern C++
+
+CJM is a build-time code generator that brings Go-style JSON tags to standard C++.
+
+It generates ordinary C++ serialization code during the build process.
+
+No macros.
+No compiler plugins.
+No runtime reflection.
+
+An open-source project by **CJM Labs**.
+
+https://cjm-labs.org
 
 A Clang-based C++ struct-to-JSON mapping code generator.
 
