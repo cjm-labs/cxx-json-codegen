@@ -237,6 +237,144 @@ Users should never need to manually invoke internal tools during normal developm
 
 ---
 
+# Development Workflow
+
+CJM follows a feature-branch workflow.
+
+Major features should never be implemented directly on the `main` branch.
+
+Recommended workflow:
+
+```
+Issue
+
+↓
+
+Feature Branch
+
+↓
+
+Implementation
+
+↓
+
+Pull Request
+
+↓
+
+AI Review
+
+↓
+
+Merge Commit
+
+↓
+
+Delete Feature Branch
+```
+
+Each feature branch should correspond to a single major task or GitHub Issue whenever practical.
+
+Examples:
+
+```
+feature/metadata-model
+
+feature/code-generator
+
+feature/parser
+
+feature/semantic-analysis
+
+feature/cmake-integration
+```
+
+---
+
+## Pull Request Strategy
+
+CJM preserves development history.
+
+Merge commits are preferred over squash or rebase merges.
+
+Reasons include:
+
+- preserving feature development history
+- improving long-term traceability
+- simplifying future debugging and `git bisect`
+- supporting future multi-contributor development
+- documenting architectural evolution
+
+The `main` branch represents the project's historical development, not only its final state.
+
+---
+
+## Commit Messages
+
+Feature branch commits should remain clean and meaningful.
+
+Avoid commit messages such as:
+
+```
+fix
+
+update
+
+tmp
+
+again
+
+oops
+```
+
+Prefer Conventional Commits:
+
+```
+feat(metadata): add type model
+
+feat(parser): preserve source locations
+
+test(generator): add golden tests
+
+refactor(cli): simplify argument parsing
+
+docs(architecture): update parser pipeline
+```
+
+Feature branches are expected to contain multiple logical commits.
+
+Do not squash commits simply to reduce commit count.
+
+---
+
+## Pull Request Reviews
+
+Before merging a Pull Request:
+
+- verify architecture consistency
+- verify layer separation
+- verify documentation changes (if applicable)
+- verify tests
+- request AI-assisted review when appropriate
+
+For this project, AI review is considered an important part of the development workflow.
+
+Final architectural decisions remain the responsibility of the maintainer.
+
+---
+
+## Branch Lifecycle
+
+After a Pull Request is merged:
+
+- delete the feature branch
+- close the related GitHub Issue
+- update the corresponding Milestone automatically when applicable
+
+The `main` branch should only contain reviewed, merge-based feature integration.
+
+---
+
 # Public API
 
 The public API should remain small and stable.
@@ -438,3 +576,13 @@ Before implementing any non-trivial feature, verify:
 - Does it follow "Standard C++ in. Standard C++ out."?
 
 If any answer is "No", redesign before implementing.
+
+---
+
+## Long-Term History
+
+Git history is considered part of the project's engineering documentation.
+
+Preserve meaningful commit history whenever practical.
+
+Future contributors should be able to understand how major architectural decisions evolved by reading the commit history.
