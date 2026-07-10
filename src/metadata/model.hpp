@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace cjm::metadata {
 
@@ -35,6 +36,14 @@ struct FieldModel {
     std::string name;
     FieldType type;
     JsonFieldMetadata json;
+    SourceLocation source_location;
+};
+
+struct TypeModel {
+    std::string name;
+    std::vector<std::string> namespace_path;
+    std::string qualified_name;
+    std::vector<FieldModel> fields;
     SourceLocation source_location;
 };
 } // namespace cjm::metadata
