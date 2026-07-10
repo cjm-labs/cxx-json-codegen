@@ -39,7 +39,7 @@ int main() {
     TypeModel user_type;
     user_type.name = "User";
     user_type.namespace_path = {};
-    user_type.qualified_name = "User",
+    user_type.qualified_name = "User";
     user_type.fields = {name_field, age_field};
     user_type.source_location = SourceLocation{"include/user.hpp", 1, 8};
 
