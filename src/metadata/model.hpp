@@ -30,4 +30,11 @@ struct FieldType {
     std::string spelling;
     std::string qualified_name;
 };
+
+struct FieldModel {
+    std::string name;
+    FieldType type;
+    JsonFieldMetadata json;
+    SourceLocation source_location;
+};
 } // namespace cjm::metadata
