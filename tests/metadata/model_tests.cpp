@@ -37,7 +37,8 @@ int main() {
     };
 
     TypeModel user_type;
-    user_type.name = "User", user_type.namespace_path = {};
+    user_type.name = "User";
+    user_type.namespace_path = {};
     user_type.qualified_name = "User",
     user_type.fields = {name_field, age_field};
     user_type.source_location = SourceLocation{"include/user.hpp", 1, 8};
@@ -45,7 +46,7 @@ int main() {
     ProjectModel project;
     project.types = {user_type};
 
-    assert(proejct.types.size() == 1);
+    assert(project.types.size() == 1);
     assert(project.types[0].qualified_name == "User");
 
     assert(project.types[0].fields.size() == 2);
@@ -59,7 +60,7 @@ int main() {
            FieldTypeKind::SignedInteger);
 
     assert(project.types[0].fields[0].source_location.file ==
-           "/include/user.hpp");
+           "include/user.hpp");
     assert(project.types[0].fields[0].source_location.line == 2);
     assert(project.types[0].fields[0].source_location.column == 17);
 
