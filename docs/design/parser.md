@@ -15,7 +15,7 @@ The parser is responsible for:
 - parsing C++ source files
 - discovering declarations
 - preserving source locations
-- exposing parser-independent semantic information
+- exposing parser-independent source facts suitable for semantic analysis
 
 The parser is **not** responsible for code generation.
 
@@ -91,9 +91,10 @@ These locations enable:
 
 # Templates
 
-The parser should identify template declarations.
+The parser may identify template declarations when they are relevant to later stages.
 
-Template expansion is handled during semantic analysis.
+Arbitrary template modeling is outside the v0.1 scope.
+Future template support should be handled after semantic analysis has a concrete need for it.
 
 The parser should avoid making policy decisions.
 
@@ -149,6 +150,6 @@ Those responsibilities belong to later stages.
 
 The parser should remain as simple as possible.
 
-Its only responsibility is to understand C++ source code and expose enough information for later stages.
+Its only responsibility is to understand C++ source code and expose enough source facts for later stages.
 
 Business logic should never live inside the parser.

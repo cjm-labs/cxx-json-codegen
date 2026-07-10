@@ -152,6 +152,9 @@ It contains information required for code generation, such as:
 - metadata
 - relationships
 
+These are examples of possible model information.
+They are not all required for the v0.1 Metadata Model.
+
 The model is independent of the parser implementation.
 
 This separation allows the parser to evolve without affecting the generator.
