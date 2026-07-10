@@ -48,7 +48,7 @@ Semantic Analysis answers questions such as:
 - What is the canonical type of each field?
 - Are the user's tags valid?
 - Are there duplicate JSON keys?
-- What dependencies exist between generated types?
+- Are there type references that later stages may need for ordering or diagnostics?
 
 This logic should not live in the parser.
 
@@ -64,7 +64,7 @@ Semantic Analysis is responsible for:
 - validating user metadata
 - resolving field types
 - canonicalizing names
-- building dependency relationships
+- preserving enough type-reference information for later dependency analysis when needed
 - detecting unsupported constructs
 - producing diagnostics
 - constructing the Metadata Model
@@ -177,9 +177,9 @@ while still preserving useful source information for diagnostics.
 
 ---
 
-# Dependency Graph
+# Dependencies
 
-Generated types may depend on each other.
+Generated types may depend on each other, but v0.1 does not require semantic analysis to build a standalone dependency graph.
 
 Example:
 
@@ -193,13 +193,13 @@ struct User {
 };
 ```
 
-Semantic Analysis records:
+For v0.1, semantic analysis may represent this relationship through the resolved field type:
 
 ```text
-User -> Address
+FieldModel.type = Address
 ```
 
-The generator can use this graph to determine generation order.
+Explicit dependency relationships may be introduced later when there is a concrete need, such as generation ordering, recursive type detection, cycle diagnostics, or multi-file generation planning.
 
 ---
 
@@ -252,8 +252,8 @@ The generator may assume that:
 
 - types are supported
 - metadata is valid
-- dependencies are known
 - names are canonicalized
+- field type references are parser-independent
 
 This keeps code generation simple and predictable.
 

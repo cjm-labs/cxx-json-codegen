@@ -62,7 +62,7 @@ The generator may assume that:
 - metadata is syntactically valid
 - unsupported types have already been rejected
 - duplicate JSON keys have already been detected
-- type dependencies are known
+- field type references are parser-independent and resolved enough for generation
 - source locations are available when needed
 
 If invalid metadata reaches the generator, that is a bug in an earlier stage.
@@ -185,9 +185,10 @@ struct User {
 };
 ```
 
-The Metadata Model should provide dependency information.
+For v0.1, the Metadata Model does not need to provide a standalone dependency graph.
+The generator may derive simple ordering needs from field type references when the supported type set requires it.
 
-The generator uses that information to emit code in a valid order.
+If future features require more precise ordering, recursive type detection, cycle diagnostics, or multi-file planning, semantic analysis may add explicit dependency information to the Metadata Model.
 
 ---
 
