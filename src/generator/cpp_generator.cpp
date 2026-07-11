@@ -22,7 +22,7 @@ void generate_from_json(std::ostringstream& out,
         << type.qualified_name << "& value) {\n";
 
     for (const auto& field : type.fields) {
-        out << "   j.at(\"" << field.json.name << "\").get_to(value."
+        out << "    j.at(\"" << field.json.name << "\").get_to(value."
             << field.name << ");\n";
     }
     out << "}\n";
@@ -45,6 +45,7 @@ std::string generate_header(const metadata::ProjectModel& project) {
         generate_to_json(out, type);
         out << "\n";
         generate_from_json(out, type);
+        out << "\n";
     }
 
     return out.str();
