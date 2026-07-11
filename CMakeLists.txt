@@ -20,6 +20,9 @@ target_include_directories(cjm_metadata
 
 target_compile_features(cjm_metadata INTERFACE cxx_std_17)
 
+
+add_executable(cjm tools/cjm/main.cpp)
+
 if (CJM_BUILD_TESTS)
   enable_testing()
 
@@ -38,4 +41,5 @@ if (CJM_BUILD_TESTS)
   set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 endif()
+
 
