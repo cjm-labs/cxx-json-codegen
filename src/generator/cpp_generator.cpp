@@ -1,13 +1,48 @@
 #include "generator/cpp_generator.hpp"
 
+#include <cstddef>
 #include <sstream>
+#include <vector>
 
 namespace cjm::generator {
 
+void open_namespace(std::ostringstream& out,
+                    const std::vector<std::string>& namespace_path) {
+
+    if (namespace_path.empty()) {
+        return;
+    }
+
+    out << "namespace ";
+    for (std::size_t i = 0; i < namespace_path.size(); ++i) {
+        if (i > 0) {
+            out << "::";
+        }
+        out << namespace_path[i];
+    }
+    out << " {\n\n";
+}
+
+void close_namespace(std::ostringstream& out,
+                     const std::vector<std::string>& namespace_path) {
+    if (namespace_path.empty()) {
+        return;
+    }
+
+    out << "} // namespace ";
+    for (std::size_t i = 0; i < namespace_path.size(); ++i) {
+        if (i > 0) {
+            out << "::";
+        }
+        out << namespace_path[i];
+    }
+    out << "\n";
+}
+
 void generate_to_json(std::ostringstream& out,
                       const metadata::TypeModel& type) {
-    out << "inline void to_json(nlohmann::json& j, const "
-        << type.qualified_name << "& value) {\n";
+    out << "inline void to_json(nlohmann::json& j, const " << type.name
+        << "& value) {\n";
     for (const auto& field : type.fields) {
         out << "    j[\"" << field.json.name << "\"] = value." << field.name
             << ";\n";
@@ -18,8 +53,8 @@ void generate_to_json(std::ostringstream& out,
 void generate_from_json(std::ostringstream& out,
                         const metadata::TypeModel& type) {
 
-    out << "inline void from_json(const nlohmann::json& j, "
-        << type.qualified_name << "& value) {\n";
+    out << "inline void from_json(const nlohmann::json& j, " << type.name
+        << "& value) {\n";
 
     for (const auto& field : type.fields) {
         out << "    j.at(\"" << field.json.name << "\").get_to(value."
@@ -42,9 +77,12 @@ std::string generate_header(const metadata::ProjectModel& project) {
     out << "\n";
 
     for (const auto& type : project.types) {
+        open_namespace(out, type.namespace_path);
         generate_to_json(out, type);
         out << "\n";
         generate_from_json(out, type);
+        out << "\n";
+        close_namespace(out, type.namespace_path);
         out << "\n";
     }
 
