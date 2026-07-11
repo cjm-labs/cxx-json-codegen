@@ -22,4 +22,13 @@ function(cjm_generate)
   if (NOT CJM_GENERATE_HEADERS) 
     message(FATAL_ERROR "cjm_generate requires HEADERS <header>...")
   endif()
+
+  set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/cjm")
+  set(generated_headers)
+
+  foreach(header IN LISTS CJM_GENERATE_HEADERS)
+    get_filename_component(header_name "${header}" NAME_WE)
+    set(generated_header "${generated_dir}/${header_name}.cjm.hpp")
+    list(APPEND generated_headers "${generated_header}")
+  endforeach()
 endfunction()
