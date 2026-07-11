@@ -44,6 +44,7 @@ std::string generate_header(const metadata::ProjectModel& project) {
     for (const auto& type : project.types) {
         generate_to_json(out, type);
         out << "\n";
+        generate_from_json(out, type);
     }
 
     return out.str();
