@@ -31,5 +31,11 @@ if (CJM_BUILD_TESTS)
 
   add_test(NAME cjm_metadata_tests COMMAND cjm_metadata_tests)
 
+
+  add_executable(cjm_generator_tests tests/generator/cpp_generator_tests.cpp)
+  target_link_libraries(cjm_generator_tests PRIVATE cjm_generator)
+  add_test(NAME cjm_generator_tests COMMAND cjm_generator_tests)
+  set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 endif()
 

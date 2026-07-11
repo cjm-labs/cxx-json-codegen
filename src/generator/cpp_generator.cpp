@@ -76,14 +76,19 @@ std::string generate_header(const metadata::ProjectModel& project) {
 
     out << "\n";
 
-    for (const auto& type : project.types) {
+    for (std::size_t i = 0; i < project.types.size(); ++i) {
+        const auto& type = project.types[i];
+
         open_namespace(out, type.namespace_path);
         generate_to_json(out, type);
         out << "\n";
         generate_from_json(out, type);
         out << "\n";
         close_namespace(out, type.namespace_path);
-        out << "\n";
+
+        if (i + 1 < project.types.size()) {
+            out << "\n";
+        }
     }
 
     return out.str();
