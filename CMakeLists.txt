@@ -27,20 +27,50 @@ target_link_libraries(cjm PRIVATE cjm_generator)
 if (CJM_BUILD_TESTS)
   enable_testing()
 
+  # METADATA tests below...
   add_executable(cjm_metadata_tests
     tests/metadata/model_tests.cpp
   )
-
   target_link_libraries(cjm_metadata_tests PRIVATE cjm_metadata)
-
   add_test(NAME cjm_metadata_tests COMMAND cjm_metadata_tests)
 
 
+  # GENERATOR tests below...
   add_executable(cjm_generator_tests tests/generator/cpp_generator_tests.cpp)
   target_link_libraries(cjm_generator_tests PRIVATE cjm_generator)
   add_test(NAME cjm_generator_tests COMMAND cjm_generator_tests)
   set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+  # CLI tests below...
+  add_test(NAME cjm_cli_help COMMAND cjm --help)
+  add_test(NAME cjm_cli_generate
+    COMMAND cjm generate
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/examples/basic/user.hpp 
+    --output ${CMAKE_CURRENT_BINARY_DIR}/user.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate
+    PROPERTIES 
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+ 
+  add_test(NAME cjm_cli_unknown_command 
+    COMMAND cjm unknown 
+  )
+  set_tests_properties(
+    cjm_cli_unknown_command
+    PROPERTIES 
+      WILL_FAIL TRUE 
+  )
+
+  add_test(NAME cjm_cli_generate_missing_args 
+    COMMAND cjm generate 
+  )
+  set_tests_properties(
+    cjm_cli_generate_missing_args 
+    PROPERTIES 
+      WILL_FAIL TRUE 
+  )
 endif()
 
 
