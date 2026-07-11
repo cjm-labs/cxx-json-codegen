@@ -42,4 +42,17 @@ function(cjm_generate)
 
     list(APPEND generated_headers "${generated_header}")
   endforeach()
+
+  target_sources(
+    ${CJM_GENERATE_TARGET}
+    PRIVATE
+      ${generated_headers}
+  )
+  
+  target_include_directories(
+    ${CJM_GENERATE_TARGET}
+    PRIVATE
+      "${generated_dir}"
+  )
+
 endfunction()
