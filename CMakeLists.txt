@@ -8,6 +8,11 @@ option(CJM_BUILD_TESTS "Build CJM tests" ON)
 
 add_library(cjm_metadata INTERFACE)
 
+add_library(cjm_generator src/generator/cpp_generator.cpp)
+target_link_libraries(cjm_generator PUBLIC cjm_metadata)
+target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_generator PUBLIC cxx_std_17)
+
 target_include_directories(cjm_metadata 
   INTERFACE 
       ${CMAKE_CURRENT_SOURCE_DIR}/src

@@ -237,6 +237,174 @@ Users should never need to manually invoke internal tools during normal developm
 
 ---
 
+# Task Execution Modes
+
+Different tasks require different execution strategies.
+
+Unless explicitly instructed otherwise, choose the smallest execution mode that satisfies the task.
+
+---
+
+## Mode: Fast Patch
+
+Use this mode for:
+
+- small bug fixes
+- documentation updates
+- typo fixes
+- localized refactoring
+- isolated test fixes
+
+Behavior:
+
+- inspect only directly relevant files
+- do not perform repository-wide analysis
+- do not redesign existing architecture
+- make the smallest correct change
+- run only targeted tests
+- stop if architectural changes become necessary
+
+Avoid:
+
+- unrelated cleanup
+- speculative improvements
+- broad refactoring
+- updating unrelated documentation
+
+Goal:
+
+Minimize turnaround time.
+
+---
+
+## Mode: Implementation
+
+Use this mode for normal feature development.
+
+Examples:
+
+- implementing a GitHub Issue
+- completing a roadmap milestone
+- adding a new component already described by the design documents
+
+Behavior:
+
+Treat the following documents as authoritative:
+
+- AGENTS.md
+- ARCHITECTURE.md
+- ROADMAP.md
+- design documents under docs/design/
+
+Do not redesign established architecture.
+
+Implement the approved design faithfully.
+
+Keep changes within the current Issue scope.
+
+Run only relevant tests.
+
+If implementation reveals an architectural conflict:
+
+- explain the issue
+- propose alternatives
+- do not silently redesign the architecture
+
+Goal:
+
+Deliver production-quality implementation while preserving architectural consistency.
+
+---
+
+## Mode: Design Review
+
+Use this mode only when explicitly requested or when a design document is being created or reviewed.
+
+Behavior:
+
+- do not write production code
+- review architecture
+- identify inconsistencies
+- identify unnecessary abstractions
+- identify missing requirements
+- propose tradeoffs
+- preserve v0.1 scope
+
+Do not expand project scope merely because a more generic design is possible.
+
+Goal:
+
+Improve design quality before implementation.
+
+---
+
+## Mode: Architecture Evolution
+
+Use this mode only when the maintainer explicitly requests an architectural redesign.
+
+Behavior:
+
+Architecture may evolve only when:
+
+- implementation exposes structural problems
+- long-term maintainability clearly improves
+- existing design goals remain satisfied
+
+Every architectural change should include:
+
+- motivation
+- tradeoff analysis
+- impact on existing components
+- migration strategy
+
+Avoid architecture changes based solely on hypothetical future features.
+
+Goal:
+
+Evolve the architecture deliberately rather than continuously redesigning it.
+
+---
+
+## Repository Inspection Policy
+
+Unless the task explicitly requires repository-wide analysis:
+
+- inspect only files relevant to the current task
+- avoid reading unrelated design documents
+- avoid modifying unrelated files
+
+Large repository reviews should be performed only for:
+
+- architecture review
+- design review
+- major refactoring
+- release preparation
+
+This reduces unnecessary reasoning time while keeping implementations focused.
+
+---
+
+## General Principle
+
+Prefer focused execution over exhaustive analysis.
+
+Only increase reasoning scope when the task genuinely requires broader architectural consideration.
+
+
+## Scope Discipline
+
+For v0.1:
+
+Do not introduce new abstractions solely for future extensibility.
+
+When uncertain:
+
+implement the smallest design that satisfies the approved v0.1 requirements.
+
+Future capabilities should be added only when required by future milestones.
+
+--- 
+
 # Development Workflow
 
 CJM follows a feature-branch workflow.
