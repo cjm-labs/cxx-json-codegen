@@ -15,6 +15,19 @@ void generate_to_json(std::ostringstream& out,
     out << "}\n";
 }
 
+void generate_from_json(std::ostringstream& out,
+                        const metadata::TypeModel& type) {
+
+    out << "inline void from_json(const nlohmann::json& j, "
+        << type.qualified_name << "& value) {\n";
+
+    for (const auto& field : type.fields) {
+        out << "   j.at(\"" << field.json.name << "\").get_to(value."
+            << field.name << ");\n";
+    }
+    out << "}\n";
+}
+
 std::string generate_header(const metadata::ProjectModel& project) {
 
     std::ostringstream out;
