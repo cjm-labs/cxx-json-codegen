@@ -8,6 +8,11 @@ option(CJM_BUILD_TESTS "Build CJM tests" ON)
 
 add_library(cjm_metadata INTERFACE)
 
+add_library(cjm_generator src/generator/cpp_generator.cpp)
+target_link_libraries(cjm_generator PUBLIC cjm_metadata)
+target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_generator PUBLIC cxx_std_17)
+
 target_include_directories(cjm_metadata 
   INTERFACE 
       ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -25,6 +30,12 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_metadata_tests PRIVATE cjm_metadata)
 
   add_test(NAME cjm_metadata_tests COMMAND cjm_metadata_tests)
+
+
+  add_executable(cjm_generator_tests tests/generator/cpp_generator_tests.cpp)
+  target_link_libraries(cjm_generator_tests PRIVATE cjm_generator)
+  add_test(NAME cjm_generator_tests COMMAND cjm_generator_tests)
+  set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 endif()
 
