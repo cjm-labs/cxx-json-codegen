@@ -1,5 +1,9 @@
+#include <fstream>
 #include <iostream>
 #include <string>
+
+#include "generator/cpp_generator.hpp"
+#include "metadata/model.hpp"
 
 namespace {
 
@@ -9,7 +13,7 @@ void print_help(std::ostream& out) {
         << "Usage:\n"
         << "    cjm --help\n"
         << "    cjm help\n"
-        << "    cjm generate --input <header> --outout <file>\n";
+        << "    cjm generate --input <header> --output <file>\n";
 }
 
 struct GenerateOptions {
@@ -52,6 +56,34 @@ bool parse_generate_options(int argc, char** argv, GenerateOptions& options) {
     }
     return true;
 }
+
+// Temporary bridge until parser and semantic analysis can build the real
+// metadata model.
+cjm::metadata::ProjectModel make_temporary_project_model() {
+    using namespace cjm::metadata;
+
+    TypeModel user;
+    user.name = "User";
+
+    FieldModel name;
+    name.name = "name";
+    name.type.spelling = "std::string";
+    name.json.name = "name";
+
+    FieldModel age;
+    age.name = "age";
+    age.type.spelling = "int";
+    age.json.name = "age";
+
+    user.fields.push_back(name);
+    user.fields.push_back(age);
+
+    ProjectModel project;
+    project.types.push_back(user);
+
+    return project;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -74,9 +106,19 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        std::cout << "cjm: generate is not implemented yet\n";
-        std::cout << "input: " << options.input << "\n";
-        std::cout << "output: " << options.output << "\n";
+        const auto project = make_temporary_project_model();
+        const auto generated = cjm::generator::generate_header(project);
+
+        std::ofstream output(options.output);
+        if (!output.is_open()) {
+            std::cerr << "cjm: failed to open output file: " << options.output
+                      << "\n";
+            return 1;
+        }
+        output << generated;
+
+        std::cout << "cjm: generated " << options.output << " from "
+                  << options.input << "\n";
         return 0;
     }
 

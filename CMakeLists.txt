@@ -22,6 +22,7 @@ target_compile_features(cjm_metadata INTERFACE cxx_std_17)
 
 
 add_executable(cjm tools/cjm/main.cpp)
+target_link_libraries(cjm PRIVATE cjm_generator)
 
 if (CJM_BUILD_TESTS)
   enable_testing()
