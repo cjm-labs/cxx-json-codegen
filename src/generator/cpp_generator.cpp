@@ -4,8 +4,18 @@
 
 namespace cjm::generator {
 
-std::string generate_header(const metadata::ProjectModel &project) {
-    (void)project;
+void generate_to_json(std::ostringstream& out,
+                      const metadata::TypeModel& type) {
+    out << "inline void to_json(nlohmann::json& j, const "
+        << type.qualified_name << "& value) {\n";
+    for (const auto& field : type.fields) {
+        out << "    j[\"" << field.json.name << "\"] = value." << field.name
+            << ";\n";
+    }
+    out << "}\n";
+}
+
+std::string generate_header(const metadata::ProjectModel& project) {
 
     std::ostringstream out;
 
@@ -15,6 +25,13 @@ std::string generate_header(const metadata::ProjectModel &project) {
         << "#pragma once\n"
         << "\n"
         << "#include <nlohmann/json.hpp>\n";
+
+    out << "\n";
+
+    for (const auto& type : project.types) {
+        generate_to_json(out, type);
+        out << "\n";
+    }
 
     return out.str();
 }
