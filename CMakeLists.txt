@@ -6,6 +6,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CJM_BUILD_TESTS "Build CJM tests" ON)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
+
 add_library(cjm_metadata INTERFACE)
 
 add_library(cjm_generator src/generator/cpp_generator.cpp)
