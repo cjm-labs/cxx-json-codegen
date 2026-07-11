@@ -7,6 +7,10 @@
 
 namespace {
 
+constexpr int kExitSuccess = 0;
+constexpr int kExitFailure = 1;
+constexpr int kExitUsageError = 2;
+
 void print_help(std::ostream& out) {
     out << "cjm - C++ JSON metadata code generator\n"
         << "\n"
@@ -89,21 +93,21 @@ cjm::metadata::ProjectModel make_temporary_project_model() {
 int main(int argc, char** argv) {
     if (argc <= 1) {
         print_help(std::cout);
-        return 0;
+        return kExitSuccess;
     }
 
     const std::string command = argv[1];
 
     if (command == "--help" || command == "-h" || command == "help") {
         print_help(std::cout);
-        return 0;
+        return kExitSuccess;
     }
 
     if (command == "generate") {
         GenerateOptions options;
         if (!parse_generate_options(argc, argv, options)) {
             std::cerr << "Run 'cjm --help' for usage.\n";
-            return 1;
+            return kExitUsageError;
         }
 
         const auto project = make_temporary_project_model();
@@ -113,17 +117,17 @@ int main(int argc, char** argv) {
         if (!output.is_open()) {
             std::cerr << "cjm: failed to open output file: " << options.output
                       << "\n";
-            return 1;
+            return kExitFailure;
         }
         output << generated;
 
         std::cout << "cjm: generated " << options.output << " from "
                   << options.input << "\n";
-        return 0;
+        return kExitSuccess;
     }
 
     std::cerr << "cjm: unknown command: " << command << "\n";
     std::cerr << "run 'cjm --help' for usage.\n";
 
-    return 1;
+    return kExitUsageError;
 }
