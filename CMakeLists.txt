@@ -25,10 +25,10 @@ target_include_directories(cjm_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_parser PUBLIC cxx_std_17)
 
 # semantic library 
-add_library(cjm_semantic INTERFACE)
-target_include_directories(cjm_semantic INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(cjm_semantic INTERFACE cjm_metadata)
-target_compile_features(cjm_semantic INTERFACE cxx_std_17)
+add_library(cjm_semantic src/semantic/analysis.cpp)
+target_include_directories(cjm_semantic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(cjm_semantic PUBLIC cjm_metadata)
+target_compile_features(cjm_semantic PUBLIC cxx_std_17)
 
 # cjm main app
 add_executable(cjm tools/cjm/main.cpp)

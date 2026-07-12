@@ -24,4 +24,14 @@ struct AnalysisResult {
     bool success = false;
 };
 
+struct JsonFieldMetadataResult {
+    std::string json_name;
+    Diagnostic diagnostic;
+    bool success = false;
+    bool found = false;
+};
+
+JsonFieldMetadataResult
+parse_json_field_metadata(const std::string& comment,
+                          const SourceLocation& location);
 } // namespace cjm::semantic
