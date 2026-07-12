@@ -1,9 +1,29 @@
+#include <cctype>
 #include <fstream>
-#include <sstream>
 
 #include "parser/parser.hpp"
 
 namespace cjm::parser {
+
+std::string trim(const std::string& text) {
+    std::size_t first = 0;
+    while (first < text.size() &&
+           std::isspace(static_cast<unsigned char>(text[first]))) {
+        ++first;
+    }
+
+    std::size_t last = text.size();
+    while (last > first &&
+           std::isspace(static_cast<unsigned char>(text[last - 1]))) {
+        --last;
+    }
+
+    return text.substr(first, last - first);
+}
+
+bool starts_with(const std::string& text, const std::string& prefix) {
+    return text.rfind(prefix, 0) == 0;
+}
 
 ParseResult parse_source_file(const std::string& path) {
     std::ifstream input(path);
@@ -15,13 +35,70 @@ ParseResult parse_source_file(const std::string& path) {
         result.error.location.file = path;
         return result;
     }
-
-    std::ostringstream buffer;
-    buffer << input.rdbuf();
-
     ParseResult result;
     result.success = true;
     result.file.path = path;
+
+    std::string line;
+    int line_number = 0;
+    DeclarationSyntax* current_declaration = nullptr;
+
+    while (std::getline(input, line)) {
+        ++line_number;
+        const std::string stripped = trim(line);
+
+        if (starts_with(stripped, "struct ")) {
+            const auto name_start = std::string("struct ").size();
+            const auto name_end = stripped.find_first_of(" {", name_start);
+
+            if (name_end != std::string::npos) {
+                DeclarationSyntax declaration;
+                declaration.name =
+                    stripped.substr(name_start, name_end - name_start);
+                declaration.location.file = path;
+                declaration.location.line = line_number;
+                declaration.location.column =
+                    static_cast<int>(line.find("struct")) + 1;
+
+                result.file.declarations.push_back(declaration);
+                current_declaration = &result.file.declarations.back();
+            }
+            continue;
+        }
+
+        if (stripped == "};") {
+            current_declaration = nullptr;
+            continue;
+        }
+        if (current_declaration == nullptr) {
+            continue;
+        }
+        const auto semicolon = stripped.find(";");
+        if (semicolon == std::string::npos) {
+            continue;
+        }
+
+        std::string field_text = stripped.substr(0, semicolon);
+        const auto initializer = field_text.find('=');
+        if (initializer != std::string::npos) {
+            field_text = trim(field_text.substr(0, initializer));
+        }
+
+        const auto split = field_text.find_last_of(" \t");
+        if (split == std::string::npos) {
+            continue;
+        }
+
+        FieldSyntax field;
+        field.type_spelling = trim(field_text.substr(0, split));
+        field.name = trim(field_text.substr(split + 1));
+        field.location.file = path;
+        field.location.line = line_number;
+        field.location.column = static_cast<int>(line.find(field.name)) + 1;
+
+        current_declaration->fields.push_back(field);
+    }
+
     return result;
 }
 
