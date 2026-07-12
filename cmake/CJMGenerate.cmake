@@ -25,6 +25,7 @@ function(cjm_generate)
 
   set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/cjm")
   set(generated_headers)
+  file(MAKE_DIRECTORY "${generated_dir}")
 
   foreach(header IN LISTS CJM_GENERATE_HEADERS)
     get_filename_component(header_name "${header}" NAME_WE)

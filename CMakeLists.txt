@@ -73,6 +73,13 @@ if (CJM_BUILD_TESTS)
     PROPERTIES 
       WILL_FAIL TRUE 
   )
+
+  add_subdirectory(examples/basic)
+
+  add_test(
+    NAME cjm_basic_example 
+    COMMAND cjm_basic_example 
+  )
 endif()
 
 
