@@ -84,6 +84,11 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_parser_tests PRIVATE cjm_parser)
   add_test(NAME cjm_parser_tests COMMAND cjm_parser_tests)
   set_tests_properties(cjm_parser_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  
+  add_executable(cjm_parser_file_tests tests/parser/parser_tests.cpp)
+  target_link_libraries(cjm_parser_file_tests PRIVATE cjm_parser)
+  add_test(NAME cjm_parser_file_tests COMMAND cjm_parser_file_tests)
+  set_tests_properties(cjm_parser_file_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 
