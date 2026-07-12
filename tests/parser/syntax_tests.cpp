@@ -56,6 +56,13 @@ int main() {
         assert(ok.file.declarations[0].fields[1].name == "age");
         assert(ok.file.declarations[0].fields[1].type_spelling == "int");
 
+        assert(ok.file.declarations[0].fields[0].comments.size() == 1);
+        assert(ok.file.declarations[0].fields[0].comments[0].text ==
+               R"(json:"name")");
+        assert(ok.file.declarations[0].fields[1].comments.size() == 1);
+        assert(ok.file.declarations[0].fields[1].comments[0].text ==
+               R"(json:"age")");
+
         auto missing =
             cjm::parser::parse_source_file("examples/basic/missing.hpp");
         assert(!missing.success);

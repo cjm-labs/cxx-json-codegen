@@ -73,12 +73,22 @@ ParseResult parse_source_file(const std::string& path) {
         if (current_declaration == nullptr) {
             continue;
         }
-        const auto semicolon = stripped.find(";");
+
+        // parse comments
+        std::string code_text = stripped;
+        std::string comment_text;
+        const auto comment_start = stripped.find("//");
+        if (comment_start != std::string::npos) {
+            code_text = trim(stripped.substr(0, comment_start));
+            comment_text = trim(stripped.substr(comment_start + 2));
+        }
+
+        const auto semicolon = code_text.find(";");
         if (semicolon == std::string::npos) {
             continue;
         }
 
-        std::string field_text = stripped.substr(0, semicolon);
+        std::string field_text = code_text.substr(0, semicolon);
         const auto initializer = field_text.find('=');
         if (initializer != std::string::npos) {
             field_text = trim(field_text.substr(0, initializer));
@@ -96,6 +106,14 @@ ParseResult parse_source_file(const std::string& path) {
         field.location.line = line_number;
         field.location.column = static_cast<int>(line.find(field.name)) + 1;
 
+        if (!comment_text.empty()) {
+            CommentSyntax comment;
+            comment.text = comment_text;
+            comment.location.file = path;
+            comment.location.line = line_number;
+            comment.location.column = static_cast<int>(line.find("//")) + 1;
+            field.comments.push_back(comment);
+        }
         current_declaration->fields.push_back(field);
     }
 
