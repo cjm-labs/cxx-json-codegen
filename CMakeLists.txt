@@ -17,9 +17,9 @@ target_link_libraries(cjm_generator PUBLIC cjm_metadata)
 target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_generator PUBLIC cxx_std_17)
 
-add_library(cjm_parser INTERFACE)
-target_include_directories(cjm_parser INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_features(cjm_parser INTERFACE cxx_std_17)
+add_library(cjm_parser src/parser/parser.cpp)
+target_include_directories(cjm_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_parser PUBLIC cxx_std_17)
 
 add_executable(cjm tools/cjm/main.cpp)
 target_link_libraries(cjm PRIVATE cjm_generator)
@@ -83,6 +83,7 @@ if (CJM_BUILD_TESTS)
   add_executable(cjm_parser_tests tests/parser/syntax_tests.cpp)
   target_link_libraries(cjm_parser_tests PRIVATE cjm_parser)
   add_test(NAME cjm_parser_tests COMMAND cjm_parser_tests)
+  set_tests_properties(cjm_parser_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 
