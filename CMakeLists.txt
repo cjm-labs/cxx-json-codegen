@@ -9,19 +9,17 @@ option(CJM_BUILD_TESTS "Build CJM tests" ON)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
 
 add_library(cjm_metadata INTERFACE)
+target_include_directories(cjm_metadata INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_metadata INTERFACE cxx_std_17)
 
 add_library(cjm_generator src/generator/cpp_generator.cpp)
 target_link_libraries(cjm_generator PUBLIC cjm_metadata)
 target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_generator PUBLIC cxx_std_17)
 
-target_include_directories(cjm_metadata 
-  INTERFACE 
-      ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-
-target_compile_features(cjm_metadata INTERFACE cxx_std_17)
-
+add_library(cjm_parser src/parser/parser.cpp)
+target_include_directories(cjm_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_parser PUBLIC cxx_std_17)
 
 add_executable(cjm tools/cjm/main.cpp)
 target_link_libraries(cjm PRIVATE cjm_generator)
@@ -80,6 +78,17 @@ if (CJM_BUILD_TESTS)
     NAME cjm_basic_example 
     COMMAND cjm_basic_example 
   )
+
+  # parser tests below...
+  add_executable(cjm_parser_tests tests/parser/syntax_tests.cpp)
+  target_link_libraries(cjm_parser_tests PRIVATE cjm_parser)
+  add_test(NAME cjm_parser_tests COMMAND cjm_parser_tests)
+  set_tests_properties(cjm_parser_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  
+  add_executable(cjm_parser_file_tests tests/parser/parser_tests.cpp)
+  target_link_libraries(cjm_parser_file_tests PRIVATE cjm_parser)
+  add_test(NAME cjm_parser_file_tests COMMAND cjm_parser_file_tests)
+  set_tests_properties(cjm_parser_file_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 
