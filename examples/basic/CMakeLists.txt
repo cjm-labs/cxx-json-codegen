@@ -8,13 +8,11 @@ target_include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-if (nlohmann_json_FOUND)
-  target_link_libraries(
-    cjm_basic_example 
-    PRIVATE 
-      nlohmann_json::nlohmann_json 
-  )
-endif()
+target_link_libraries(
+  cjm_basic_example 
+  PRIVATE 
+    nlohmann_json::nlohmann_json 
+)
 
 cjm_generate(
   TARGET cjm_basic_example 

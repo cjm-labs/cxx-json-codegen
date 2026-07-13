@@ -2,7 +2,18 @@ cmake_minimum_required(VERSION 3.20)
 
 project(CJM VERSION 0.1.0 LANGUAGES CXX)
 
+include(FetchContent)
+
 find_package(nlohmann_json QUIET)
+
+if (NOT nlohmann_json_FOUND)
+  FetchContent_Declare(
+    nlohmann_json 
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+  )
+  FetchContent_MakeAvailable(nlohmann_json)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
