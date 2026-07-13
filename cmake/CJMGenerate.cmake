@@ -28,15 +28,16 @@ function(cjm_generate)
   file(MAKE_DIRECTORY "${generated_dir}")
 
   foreach(header IN LISTS CJM_GENERATE_HEADERS)
-    get_filename_component(header_name "${header}" NAME_WE)
+    get_filename_component(header_path "${header}" ABSOLUTE)
+    get_filename_component(header_name "${header_path}" NAME_WE)
     set(generated_header "${generated_dir}/${header_name}.cjm.hpp")
   
     add_custom_command(
       OUTPUT "${generated_header}"
       COMMAND cjm generate 
-              --input "${header}"
+              --input "${header_path}"
               --output "${generated_header}"
-      DEPENDS "${header}" cjm 
+      DEPENDS "${header_path}" cjm 
       COMMENT "Generating ${generated_header}"
       VERBATIM
     )
