@@ -1,6 +1,7 @@
 #pragma once
 
 #include "metadata/model.hpp"
+#include "parser/syntax.hpp"
 
 #include <string>
 #include <vector>
@@ -34,4 +35,6 @@ struct JsonFieldMetadataResult {
 JsonFieldMetadataResult
 parse_json_field_metadata(const std::string& comment,
                           const SourceLocation& location);
+
+AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file);
 } // namespace cjm::semantic

@@ -1,3 +1,4 @@
+#include "parser/syntax.hpp"
 #include "semantic/analysis.hpp"
 
 #include <cassert>
@@ -48,6 +49,38 @@ int main() {
         assert(!invalid.success);
         assert(invalid.diagnostic.location.file == "user.hpp");
         assert(!invalid.diagnostic.message.empty());
+    }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "user.hpp";
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+
+        cjm::parser::FieldSyntax name;
+        name.name = "name";
+        name.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax name_comment;
+        name_comment.text = R"(json:"name")";
+        name_comment.location.file = "user.hpp";
+        name_comment.location.line = 4;
+        name_comment.location.column = 30;
+        name.comments.push_back(name_comment);
+
+        user.fields.push_back(name);
+        file.declarations.push_back(user);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+        assert(result.project.types[0].name == "User");
+        assert(result.project.types[0].fields.size() == 1);
+        assert(result.project.types[0].fields[0].name == "name");
+        assert(result.project.types[0].fields[0].type.spelling ==
+               "std::string");
+        assert(result.project.types[0].fields[0].json.name == "name");
     }
     return 0;
 }

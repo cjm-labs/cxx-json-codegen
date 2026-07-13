@@ -34,4 +34,55 @@ parse_json_field_metadata(const std::string& comment,
     result.success = true;
     return result;
 }
+
+SourceLocation to_semantic_location(const parser::SourceLocation& location) {
+    SourceLocation result;
+    result.file = location.file;
+    result.line = location.line;
+    result.column = location.column;
+    return result;
+}
+
+AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
+    AnalysisResult result;
+    result.success = true;
+
+    for (const auto& declaration : file.declarations) {
+        metadata::TypeModel type;
+        type.name = declaration.name;
+
+        for (const auto& field_syntax : declaration.fields) {
+            bool included = false;
+
+            for (const auto& comment : field_syntax.comments) {
+                const auto metadata_result = parse_json_field_metadata(
+                    comment.text, to_semantic_location(comment.location));
+
+                if (!metadata_result.found) {
+                    continue;
+                }
+
+                if (!metadata_result.success) {
+                    result.success = false;
+                    result.diagnostics.push_back(metadata_result.diagnostic);
+                    continue;
+                }
+
+                metadata::FieldModel field;
+                field.name = field_syntax.name;
+                field.type.spelling = field_syntax.type_spelling;
+                field.json.name = metadata_result.json_name;
+
+                type.fields.push_back(field);
+                included = true;
+                break;
+            }
+            (void)included;
+        }
+        if (!type.fields.empty()) {
+            result.project.types.push_back(type);
+        }
+    }
+    return result;
+}
 } // namespace cjm::semantic
