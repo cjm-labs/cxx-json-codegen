@@ -1,3 +1,5 @@
+#include <set>
+
 #include "semantic/analysis.hpp"
 
 namespace cjm::semantic {
@@ -50,13 +52,14 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
     for (const auto& declaration : file.declarations) {
         metadata::TypeModel type;
         type.name = declaration.name;
+        std::set<std::string> json_names;
 
         for (const auto& field_syntax : declaration.fields) {
-            bool included = false;
-
             for (const auto& comment : field_syntax.comments) {
-                const auto metadata_result = parse_json_field_metadata(
-                    comment.text, to_semantic_location(comment.location));
+                const auto comment_location =
+                    to_semantic_location(comment.location);
+                const auto metadata_result =
+                    parse_json_field_metadata(comment.text, comment_location);
 
                 if (!metadata_result.found) {
                     continue;
@@ -68,16 +71,27 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
                     continue;
                 }
 
+                if (json_names.count(metadata_result.json_name) != 0) {
+                    result.success = false;
+
+                    Diagnostic diagnostic;
+                    diagnostic.location = comment_location;
+                    diagnostic.message = "duplicate JSON field name: " +
+                                         metadata_result.json_name;
+                    result.diagnostics.push_back(diagnostic);
+                    continue;
+                }
+
+                json_names.insert(metadata_result.json_name);
+
                 metadata::FieldModel field;
                 field.name = field_syntax.name;
                 field.type.spelling = field_syntax.type_spelling;
                 field.json.name = metadata_result.json_name;
 
                 type.fields.push_back(field);
-                included = true;
                 break;
             }
-            (void)included;
         }
         if (!type.fields.empty()) {
             result.project.types.push_back(type);

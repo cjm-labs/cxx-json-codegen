@@ -82,5 +82,46 @@ int main() {
                "std::string");
         assert(result.project.types[0].fields[0].json.name == "name");
     }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "user.hpp";
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+
+        cjm::parser::FieldSyntax first_name;
+        first_name.name = "first_name";
+        first_name.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax first_comment;
+        first_comment.text = R"(json:"name")";
+        first_comment.location.file = "user.hpp";
+        first_comment.location.line = 4;
+        first_comment.location.column = 31;
+        first_name.comments.push_back(first_comment);
+
+        cjm::parser::FieldSyntax last_name;
+        last_name.name = "last_name";
+        last_name.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax second_comment;
+        second_comment.text = R"(json:"name")";
+        second_comment.location.file = "user.hpp";
+        second_comment.location.line = 5;
+        second_comment.location.column = 31;
+        last_name.comments.push_back(second_comment);
+
+        user.fields.push_back(first_name);
+        user.fields.push_back(last_name);
+        file.declarations.push_back(user);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(!result.success);
+        assert(result.diagnostics.size() == 1);
+        assert(result.diagnostics[0].location.line == 5);
+        assert(result.diagnostics[0].message ==
+               "duplicate JSON field name: name");
+    }
     return 0;
 }
