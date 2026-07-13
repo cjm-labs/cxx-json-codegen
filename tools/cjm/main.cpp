@@ -3,7 +3,8 @@
 #include <string>
 
 #include "generator/cpp_generator.hpp"
-#include "metadata/model.hpp"
+#include "parser/parser.hpp"
+#include "semantic/analysis.hpp"
 
 namespace {
 
@@ -61,33 +62,6 @@ bool parse_generate_options(int argc, char** argv, GenerateOptions& options) {
     return true;
 }
 
-// Temporary bridge until parser and semantic analysis can build the real
-// metadata model.
-cjm::metadata::ProjectModel make_temporary_project_model() {
-    using namespace cjm::metadata;
-
-    TypeModel user;
-    user.name = "User";
-
-    FieldModel name;
-    name.name = "name";
-    name.type.spelling = "std::string";
-    name.json.name = "name";
-
-    FieldModel age;
-    age.name = "age";
-    age.type.spelling = "int";
-    age.json.name = "age";
-
-    user.fields.push_back(name);
-    user.fields.push_back(age);
-
-    ProjectModel project;
-    project.types.push_back(user);
-
-    return project;
-}
-
 } // namespace
 
 int main(int argc, char** argv) {
@@ -110,8 +84,28 @@ int main(int argc, char** argv) {
             return kExitUsageError;
         }
 
-        const auto project = make_temporary_project_model();
-        const auto generated = cjm::generator::generate_header(project);
+        const auto parse_result = cjm::parser::parse_source_file(options.input);
+        if (!parse_result.success) {
+            std::cerr << "cjm: " << parse_result.error.message << ": "
+                      << parse_result.error.location.file << "\n";
+            return kExitFailure;
+        }
+
+        const auto analysis_result =
+            cjm::semantic::analyze_source_file(parse_result.file);
+
+        if (!analysis_result.success) {
+            for (const auto& diagnostic : analysis_result.diagnostics) {
+                std::cerr << diagnostic.location.file << ":"
+                          << diagnostic.location.line << ":"
+                          << diagnostic.location.column << ": "
+                          << diagnostic.message << "\n";
+            }
+            return kExitFailure;
+        }
+
+        const auto generated =
+            cjm::generator::generate_header(analysis_result.project);
 
         std::ofstream output(options.output);
         if (!output.is_open()) {

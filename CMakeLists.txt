@@ -32,7 +32,7 @@ target_compile_features(cjm_semantic PUBLIC cxx_std_17)
 
 # cjm main app
 add_executable(cjm tools/cjm/main.cpp)
-target_link_libraries(cjm PRIVATE cjm_generator)
+target_link_libraries(cjm PRIVATE cjm_generator cjm_semantic)
 
 if (CJM_BUILD_TESTS)
   enable_testing()
