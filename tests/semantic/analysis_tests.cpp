@@ -123,5 +123,35 @@ int main() {
         assert(result.diagnostics[0].message ==
                "duplicate JSON field name: name");
     }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "user.hpp";
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+
+        cjm::parser::FieldSyntax name;
+        name.name = "name";
+        name.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax invalid_comment;
+        invalid_comment.text = "json:name";
+        invalid_comment.location.file = "user.hpp";
+        invalid_comment.location.line = 4;
+        invalid_comment.location.column = 30;
+        name.comments.push_back(invalid_comment);
+
+        user.fields.push_back(name);
+        file.declarations.push_back(user);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(!result.success);
+        assert(result.project.types.empty());
+        assert(result.diagnostics.size() == 1);
+        assert(result.diagnostics[0].location.file == "user.hpp");
+        assert(result.diagnostics[0].location.line == 4);
+        assert(!result.diagnostics[0].message.empty());
+    }
     return 0;
 }
