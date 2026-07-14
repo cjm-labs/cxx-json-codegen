@@ -167,3 +167,47 @@ https://github.com/cjm-labs
 ## License
 
 MIT License
+
+## Golden Tests
+
+CJM uses golden tests to protect generated C++ output.
+
+Golden files live under:
+
+```text
+tests/golden/
+```
+
+Expected files are committed:
+
+```text
+*.expected.cjm.hpp
+```
+
+Actual files are local failure artifacts:
+
+```text
+*.actual.cjm.hpp
+```
+
+When a golden test fails, the test writes an actual file and prints both paths:
+
+```text
+golden mismatch
+expected: tests/golden/example.expected.cjm.hpp
+actual: tests/golden/example.actual.cjm.hpp
+```
+
+To inspect the change:
+
+```bash
+diff -u tests/golden/example.expected.cjm.hpp tests/golden/example.actual.cjm.hpp
+```
+
+If the generated output change is intentional, update the expected file after review:
+
+```bash
+cp tests/golden/example.actual.cjm.hpp tests/golden/example.expected.cjm.hpp
+```
+
+Do not commit `*.actual.*` files. They are ignored by git and exist only to help inspect local failures.
