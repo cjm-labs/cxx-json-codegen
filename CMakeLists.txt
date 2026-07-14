@@ -102,6 +102,12 @@ if (CJM_BUILD_TESTS)
     COMMAND cjm_basic_example 
   )
 
+  add_test(
+    NAME cjm_basic_example_generated_header
+    COMMAND ${CMAKE_COMMAND} -E compare_files
+            ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp
+            ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp
+  )
   # parser tests below...
   add_executable(cjm_parser_tests tests/parser/syntax_tests.cpp)
   target_link_libraries(cjm_parser_tests PRIVATE cjm_parser)
