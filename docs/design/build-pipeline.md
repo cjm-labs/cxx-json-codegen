@@ -225,6 +225,40 @@ The build pipeline follows several principles:
 
 ---
 
+# Current v0.1 End-to-End Example 
+
+The current end-to-end example demonstrates the complete CJM build pipeline:
+
+```text 
+C++ header 
+↓
+Parser 
+↓
+Semantic Analysis 
+↓
+Metadata Model
+↓
+Code Generator 
+↓
+Generated *.cjm.hpp
+↓
+Normal C++ compilation 
+↓
+Executable test
+```
+The example uses `examples/basic/user.hpp` as input and generates `user.cjm.hpp` under the build directory.
+The generated header targets the initial `nlohmann/json` backend. The example links `nlohmann_json::nlohmann_json` so the generated code can be included, compiled, and executed.
+
+Current limitations:
+- the parser supports only a minimal v0.1 struct shape 
+- semantic analysis supports only simple `json:"name" field metadata 
+- generated code currently targets `nlohmann/json` 
+- native JSON backend supports is not part of the current example 
+- advanced C++ constructs, templates, methods, and complex type resolution are out of scope
+
+
+---
+
 # Summary
 
 The user experience should feel simple:
