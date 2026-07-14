@@ -64,6 +64,12 @@ if (CJM_BUILD_TESTS)
   add_test(NAME cjm_generator_tests COMMAND cjm_generator_tests)
   set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
+  # PIPELINE GOLDEN tests below...
+  add_executable(cjm_pipeline_golden_tests tests/generator/pipeline_golden_tests.cpp)
+  target_link_libraries(cjm_pipeline_golden_tests PRIVATE cjm_generator cjm_parser cjm_semantic)
+  add_test(NAME cjm_pipeline_golden_tests COMMAND cjm_pipeline_golden_tests)
+  set_tests_properties(cjm_pipeline_golden_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
   # CLI tests below...
   add_test(NAME cjm_cli_help COMMAND cjm --help)
   add_test(NAME cjm_cli_generate

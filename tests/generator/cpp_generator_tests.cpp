@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -65,12 +66,18 @@ ProjectModel make_basic_user_project() {
 int main() {
     const ProjectModel project = make_basic_user_project();
 
+    const std::string expected_path =
+        "tests/golden/basic_user.expected.cjm.hpp";
+    const std::string actual_path = "tests/golden/basic_user.actual.cjm.hpp";
+
     const std::string generated = generate_header(project);
-    const std::string expected =
-        read_file("tests/golden/basic_user.expected.cjm.hpp");
+    const std::string expected = read_file(expected_path);
 
     if (generated != expected) {
-        write_file("tests/golden/basic_user.actual.cjm.hpp", generated);
+        write_file(actual_path, generated);
+        std::cerr << "golden mismatch\n"
+                  << "expected: " << expected_path << "\n"
+                  << "actual: " << actual_path << "\n";
     }
     assert(generated == expected);
     return 0;
