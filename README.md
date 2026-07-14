@@ -122,8 +122,8 @@ Users only interact with standard C++ source code and generated C++ files.
 
 Current status:
 
-- Early v0.1 release preparation 
-- Minimal end-to-end JSON code generation pipeline is working 
+- v0.1.0 has been released 
+- Minimal end-to-end JSON code generation pipeline is available 
 - Initial backend: `nlohmann/json` 
 
 ---
