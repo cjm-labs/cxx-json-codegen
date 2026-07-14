@@ -122,9 +122,34 @@ Users only interact with standard C++ source code and generated C++ files.
 
 Current status:
 
-- 🚧 Early development
-- Private development before the first public release
-- Initial target: **v0.1**
+- Early v0.1 release preparation 
+- Minimal end-to-end JSON code generation pipeline is working 
+- Initial backend: `nlohmann/json` 
+
+---
+
+## Current Limitations 
+
+CJM v0.1 is intentionally minimal.
+
+Supported:
+
+- explicit CMake header registration with `cjm_generate`
+- simple `struct` declarations 
+- simple fields with `json:"name"` comments 
+- generated `to_json` / `from_json` for `nlohmann/json` 
+- basic scalar and `std::string` field spelling 
+
+Not yet supported:
+
+- full C++ parsing 
+- automatic header discovery 
+- nested structs 
+- STL containers 
+- templates 
+- private fields 
+- native JSON backend 
+- install/package distribution
 
 ---
 
