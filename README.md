@@ -191,7 +191,7 @@ https://github.com/cjm-labs
 
 ## License
 
-MIT License
+CJM is licensed under the MIT License. See [LICENSE](LICENSE).
 
 ## Golden Tests
 
