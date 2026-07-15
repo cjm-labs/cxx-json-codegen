@@ -25,6 +25,24 @@ bool starts_with(const std::string& text, const std::string& prefix) {
     return text.rfind(prefix, 0) == 0;
 }
 
+std::vector<std::string> split_namespace_path(const std::string& text) {
+    std::vector<std::string> result;
+    std::size_t start = 0;
+
+    while (start < text.size()) {
+        const auto end = text.find("::", start);
+        if (end == std::string::npos) {
+            result.push_back(text.substr(start));
+            break;
+        }
+
+        result.push_back(text.substr(start, end - start));
+        start = end + 2;
+    }
+
+    return result;
+}
+
 ParseResult parse_source_file(const std::string& path) {
     std::ifstream input(path);
 
@@ -42,10 +60,87 @@ ParseResult parse_source_file(const std::string& path) {
     std::string line;
     int line_number = 0;
     DeclarationSyntax* current_declaration = nullptr;
+    std::vector<std::string> namespace_path;
+    std::vector<std::size_t> namespace_block_sizes;
 
     while (std::getline(input, line)) {
         ++line_number;
         const std::string stripped = trim(line);
+
+        if (current_declaration == nullptr &&
+            starts_with(stripped, "namespace ")) {
+            const auto name_start = std::string("namespace ").size();
+            const auto brace = stripped.find("{", name_start);
+            if (brace != std::string::npos) {
+                const auto namespace_name =
+                    trim(stripped.substr(name_start, brace - name_start));
+                const auto parts = split_namespace_path(namespace_name);
+
+                namespace_path.insert(namespace_path.end(), parts.begin(),
+                                      parts.end());
+                namespace_block_sizes.push_back(parts.size());
+            }
+            continue;
+        }
+
+        // ?
+        if (current_declaration == nullptr && starts_with(stripped, "}") &&
+            stripped != "};") {
+            if (!namespace_block_sizes.empty()) {
+                const auto block_size = namespace_block_sizes.back();
+                namespace_block_sizes.pop_back();
+
+                for (std::size_t i = 0;
+                     i < block_size && !namespace_path.empty(); ++i) {
+                    namespace_path.pop_back();
+                }
+            }
+            continue;
+        }
+
+        if (current_declaration == nullptr && starts_with(stripped, "using ")) {
+            const auto name_start = std::string("using ").size();
+            const auto equals = stripped.find("=", name_start);
+            const auto semicolon = stripped.find(";", name_start);
+
+            if (equals != std::string::npos && semicolon != std::string::npos &&
+                equals < semicolon) {
+                TypeAliasSyntax alias;
+                alias.name =
+                    trim(stripped.substr(name_start, equals - name_start));
+                alias.target_type_spelling =
+                    trim(stripped.substr(equals + 1, semicolon - equals - 1));
+                alias.namespace_path = namespace_path;
+                alias.location.file = path;
+                alias.location.line = line_number;
+                alias.location.column =
+                    static_cast<int>(line.find("using")) + 1;
+                result.file.type_aliases.push_back(alias);
+            }
+            continue;
+        }
+
+        if (current_declaration == nullptr &&
+            (starts_with(stripped, "enum ") ||
+             starts_with(stripped, "enum class "))) {
+            const std::string prefix =
+                starts_with(stripped, "enum class ") ? "enum class " : "enum ";
+            const auto name_start = prefix.size();
+            const auto name_end = stripped.find_first_of(" {:", name_start);
+
+            if (name_end != std::string::npos) {
+                EnumSyntax enum_syntax;
+                enum_syntax.name =
+                    stripped.substr(name_start, name_end - name_start);
+                enum_syntax.namespace_path = namespace_path;
+                enum_syntax.location.file = path;
+                enum_syntax.location.line = line_number;
+                enum_syntax.location.column =
+                    static_cast<int>(line.find("enum")) + 1;
+                result.file.enums.push_back(enum_syntax);
+            }
+            continue;
+        }
 
         if (starts_with(stripped, "struct ")) {
             const auto name_start = std::string("struct ").size();
@@ -55,6 +150,7 @@ ParseResult parse_source_file(const std::string& path) {
                 DeclarationSyntax declaration;
                 declaration.name =
                     stripped.substr(name_start, name_end - name_start);
+                declaration.namespace_path = namespace_path;
                 declaration.location.file = path;
                 declaration.location.line = line_number;
                 declaration.location.column =
