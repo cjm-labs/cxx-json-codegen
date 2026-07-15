@@ -32,6 +32,25 @@ Everything else is an implementation detail.
 
 ---
 
+# Product Preference
+
+CJM prefers:
+
+- explicit over implicit
+- generated code over runtime magic
+- metadata over external configuration
+- build-time errors over runtime surprises
+- ordinary C++ over proprietary DSLs
+- readable generated output over opaque machinery
+
+These preferences define CJM's product boundary.
+
+They help keep CJM focused on source-level metadata and build-time generation
+rather than expanding into a JSON library, runtime framework, or schema-first
+model generator.
+
+---
+
 # Build-Time, Not Runtime
 
 Code generation happens during the build.
@@ -52,7 +71,7 @@ The purpose is to improve the developer experience.
 
 Users should spend their time writing application code instead of repetitive serialization logic.
 
-Whenever implementation complexity conflicts with user simplicity, implementation complexity is preferred.
+Whenever implementation complexity conflicts with user simplicity, user simplicity is preferred.
 
 ---
 

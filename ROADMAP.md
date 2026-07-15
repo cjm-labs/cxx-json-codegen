@@ -1,10 +1,112 @@
 # CJM Roadmap
 
-This roadmap describes the planned development path for CJM.
+This roadmap describes CJM as both a product strategy and a development plan.
 
-The roadmap is intentionally incremental.
+CJM should become useful through small, testable milestones while preserving a
+clear long-term identity.
 
-CJM should become useful through small, testable milestones rather than large rewrites.
+---
+
+# Vision
+
+CJM is a metadata-driven source generator for Modern C++.
+
+The goal is **not** to become another JSON library.
+
+The goal is to let existing C++ models remain the single source of truth while
+generating JSON integration automatically during the build.
+
+> CJM keeps your C++ models as the source of truth. It generates the JSON
+> integration around them, not the models themselves.
+
+Design principles:
+
+- C++ source is the source of truth.
+- Metadata lives next to the field it describes.
+- Generated code is ordinary C++.
+- Generation happens at build time, not through runtime reflection.
+- The architecture remains backend-independent.
+- The workflow remains CMake-first.
+- v1.0 supports a documented, tested JSON mapping matrix rather than an
+  open-ended promise to support the entire C++ type system.
+
+---
+
+# Architecture Direction
+
+The long-term architecture is:
+
+```text
+C++ Source
+    |
+    v
+Parser
+    |
+    v
+Semantic Analysis
+    |
+    v
+Metadata IR
+    |
+    +----------------+
+    |                |
+    v                v
+JSON Backend    Schema Backend
+    |                |
+    v                v
+Generated C++    JSON Schema
+```
+
+The Metadata IR is the center of CJM.
+
+All parser implementations produce it.
+All backends consume it.
+
+Future backends may include:
+
+- nlohmann/json backend
+- RapidJSON backend
+- native CJM backend
+- schema backend
+- documentation backend
+- OpenAPI backend
+
+These are architectural directions, not v0.1 requirements.
+
+---
+
+# Philosophy
+
+CJM prefers:
+
+- explicit over implicit
+- generated code over runtime magic
+- metadata over external configuration
+- build-time errors over runtime surprises
+- ordinary C++ over proprietary DSLs
+- readable generated output over opaque machinery
+
+---
+
+# Non-Goals
+
+CJM is not intended to become:
+
+- a JSON parser
+- a serialization runtime
+- a reflection framework
+- a schema-first code generator
+- a JSON editor
+- a UI renderer
+- a general-purpose compiler
+- a replacement for CMake
+- a replacement for the user's compiler
+
+These are intentionally left to existing projects.
+
+CJM should remain focused:
+
+> Build-time C++ code generation from source-level metadata.
 
 ---
 
@@ -12,7 +114,8 @@ CJM should become useful through small, testable milestones rather than large re
 
 CJM is in early development.
 
-The current focus is to establish:
+The current focus is to preserve the architecture while making the first
+end-to-end workflow practical:
 
 - product identity
 - architecture
@@ -23,7 +126,7 @@ The current focus is to establish:
 
 ---
 
-# v0.1 — Minimal Working Codegen
+# v0.1 - Minimal Working Generator
 
 Goal:
 
@@ -71,7 +174,7 @@ struct User {
 };
 ```
 
-↓
+to:
 
 ```cmake
 cjm_generate(
@@ -81,13 +184,13 @@ cjm_generate(
 )
 ```
 
-↓
+to:
 
 ```text
 user.cjm.hpp
 ```
 
-↓
+to:
 
 ```cpp
 nlohmann::json j = user;
@@ -96,11 +199,11 @@ User parsed = j.get<User>();
 
 ---
 
-# v0.2 — Practical Type Support
+# v0.2 - Practical Models
 
 Goal:
 
-> Support realistic application structs.
+> Support realistic production models.
 
 Add support for:
 
@@ -108,9 +211,23 @@ Add support for:
 - std::vector<T>
 - std::optional<T>
 - enums
-- namespace-aware generated code
+- namespaces
+- type aliases
+- `omitempty` metadata
+- `ignore` metadata
 - multiple input headers
 - dependency ordering
+
+Begin the production mapping matrix:
+
+- JSON primitives through common C++ scalar and string types
+- JSON objects through supported structs
+- JSON arrays through `std::vector<T>`
+- missing/null semantics through `std::optional<T>`
+- field rename metadata
+- `ignore` metadata
+- `omitempty` metadata
+- basic unsupported-type diagnostics
 
 Improve:
 
@@ -118,111 +235,43 @@ Improve:
 - generated code formatting
 - golden tests
 - examples
+- integration with realistic downstream model projects
 
 Success criteria:
 
 - multiple related structs generate correctly
 - nested JSON objects work
+- optional and omitted fields behave predictably
 - generated output remains deterministic
+- CJM can be dogfooded against practical model headers
 
 ---
 
-# v0.3 — Discovery and Build UX
+# v0.3 - Adoption
 
 Goal:
 
-> Improve user experience in larger projects.
+> Make CJM easy for other C++ projects to try and adopt.
 
 Add:
 
-- header discovery mode
-- root-based scanning
-- generated include aggregation
-- better incremental rebuild behavior
-- debug mode
-- `cjm doctor`
-- better CMake diagnostics
-
-Possible CMake API:
-
-```cmake
-cjm_generate(
-    TARGET app
-    DISCOVER
-    ROOTS
-        include
-)
-```
-
-Explicit mode remains supported.
-
-Discovery mode should never scan the entire project implicitly.
-
----
-
-# v0.4 — Backend Strategy
-
-Goal:
-
-> Stabilize backend abstraction.
-
-Initial backend:
-
-- nlohmann/json
-
-Investigate:
-
-- backend interface
-- native CJM JSON writer
-- reduced dependency mode
-- generated-only serialization path
-- backend-specific options
-
-Long-term direction:
-
-> CJM should eventually provide a native backend so users are not forced to depend on third-party JSON libraries.
-
-The MVP should not block on this.
-
----
-
-# v0.5 — Production Diagnostics
-
-Goal:
-
-> Make CJM pleasant to use when things go wrong.
-
-Add:
-
-- source-location aware errors
-- clear unsupported-type diagnostics
-- duplicate tag detection
-- invalid tag syntax diagnostics
-- dependency cycle detection
-- actionable suggestions
-
-Example diagnostic:
-
-```text
-include/user.hpp:12:18: unsupported CJM field type: std::map<std::string, int>
-```
-
----
-
-# v0.6 — Packaging
-
-Goal:
-
-> Make CJM easy to install.
-
-Add:
-
-- prebuilt binaries
+- FetchContent support
+- `install()` rules
 - CMake package config
-- install rules
 - version command
 - release artifacts
-- basic platform coverage
+- cross-platform CI
+- GitHub Action
+- examples
+- complete quick start
+- troubleshooting documentation
+
+Mapping scope:
+
+- no new core mapping requirements
+- examples should cover the complete v0.2 supported mapping surface
+- installation workflows should make generated headers usable without manual
+  internal tool invocation
 
 Target platforms:
 
@@ -230,11 +279,108 @@ Target platforms:
 - Linux x86_64
 - Windows x86_64
 
-The user should not need to manually configure parser dependencies.
+Success criteria:
+
+- users can consume CJM through normal CMake workflows
+- users do not manually invoke internal tools during normal development
+- examples demonstrate the supported v0.2 model surface
 
 ---
 
-# v0.7 — Performance and Incrementality
+# v0.4 - Extensibility
+
+Goal:
+
+> Stabilize the extension points around the Metadata IR.
+
+Add or design:
+
+- backend abstraction
+- adapter system
+- custom converters
+- metadata extensions
+- stable IR boundaries
+- backend-specific options
+- explicit type mapping policies
+
+Expand the mapping matrix:
+
+- `std::array<T, N>`
+- `std::map<std::string, T>`
+- `std::unordered_map<std::string, T>`
+- `enum` and `enum class` string mappings
+- custom converter design for future non-core types
+
+Initial backend:
+
+- nlohmann/json
+
+Potential later backends:
+
+- native CJM backend
+- RapidJSON backend
+- schema backend
+- documentation backend
+
+Success criteria:
+
+- generators consume the Metadata IR rather than parser-specific structures
+- backend-specific code remains isolated
+- public user workflows stay stable as internals evolve
+- custom conversion points do not leak parser-specific details
+
+---
+
+# v0.5 - Schema
+
+Goal:
+
+> Generate JSON Schema from the Metadata IR.
+
+Add:
+
+- schema backend
+- schema-oriented metadata mapping
+- golden tests for schema output
+- examples showing generated schemas
+- documentation for schema limitations
+
+Schema coverage should align with the supported JSON mapping matrix:
+
+- primitive types
+- objects
+- arrays
+- optional/null behavior
+- string-keyed maps
+- enum string mappings
+- required fields when validation metadata has landed
+- default values when default metadata has landed
+- documented time string formats when time mappings have landed
+
+Strategic value:
+
+```text
+C++
+  |
+  v
+CJM
+  |
+  v
+JSON Schema
+  |
+  v
+quicktype or other schema tooling
+  |
+  v
+Rust / Go / TypeScript / other languages
+```
+
+CJM should not try to generate every language itself.
+Schema export gives CJM a clean integration point with existing ecosystems.
+
+---
+
+# v0.6 - Performance
 
 Goal:
 
@@ -248,26 +394,88 @@ Improve:
 - dependency tracking
 - unnecessary rewrite avoidance
 - parallel generation
+- benchmarks
+
+Mapping scope:
+
+- no major new mapping requirements
+- performance work should cover realistic model sets using mappings introduced
+  through v0.5
+- generated output for supported mappings should remain deterministic and avoid
+  unnecessary rewrites
+
+Investigate:
+
+- RapidJSON backend
+- streaming writer
+- native backend research
 
 Generated files should not be rewritten if contents do not change.
 
 ---
 
-# v0.8 — Documentation and Examples
+# v0.7 - Reliability
 
 Goal:
 
-> Make CJM understandable and adoptable.
+> Make CJM predictable and trustworthy on larger real-world inputs.
+
+Improve:
+
+- source-location aware diagnostics
+- unsupported-type diagnostics
+- duplicate tag detection
+- invalid tag syntax diagnostics
+- dependency cycle detection
+- generated include stability
+- deterministic dependency ordering
+- clearer CMake failure messages
+- regression tests for failure cases
+
+Complete semantic mapping features:
+
+- required metadata
+- optional metadata
+- default value metadata
+- documented time string mappings
+- missing required diagnostics
+- type mismatch diagnostics
+- invalid enum string diagnostics
+
+Success criteria:
+
+- users can understand why generation failed
+- diagnostics point to the user's source whenever possible
+- unsupported input fails clearly instead of producing confusing generated code
+- supported input produces stable output across repeated builds
+
+---
+
+# v0.8 - Documentation and Ecosystem
+
+Goal:
+
+> Make CJM understandable as a Modern C++ developer tool, not only as a JSON helper.
 
 Add:
 
 - complete quick start
 - tutorial
-- examples
-- FAQ
+- examples for each supported model pattern
 - generated code explanation
-- design notes
 - troubleshooting guide
+- JSON mapping scope documentation
+- backend strategy documentation
+- competitive landscape documentation
+- contribution guide
+- release notes process
+
+Mapping scope:
+
+- complete supported type matrix documentation
+- examples for every supported v1.0 mapping
+- troubleshooting entries for common mapping failures
+- generated code explanation for supported mappings
 
 Example projects:
 
@@ -276,36 +484,121 @@ Example projects:
 - vector fields
 - optional fields
 - enum fields
+- namespace usage
+- schema generation
 - larger CMake project
+
+Success criteria:
+
+- a new user can understand what CJM is and what it is not
+- documentation explains the source-of-truth model
+- examples match supported behavior instead of future aspirations
+- contributors can understand CJM's architecture before changing code
 
 ---
 
-# v1.0 — Production-Ready Release
+# v0.9 - Release Hardening
 
 Goal:
 
-> Make CJM stable enough for external users.
+> Prepare CJM for a stable v1.0 release.
 
-Requirements:
+Harden:
 
-- stable public CMake API
-- stable generated file conventions
-- clear versioning
-- reliable diagnostics
-- tested supported type matrix
-- CI
-- documentation
-- examples
-- release artifacts
-- public repository
-- license
-- contribution guide
+- public CMake API
+- CLI behavior
+- generated file conventions
+- Metadata IR compatibility expectations
+- backend option behavior
+- versioning policy
+- release artifact process
+- cross-platform CI
+- installation validation
+- dogfood coverage
+- final v1.0 supported mapping matrix review
 
-v1.0 should represent a tool that external C++ developers can reasonably try in real projects.
+Mapping scope:
+
+- freeze the v1.0 mapping matrix
+- complete golden tests for supported mappings
+- complete schema backend tests for supported mappings
+- move unfinished mapping work to Future Ideas or mark it experimental
+
+Success criteria:
+
+- all v1.0 public interfaces are either stable or explicitly marked experimental
+- release artifacts can be produced repeatably
+- supported platforms are tested continuously
+- downstream projects can adopt CJM without relying on repository internals
+- all supported mappings have tests, examples, and diagnostics
 
 ---
 
-# Long-Term Ideas
+# v1.0 - Production Ready
+
+Goal:
+
+> Make CJM stable enough for external production use.
+
+Definition of done:
+
+- production-ready core workflow
+- documented public APIs
+- stable CMake API
+- stable generated file conventions
+- versioned releases
+- installable packages
+- release artifacts
+- reliable diagnostics
+- tested supported type matrix
+- cross-platform CI
+- examples
+- troubleshooting documentation
+- dogfooded on practical models
+- at least several external or downstream projects using CJM successfully
+
+Required JSON mapping surface:
+
+- `bool`
+- signed and unsigned integer types
+- floating-point types
+- `std::string` as UTF-8 JSON strings
+- nested supported structs
+- namespaces
+- multiple input headers
+- `std::vector<T>`
+- `std::array<T, N>`
+- `std::optional<T>`
+- `std::map<std::string, T>`
+- `std::unordered_map<std::string, T>`
+- `enum` and `enum class` string mappings
+- field rename metadata
+- ignore metadata
+- `omitempty` metadata
+- required and optional metadata
+- default value metadata
+- documented time string mappings
+- schema output for supported mappings
+- clear diagnostics for unsupported types and invalid metadata
+
+Out of scope for v1.0 by default:
+
+- arbitrary C++ templates
+- arbitrary custom containers
+- arbitrary map key conversion
+- pointer ownership semantics
+- inheritance and polymorphic serialization
+- native UTF-16 or UTF-32 string conversion
+- Unicode normalization
+- automatic timezone inference
+- complete JSON Schema validation runtime
+
+v1.0 should represent a tool that external C++ developers can reasonably try in
+real projects, not just a demo pipeline.
+
+---
+
+# Future Ideas
 
 These are not commitments.
 
@@ -313,35 +606,20 @@ They may be explored only after the core workflow is stable.
 
 Possible future work:
 
-- native JSON backend
-- additional JSON backends
-- schema export
-- formatting/linting for tags
+- C++26 reflection integration
+- JSON Schema export improvements
+- RapidJSON backend
+- YAML backend
+- OpenAPI integration
+- reflection backend
+- validation metadata
+- incremental generation improvements
 - IDE integration
 - VS Code extension
 - compile database integration
 - package manager integration
 - richer metadata syntax
 - custom field adapters
-- reflection-like metadata queries
-
----
-
-# Non-Goals
-
-CJM should not become:
-
-- a general C++ reflection framework
-- a full serialization framework for every format
-- a JSON DOM library first
-- a compiler plugin requirement
-- a macro-heavy registration system
-- a replacement for CMake
-- a replacement for the user's compiler
-
-CJM should remain focused:
-
-> Build-time C++ code generation from source-level metadata.
 
 ---
 
