@@ -18,6 +18,32 @@ int main() {
         "std::string",
     };
 
+    FieldType address_type{
+        FieldTypeKind::UserDefined,
+        "Address",
+        "company::model::Address",
+    };
+
+    FieldType vector_string_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::string>",
+        "",
+    };
+    vector_string_type.arguments.push_back(string_type);
+
+    FieldType optional_address_type{
+        FieldTypeKind::Optional,
+        "std::optional<Address>",
+        "",
+    };
+    optional_address_type.arguments.push_back(address_type);
+
+    FieldType status_type{
+        FieldTypeKind::Enum,
+        "Status",
+        "company::model::Status",
+    };
+
     FieldModel name_field{
         "name",
         string_type,
@@ -53,6 +79,18 @@ int main() {
     assert(project.types[0].fields[0].name == "name");
     assert(project.types[0].fields[0].json.name == "name");
     assert(project.types[0].fields[0].type.kind == FieldTypeKind::String);
+
+    assert(!project.types[0].fields[0].json.omit_empty);
+
+    assert(vector_string_type.kind == FieldTypeKind::Vector);
+    assert(vector_string_type.arguments.size() == 1);
+    assert(vector_string_type.arguments[0].kind == FieldTypeKind::String);
+
+    assert(optional_address_type.kind == FieldTypeKind::Optional);
+    assert(optional_address_type.arguments.size() == 1);
+    assert(optional_address_type.arguments[0].qualified_name ==
+           "company::model::Address");
+    assert(status_type.kind == FieldTypeKind::Enum);
 
     assert(project.types[0].fields[1].name == "age");
     assert(project.types[0].fields[1].json.name == "age");
