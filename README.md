@@ -6,6 +6,8 @@
 
 Instead of writing repetitive serialization code or relying on macros and runtime reflection, CJM generates ordinary C++ code during the build process while keeping your source files valid, standard C++.
 
+CJM keeps your C++ models as the source of truth. It generates the JSON integration around them, not the models themselves.
+
 > **Standard C++ in. Standard C++ out.**
 
 ---
@@ -75,6 +77,42 @@ No macros.
 No compiler plugins.
 
 No runtime reflection.
+
+---
+
+## Try From Source
+
+CJM v0.1 can be tried directly from the source tree.
+
+Requirements:
+
+- CMake
+- a C++17 compiler
+- `nlohmann/json`
+
+Build and run the included example:
+
+```sh
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+The basic example lives in:
+
+```text
+examples/basic/
+```
+
+It demonstrates:
+
+- a standard C++ model in `user.hpp`
+- field metadata written next to the fields
+- generated `user.cjm.hpp`
+- normal `nlohmann::json` conversion
+
+Packaged installation through `find_package(CJM REQUIRED)` is part of the
+Adoption roadmap rather than the current v0.1 release surface.
 
 ---
 
@@ -155,25 +193,19 @@ Not yet supported:
 
 ## Roadmap
 
-- v0.1 — Basic JSON code generation
-- v0.2 — Nested types and STL containers
-- v0.3 — Incremental generation
-- v0.4 — Performance optimizations
-- v1.0 — Production-ready release
-
-See [ROADMAP.md](ROADMAP.md) for details.
+See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 
 ---
 
 ## Documentation
 
-- Project Vision
-- Architecture
-- Branding
-- Philosophy
-- Design Notes
-
-(Documentation is under active development.)
+- [Project Vision](docs/vision.md)
+- [Architecture](ARCHITECTURE.md)
+- [Philosophy](docs/philosophy.md)
+- [Roadmap](ROADMAP.md)
+- [JSON Mapping Scope](docs/design/json-mapping-scope.md)
+- [Competitive Landscape](docs/design/competitive-landscape.md)
+- [Design Notes](docs/design/)
 
 ---
 
