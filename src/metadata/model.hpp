@@ -19,13 +19,16 @@ struct JsonFieldMetadata {
     bool omit_empty = false;
 };
 
-// Minimal v0.1 field type categories understood by generators.
+// Parser-independent field type categories understood by semantic analysis.
 enum class FieldTypeKind {
     Bool,
     SignedInteger,
     UnsignedInteger,
     FloatingPoint,
     String,
+    Enum,
+    Vector,
+    Optional,
     UserDefined
 };
 
@@ -34,6 +37,7 @@ struct FieldType {
     FieldTypeKind kind;
     std::string spelling;
     std::string qualified_name;
+    std::vector<FieldType> arguments;
 };
 
 // One C++ data member selected for generation.
