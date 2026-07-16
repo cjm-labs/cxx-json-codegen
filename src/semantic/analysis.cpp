@@ -1,6 +1,9 @@
 #include <set>
 #include <cctype>
+#include <map>
+#include <set>
 #include "semantic/analysis.hpp"
+#include "metadata/model.hpp"
 
 namespace cjm::semantic {
 
@@ -37,6 +40,226 @@ std::vector<std::string> split_options(const std::string& text) {
         start = comma + 1;
     }
     return result;
+}
+
+bool starts_with(const std::string& text, const std::string& prefix) {
+    return text.rfind(prefix, 0) == 0;
+}
+
+bool ends_with(const std::string& text, const std::string& suffix) {
+    return text.size() >= suffix.size() &&
+           text.compare(text.size() - suffix.size(), suffix.size(), suffix) ==
+               0;
+}
+
+std::string join_qualified_name(const std::vector<std::string>& namespace_path,
+                                const std::string& name) {
+    std::string result;
+    for (const auto& namespace_name : namespace_path) {
+        if (!result.empty()) {
+            result += "::";
+        }
+        result += namespace_name;
+    }
+    if (!result.empty()) {
+        result += "::";
+    }
+    result += name;
+    return result;
+}
+
+std::string strip_global_prefix(const std::string& spelling) {
+    if (starts_with(spelling, "::")) {
+        return spelling.substr(2);
+    }
+    return spelling;
+}
+
+std::string strip_cv_ref(const std::string& spelling) {
+    std::string result = trim(spelling);
+    if (starts_with(result, "const ")) {
+        result = trim(result.substr(6));
+    }
+    if (ends_with(result, "&")) {
+        result = trim(result.substr(0, result.size() - 1));
+    }
+    return result;
+}
+
+bool parse_template_argument(const std::string& spelling,
+                             const std::string& prefix, std::string& argument) {
+    if (!starts_with(spelling, prefix + "<") || !ends_with(spelling, ">")) {
+        return false;
+    }
+
+    argument = trim(spelling.substr(prefix.size() + 1,
+                                    spelling.size() - prefix.size() - 2));
+    return !argument.empty();
+}
+
+metadata::SourceLocation
+to_metadata_location(const parser::SourceLocation& location) {
+    metadata::SourceLocation result;
+    result.file = location.file;
+    result.line = static_cast<std::uint32_t>(location.line);
+    result.column = static_cast<std::uint32_t>(location.column);
+    return result;
+}
+
+struct TypeSymbols {
+    std::set<std::string> generated_types;
+    std::set<std::string> enums;
+    std::map<std::string, std::string> aliases;
+};
+
+metadata::FieldType make_type(metadata::FieldTypeKind kind,
+                              const std::string& spelling,
+                              const std::string& qualified_name) {
+    metadata::FieldType type;
+    type.kind = kind;
+    type.spelling = spelling;
+    type.qualified_name = qualified_name;
+    return type;
+}
+
+SourceLocation to_semantic_location(const parser::SourceLocation& location) {
+    SourceLocation result;
+    result.file = location.file;
+    result.line = location.line;
+    result.column = location.column;
+    return result;
+}
+
+Diagnostic make_diagnostic(const parser::SourceLocation& location,
+                           const std::string& message) {
+    Diagnostic diagnostic;
+    diagnostic.location = to_semantic_location(location);
+    diagnostic.message = message;
+    return diagnostic;
+}
+
+std::string resolve_alias(const TypeSymbols symbols,
+                          const std::vector<std::string>& namespace_path,
+                          const std::string& spelling) {
+    const auto normalized = strip_global_prefix(strip_cv_ref(spelling));
+    const auto direct = symbols.aliases.find(normalized);
+    if (direct != symbols.aliases.end()) {
+        return direct->second;
+    }
+
+    const auto scoped =
+        symbols.aliases.find(join_qualified_name(namespace_path, normalized));
+    if (scoped != symbols.aliases.end()) {
+        return scoped->second;
+    }
+    return normalized;
+}
+
+std::string resolve_named_type(const std::set<std::string>& names,
+                               const std::vector<std::string>& namespace_path,
+                               const std::string& spelling) {
+
+    const auto normalized = strip_global_prefix(strip_cv_ref(spelling));
+
+    const auto scoped = join_qualified_name(namespace_path, normalized);
+    if (names.count(scoped) != 0) {
+        return scoped;
+    }
+    if (names.count(normalized) != 0) {
+        return normalized;
+    }
+    return {};
+}
+
+metadata::FieldType
+analyze_field_type(const TypeSymbols& symbols,
+                   const std::vector<std::string>& namespace_path,
+                   const parser::FieldSyntax& field,
+                   std::vector<Diagnostic>& diagnostics, bool& success) {
+
+    const auto original_spelling = strip_cv_ref(field.type_spelling);
+    const auto spelling =
+        resolve_alias(symbols, namespace_path, original_spelling);
+
+    static const std::set<std::string> signed_integers = {
+        "char",          "signed char", "short",        "short int",
+        "int",           "long",        "long int",     "long long",
+        "long long int", "std::int8_t", "std::int16_t", "std::int32_t",
+        "std::int64_t"};
+    static const std::set<std::string> unsigned_integers = {
+        "unsigned char",     "unsigned short",     "unsigned short int",
+        "unsigned int",      "unsigned",           "unsigned long",
+        "unsigned long int", "unsigned long long", "unsigned long long int",
+        "std::uint8_t",      "std::uint16_t",      "std::uint32_t",
+        "std::uint64_t",     "std::size_t"};
+    static const std::set<std::string> floating_points = {"float", "double",
+                                                          "long double"};
+
+    if (spelling == "bool") {
+        return make_type(metadata::FieldTypeKind::Bool, original_spelling,
+                         "bool");
+    }
+
+    if (signed_integers.count(spelling) != 0) {
+        return make_type(metadata::FieldTypeKind::SignedInteger,
+                         original_spelling, spelling);
+    }
+
+    if (unsigned_integers.count(spelling) != 0) {
+        return make_type(metadata::FieldTypeKind::UnsignedInteger,
+                         original_spelling, spelling);
+    }
+
+    if (floating_points.count(spelling) != 0) {
+        return make_type(metadata::FieldTypeKind::FloatingPoint,
+                         original_spelling, spelling);
+    }
+
+    if (spelling == "std::string" || spelling == "string") {
+        return make_type(metadata::FieldTypeKind::String, original_spelling,
+                         "std::string");
+    }
+
+    std::string argument;
+    if (parse_template_argument(spelling, "std::vector", argument)) {
+        auto type =
+            make_type(metadata::FieldTypeKind::Vector, original_spelling, "");
+        parser::FieldSyntax nested = field;
+        nested.type_spelling = argument;
+        type.arguments.push_back(analyze_field_type(
+            symbols, namespace_path, nested, diagnostics, success));
+        return type;
+    }
+
+    if (parse_template_argument(spelling, "std::optional", argument)) {
+        auto type =
+            make_type(metadata::FieldTypeKind::Optional, original_spelling, "");
+        parser::FieldSyntax nested = field;
+        nested.type_spelling = argument;
+        type.arguments.push_back(analyze_field_type(
+            symbols, namespace_path, nested, diagnostics, success));
+        return type;
+    }
+
+    const auto enum_name =
+        resolve_named_type(symbols.enums, namespace_path, spelling);
+    if (!enum_name.empty()) {
+        return make_type(metadata::FieldTypeKind::Enum, original_spelling,
+                         enum_name);
+    }
+
+    const auto user_type =
+        resolve_named_type(symbols.generated_types, namespace_path, spelling);
+    if (!user_type.empty()) {
+        return make_type(metadata::FieldTypeKind::UserDefined,
+                         original_spelling, user_type);
+    }
+
+    success = false;
+    diagnostics.push_back(make_diagnostic(
+        field.location, "unsupported JSON field type: " + field.type_spelling));
+    return make_type(metadata::FieldTypeKind::UserDefined, original_spelling,
+                     "");
 }
 
 } // namespace
@@ -98,21 +321,35 @@ parse_json_field_metadata(const std::string& comment,
     return result;
 }
 
-SourceLocation to_semantic_location(const parser::SourceLocation& location) {
-    SourceLocation result;
-    result.file = location.file;
-    result.line = location.line;
-    result.column = location.column;
-    return result;
-}
-
 AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
     AnalysisResult result;
     result.success = true;
 
+    TypeSymbols symbols;
+    for (const auto& declaration : file.declarations) {
+        symbols.generated_types.insert(
+            join_qualified_name(declaration.namespace_path, declaration.name));
+    }
+    for (const auto& enum_syntax : file.enums) {
+        symbols.enums.insert(
+            join_qualified_name(enum_syntax.namespace_path, enum_syntax.name));
+    }
+    for (const auto& alias : file.type_aliases) {
+        const auto qualified_name =
+            join_qualified_name(alias.namespace_path, alias.name);
+        symbols.aliases[qualified_name] = alias.target_type_spelling;
+        symbols.aliases[alias.name] = alias.target_type_spelling;
+    }
+
     for (const auto& declaration : file.declarations) {
         metadata::TypeModel type;
         type.name = declaration.name;
+
+        type.namespace_path = declaration.namespace_path;
+        type.qualified_name =
+            join_qualified_name(type.namespace_path, type.name);
+        type.source_location = to_metadata_location(declaration.location);
+
         std::set<std::string> json_names;
 
         for (const auto& field_syntax : declaration.fields) {
@@ -151,9 +388,21 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
 
                 metadata::FieldModel field;
                 field.name = field_syntax.name;
-                field.type.spelling = field_syntax.type_spelling;
+
+                bool type_success = true;
+                field.type = analyze_field_type(
+                    symbols, declaration.namespace_path, field_syntax,
+                    result.diagnostics, type_success);
+
                 field.json.name = metadata_result.json_name;
                 field.json.omit_empty = metadata_result.omit_empty;
+
+                field.source_location =
+                    to_metadata_location(field_syntax.location);
+
+                if (!type_success) {
+                    result.success = false;
+                }
 
                 type.fields.push_back(field);
                 break;
@@ -162,6 +411,10 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         if (!type.fields.empty()) {
             result.project.types.push_back(type);
         }
+    }
+
+    if (!result.success) {
+        result.project.types.clear();
     }
     return result;
 }

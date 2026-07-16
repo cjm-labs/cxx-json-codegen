@@ -235,5 +235,156 @@ int main() {
         assert(result.diagnostics[0].location.line == 4);
         assert(!result.diagnostics[0].message.empty());
     }
+
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "models.hpp";
+
+        cjm::parser::EnumSyntax status;
+        status.name = "Status";
+        status.namespace_path = {"company", "model"};
+        file.enums.push_back(status);
+
+        cjm::parser::TypeAliasSyntax user_id;
+        user_id.name = "UserId";
+        user_id.target_type_spelling = "int";
+        user_id.namespace_path = {"company", "model"};
+        file.type_aliases.push_back(user_id);
+
+        cjm::parser::DeclarationSyntax address;
+        address.name = "Address";
+        address.namespace_path = {"company", "model"};
+
+        cjm::parser::FieldSyntax city;
+        city.name = "city";
+        city.type_spelling = "std::string";
+        cjm::parser::CommentSyntax city_comment;
+        city_comment.text = R"(json:"city")";
+        city_comment.location.file = "models.hpp";
+        city_comment.location.line = 10;
+        city_comment.location.column = 23;
+        city.comments.push_back(city_comment);
+        address.fields.push_back(city);
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+
+        cjm::parser::FieldSyntax id;
+        id.name = "id";
+        id.type_spelling = "UserId";
+        cjm::parser::CommentSyntax id_comment;
+        id_comment.text = R"(json:"id")";
+        id_comment.location.file = "models.hpp";
+        id_comment.location.line = 14;
+        id_comment.location.column = 28;
+        id.comments.push_back(id_comment);
+
+        cjm::parser::FieldSyntax user_address;
+        user_address.name = "address";
+        user_address.type_spelling = "Address";
+        cjm::parser::CommentSyntax address_comment;
+        address_comment.text = R"(json:"address")";
+        address_comment.location.file = "models.hpp";
+        address_comment.location.line = 15;
+        address_comment.location.column = 30;
+        user_address.comments.push_back(address_comment);
+
+        cjm::parser::FieldSyntax tags;
+        tags.name = "tags";
+        tags.type_spelling = "std::vector<std::string>";
+        cjm::parser::CommentSyntax tags_comment;
+        tags_comment.text = R"(json:"tags")";
+        tags_comment.location.file = "models.hpp";
+        tags_comment.location.line = 16;
+        tags_comment.location.column = 40;
+        tags.comments.push_back(tags_comment);
+
+        cjm::parser::FieldSyntax nickname;
+        nickname.name = "nickname";
+        nickname.type_spelling = "std::optional<std::string>";
+        cjm::parser::CommentSyntax nickname_comment;
+        nickname_comment.text = R"(json:"nickname")";
+        nickname_comment.location.file = "models.hpp";
+        nickname_comment.location.line = 17;
+        nickname_comment.location.column = 42;
+        nickname.comments.push_back(nickname_comment);
+
+        cjm::parser::FieldSyntax user_status;
+        user_status.name = "status";
+        user_status.type_spelling = "Status";
+        cjm::parser::CommentSyntax status_comment;
+        status_comment.text = R"(json:"status")";
+        status_comment.location.file = "models.hpp";
+        status_comment.location.line = 18;
+        status_comment.location.column = 30;
+        user_status.comments.push_back(status_comment);
+
+        user.fields.push_back(id);
+        user.fields.push_back(user_address);
+        user.fields.push_back(tags);
+        user.fields.push_back(nickname);
+        user.fields.push_back(user_status);
+
+        file.declarations.push_back(address);
+        file.declarations.push_back(user);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success);
+        assert(result.project.types.size() == 2);
+        assert(result.project.types[0].qualified_name ==
+               "company::model::Address");
+        assert(result.project.types[1].qualified_name ==
+               "company::model::User");
+
+        const auto& fields = result.project.types[1].fields;
+        assert(fields.size() == 5);
+        assert(fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(fields[1].type.kind ==
+               cjm::metadata::FieldTypeKind::UserDefined);
+        assert(fields[1].type.qualified_name == "company::model::Address");
+        assert(fields[2].type.kind == cjm::metadata::FieldTypeKind::Vector);
+        assert(fields[2].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(fields[3].type.kind == cjm::metadata::FieldTypeKind::Optional);
+        assert(fields[3].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(fields[4].type.kind == cjm::metadata::FieldTypeKind::Enum);
+        assert(fields[4].type.qualified_name == "company::model::Status");
+    }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "unsupported.hpp";
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+
+        cjm::parser::FieldSyntax callback;
+        callback.name = "callback";
+        callback.type_spelling = "std::function<void()>";
+        callback.location.file = "unsupported.hpp";
+        callback.location.line = 4;
+        callback.location.column = 5;
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"callback")";
+        comment.location.file = "unsupported.hpp";
+        comment.location.line = 4;
+        comment.location.column = 34;
+        callback.comments.push_back(comment);
+
+        user.fields.push_back(callback);
+        file.declarations.push_back(user);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(!result.success);
+        assert(result.project.types.empty());
+        assert(result.diagnostics.size() == 1);
+        assert(result.diagnostics[0].message ==
+               "unsupported JSON field type: std::function<void()>");
+    }
     return 0;
 }
