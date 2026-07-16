@@ -1,8 +1,45 @@
 #include <set>
-
+#include <cctype>
 #include "semantic/analysis.hpp"
 
 namespace cjm::semantic {
+
+namespace {
+
+std::string trim(const std::string& text) {
+    std::size_t first = 0;
+    while (first < text.size() &&
+           std::isspace(static_cast<unsigned char>(text[first]))) {
+        ++first;
+    }
+
+    std::size_t last = text.size();
+    while (last > first &&
+           std::isspace(static_cast<unsigned char>(text[last - 1]))) {
+        --last;
+    }
+
+    return text.substr(first, last - first);
+}
+
+std::vector<std::string> split_options(const std::string& text) {
+    std::vector<std::string> result;
+    std::size_t start = 0;
+
+    while (start <= text.size()) {
+        const auto comma = text.find(",", start);
+        if (comma == std::string::npos) {
+            result.push_back(trim(text.substr(start)));
+            break;
+        }
+
+        result.push_back(trim(text.substr(start, comma - start)));
+        start = comma + 1;
+    }
+    return result;
+}
+
+} // namespace
 
 JsonFieldMetadataResult
 parse_json_field_metadata(const std::string& comment,
@@ -25,12 +62,36 @@ parse_json_field_metadata(const std::string& comment,
         return result;
     }
 
-    result.json_name = value.substr(1, value.size() - 2);
-    if (result.json_name.empty()) {
+    const auto body = value.substr(1, value.size() - 2);
+    const auto options = split_options(body);
+
+    if (options.empty() || options[0].empty()) {
         result.success = false;
         result.diagnostic.location = location;
         result.diagnostic.message =
             "invalid CJM json metadata: empty JSON field name";
+        return result;
+    }
+
+    result.json_name = options[0];
+    if (result.json_name == "-") {
+        result.ignored = true;
+    }
+
+    for (std::size_t i = 1; i < options.size(); ++i) {
+        if (options[i] == "omitempty") {
+            result.omit_empty = true;
+            continue;
+        }
+
+        if (options[i].empty()) {
+            continue;
+        }
+
+        result.success = false;
+        result.diagnostic.location = location;
+        result.diagnostic.message =
+            "unsupported CJM json metadata option: " + options[i];
         return result;
     }
     result.success = true;
@@ -71,6 +132,10 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
                     continue;
                 }
 
+                if (metadata_result.ignored) {
+                    break;
+                }
+
                 if (json_names.count(metadata_result.json_name) != 0) {
                     result.success = false;
 
@@ -88,6 +153,7 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
                 field.name = field_syntax.name;
                 field.type.spelling = field_syntax.type_spelling;
                 field.json.name = metadata_result.json_name;
+                field.json.omit_empty = metadata_result.omit_empty;
 
                 type.fields.push_back(field);
                 break;

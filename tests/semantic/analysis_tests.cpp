@@ -36,6 +36,8 @@ int main() {
         assert(valid.found);
         assert(valid.success);
         assert(valid.json_name == "name");
+        assert(!valid.omit_empty);
+        assert(!valid.ignored);
         assert(valid.diagnostic.message.empty());
 
         auto ordinary = cjm::semantic::parse_json_field_metadata(
@@ -49,6 +51,30 @@ int main() {
         assert(!invalid.success);
         assert(invalid.diagnostic.location.file == "user.hpp");
         assert(!invalid.diagnostic.message.empty());
+
+        auto omit = cjm::semantic::parse_json_field_metadata(
+            R"(json:"nickname,omitempty")", location);
+        assert(omit.found);
+        assert(omit.success);
+        assert(omit.json_name == "nickname");
+        assert(omit.omit_empty);
+        assert(!omit.ignored);
+
+        auto ignored =
+            cjm::semantic::parse_json_field_metadata(R"(json:"-")", location);
+        assert(ignored.found);
+        assert(ignored.success);
+        assert(ignored.json_name == "-");
+        assert(ignored.ignored);
+        assert(!ignored.omit_empty);
+
+        auto unsupported = cjm::semantic::parse_json_field_metadata(
+            R"(json:"name,unknown")", location);
+        assert(unsupported.found);
+        assert(!unsupported.success);
+        assert(unsupported.diagnostic.location.file == "user.hpp");
+        assert(unsupported.diagnostic.message ==
+               "unsupported CJM json metadata option: unknown");
     }
     {
         cjm::parser::SourceFileSyntax file;
@@ -82,6 +108,62 @@ int main() {
                "std::string");
         assert(result.project.types[0].fields[0].json.name == "name");
     }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "user.hpp";
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+
+        cjm::parser::FieldSyntax name;
+        name.name = "name";
+        name.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax name_comment;
+        name_comment.text = R"(json:"name")";
+        name_comment.location.file = "user.hpp";
+        name_comment.location.line = 4;
+        name_comment.location.column = 30;
+        name.comments.push_back(name_comment);
+
+        cjm::parser::FieldSyntax password;
+        password.name = "password";
+        password.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax ignored_comment;
+        ignored_comment.text = R"(json:"-")";
+        ignored_comment.location.file = "user.hpp";
+        ignored_comment.location.line = 5;
+        ignored_comment.location.column = 34;
+        password.comments.push_back(ignored_comment);
+
+        cjm::parser::FieldSyntax nickname;
+        nickname.name = "nickname";
+        nickname.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax nickname_comment;
+        nickname_comment.text = R"(json:"nickname,omitempty")";
+        nickname_comment.location.file = "user.hpp";
+        nickname_comment.location.line = 6;
+        nickname_comment.location.column = 34;
+        nickname.comments.push_back(nickname_comment);
+
+        user.fields.push_back(name);
+        user.fields.push_back(password);
+        user.fields.push_back(nickname);
+        file.declarations.push_back(user);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+        assert(result.project.types[0].fields.size() == 2);
+        assert(result.project.types[0].fields[0].name == "name");
+        assert(result.project.types[0].fields[1].name == "nickname");
+        assert(result.project.types[0].fields[1].json.name == "nickname");
+        assert(result.project.types[0].fields[1].json.omit_empty);
+    }
+
     {
         cjm::parser::SourceFileSyntax file;
         file.path = "user.hpp";

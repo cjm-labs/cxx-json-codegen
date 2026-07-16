@@ -28,6 +28,8 @@ struct AnalysisResult {
 struct JsonFieldMetadataResult {
     std::string json_name;
     Diagnostic diagnostic;
+    bool omit_empty = false;
+    bool ignored = false;
     bool success = false;
     bool found = false;
 };
