@@ -1,4 +1,3 @@
-#include <set>
 #include <cctype>
 #include <map>
 #include <set>
@@ -138,21 +137,81 @@ Diagnostic make_diagnostic(const parser::SourceLocation& location,
     return diagnostic;
 }
 
-std::string resolve_alias(const TypeSymbols symbols,
-                          const std::vector<std::string>& namespace_path,
-                          const std::string& spelling) {
+/**
+ * Look up once alias target for a type spelling in the current semantic scope.
+ *
+ * Inputs:
+ *   symbols        - Alias table collected from parser syntax.
+ *   namespace_path - Namespace containing the field declaration
+ *   spelling       - Type spelling to lookup after cv/ref
+ * normalization.
+ *
+ * Output:
+ *   Returns the alias target spelling if the spelling names an alias.
+ *   Returns an empty string if no alias is found.
+ *
+ * This function performs lookup once. It does not recursively resolve aliases
+ * and does not classify whether the final type is JSON-mappable.
+ */
+
+std::string lookup_alias_once(const TypeSymbols& symbols,
+                              const std::vector<std::string>& namespace_path,
+                              const std::string& spelling) {
     const auto normalized = strip_global_prefix(strip_cv_ref(spelling));
+    auto scoped_spelling = join_qualified_name(namespace_path, normalized);
+    const auto scoped = symbols.aliases.find(scoped_spelling);
+    if (scoped != symbols.aliases.end()) {
+        return scoped->second;
+    }
+
     const auto direct = symbols.aliases.find(normalized);
     if (direct != symbols.aliases.end()) {
         return direct->second;
     }
 
-    const auto scoped =
-        symbols.aliases.find(join_qualified_name(namespace_path, normalized));
-    if (scoped != symbols.aliases.end()) {
-        return scoped->second;
+    return {};
+}
+
+/**
+ * Resolve alias chains such as Id -> UserId -> int.
+ *
+ * Inputs:
+ *  symbols         - Alias table collected from parser syntax.
+ *  namespace_path  - Namespace containing the field declaration.
+ *  spelling        - Original field type spelling.
+ *  diagnostic      - Receives a diagnostic if an alias cycle is detected.
+ *  success         - Set to false if alias resolution fails.
+ *
+ * Output:
+ *  Returns the final non-alias spelling when resolution succeeds.
+ *
+ *  This function resolves names only. It does not decide whether the resolved
+ *  type is supported by JSON mapping.
+ */
+std::string resolve_alias(const TypeSymbols& symbols,
+                          const std::vector<std::string>& namespace_path,
+                          const std::string& spelling,
+                          std::vector<Diagnostic>& diagnostics, bool& success) {
+    std::set<std::string> seen;
+    std::string current = strip_global_prefix(strip_cv_ref(spelling));
+
+    while (true) {
+        if (seen.count(current) != 0) {
+            success = false;
+            Diagnostic diagnostic;
+            diagnostic.message = "cyclic type alias detected: " + current;
+            diagnostics.push_back(diagnostic);
+
+            return current;
+        }
+        seen.insert(current);
+
+        const auto next = lookup_alias_once(symbols, namespace_path, current);
+        if (next.empty()) {
+            return current;
+        }
+        current = strip_global_prefix(strip_cv_ref(next));
     }
-    return normalized;
 }
 
 std::string resolve_named_type(const std::set<std::string>& names,
@@ -178,8 +237,8 @@ analyze_field_type(const TypeSymbols& symbols,
                    std::vector<Diagnostic>& diagnostics, bool& success) {
 
     const auto original_spelling = strip_cv_ref(field.type_spelling);
-    const auto spelling =
-        resolve_alias(symbols, namespace_path, original_spelling);
+    const auto spelling = resolve_alias(
+        symbols, namespace_path, original_spelling, diagnostics, success);
 
     static const std::set<std::string> signed_integers = {
         "char",          "signed char", "short",        "short int",
@@ -338,7 +397,6 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         const auto qualified_name =
             join_qualified_name(alias.namespace_path, alias.name);
         symbols.aliases[qualified_name] = alias.target_type_spelling;
-        symbols.aliases[alias.name] = alias.target_type_spelling;
     }
 
     for (const auto& declaration : file.declarations) {

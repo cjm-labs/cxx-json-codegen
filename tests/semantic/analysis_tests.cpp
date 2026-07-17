@@ -386,5 +386,44 @@ int main() {
         assert(result.diagnostics[0].message ==
                "unsupported JSON field type: std::function<void()>");
     }
-    return 0;
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "aliases.hpp";
+
+        cjm::parser::TypeAliasSyntax alias_userId;
+        alias_userId.name = "UserId";
+        alias_userId.target_type_spelling = "int";
+        alias_userId.namespace_path = {"company", "model"};
+
+        cjm::parser::TypeAliasSyntax alias_Id;
+        alias_Id.name = "Id";
+        alias_Id.target_type_spelling = "UserId";
+        alias_Id.namespace_path = {"company", "model"};
+
+        file.type_aliases = {alias_userId, alias_Id};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+
+        cjm::parser::FieldSyntax fieldId;
+        fieldId.name = "id";
+        fieldId.type_spelling = "Id";
+        fieldId.comments.push_back({R"(json:"id")"});
+
+        user.fields.push_back(fieldId);
+
+        file.declarations.push_back(user);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+        assert(result.project.types[0].fields.size() == 1);
+        assert(result.project.types[0].fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(result.project.types[0].qualified_name ==
+               "company::model::User");
+        assert(result.project.types[0].fields[0].type.qualified_name == "int");
+    }
 }
