@@ -207,12 +207,20 @@ Scope:
 This phase should begin only after CJM has practical product value and real
 dogfooding.
 
+Dogfooding requirement:
+
+- integrate CJM into `ull-md-engine` through the supported installation and
+  build workflow
+- use `ull-md-engine` to validate that CJM works in a real downstream project,
+  not only in repository examples
+- treat any integration friction as product feedback before v1.0
+
 Potential content:
 
 - Why build-time code generation?
 - Go struct tags in C++
 - Reflection vs code generation
-- case study: `ull-md-engine`
+- case study: `ull-md-engine` after the integration is real
 - benchmark writeups
 
 ## Phase 3 - Brand and Community
@@ -643,6 +651,7 @@ Success criteria:
 - release artifacts can be produced repeatably
 - supported platforms are tested continuously
 - downstream projects can adopt CJM without relying on repository internals
+- `ull-md-engine` consumes CJM through the supported installation workflow
 - all supported mappings have tests, examples, and diagnostics
 
 ---
@@ -667,7 +676,7 @@ Definition of done:
 - cross-platform CI
 - examples
 - troubleshooting documentation
-- dogfooded on practical models
+- dogfooded on practical models, including `ull-md-engine`
 - at least several external or downstream projects using CJM successfully
 
 Required JSON mapping surface:
