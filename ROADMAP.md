@@ -126,6 +126,112 @@ end-to-end workflow practical:
 
 ---
 
+# Discovery and Indexing Strategy
+
+CJM should distinguish indexing from SEO.
+
+Indexing means:
+
+> Search engines and developer platforms can discover that CJM exists and
+> understand what it is.
+
+SEO means:
+
+> CJM is deliberately competing for search ranking.
+
+Before the product is useful on practical projects, CJM should focus on
+indexing and discovery rather than ranking optimization.
+
+## Phase 0 - Indexing and Discovery
+
+This phase may be completed once before or during v0.2.
+
+Goal:
+
+> Make CJM discoverable without distracting from core product development.
+
+Scope:
+
+- GitHub repository title and description
+- GitHub About metadata
+- GitHub topics
+- website URL
+- release description
+- organization README
+- basic website indexing metadata
+- `robots.txt`
+- `sitemap.xml`
+- canonical URL metadata
+- Google Search Console setup
+- domain verification
+- sitemap submission
+
+Out of scope:
+
+- SEO ranking optimization
+- content marketing
+- blog articles
+- newsletter
+- Discord or community operations
+- documentation search
+- API reference
+
+Success criteria:
+
+- Google can discover the CJM website
+- GitHub clearly communicates what CJM is
+- project metadata consistently describes CJM as a C++ JSON code generator
+- indexing work can be left alone while product development continues
+
+## Phase 1 - Adoption Documentation
+
+This phase belongs with v0.3 Adoption.
+
+Goal:
+
+> Help developers understand and try CJM through documentation, not SEO tricks.
+
+Scope:
+
+- documentation site foundation
+- getting started guide
+- installation guide
+- CMake integration guide
+- JSON tags guide
+- examples
+- FAQ
+- architecture overview for users
+
+## Phase 2 - Content and Dogfooding
+
+This phase should begin only after CJM has practical product value and real
+dogfooding.
+
+Potential content:
+
+- Why build-time code generation?
+- Go struct tags in C++
+- Reflection vs code generation
+- case study: `ull-md-engine`
+- benchmark writeups
+
+## Phase 3 - Brand and Community
+
+This phase belongs near v1.0, once CJM has stable public workflows.
+
+Potential work:
+
+- release blog
+- newsletter
+- GitHub Discussions
+- Discord or community space
+- documentation search
+- public roadmap
+- API reference
+- community contribution paths
+
+---
+
 # v0.1 - Minimal Working Generator
 
 Goal:
@@ -265,6 +371,13 @@ Add:
 - examples
 - complete quick start
 - troubleshooting documentation
+- documentation site foundation
+- getting started guide
+- installation guide
+- CMake integration guide
+- JSON tags guide
+- FAQ
+- user-facing architecture overview
 
 Mapping scope:
 
