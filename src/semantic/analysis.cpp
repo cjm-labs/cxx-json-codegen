@@ -317,7 +317,7 @@ analyze_field_type(const TypeSymbols& symbols,
                          original_spelling, spelling);
     }
 
-    if (spelling == "std::string" || spelling == "string") {
+    if (spelling == "std::string") {
         return make_type(metadata::FieldTypeKind::String, original_spelling,
                          "std::string");
     }
@@ -359,7 +359,8 @@ analyze_field_type(const TypeSymbols& symbols,
 
     success = false;
     diagnostics.push_back(make_diagnostic(
-        field.location, "unsupported JSON field type: " + field.type_spelling));
+        field.location,
+        "unsupported field type for JSON mapping: " + field.type_spelling));
     return make_type(metadata::FieldTypeKind::UserDefined, original_spelling,
                      "");
 }

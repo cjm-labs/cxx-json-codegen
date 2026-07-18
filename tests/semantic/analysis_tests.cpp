@@ -2,6 +2,7 @@
 #include "semantic/analysis.hpp"
 
 #include <cassert>
+#include <iostream>
 
 int main() {
     {
@@ -383,8 +384,33 @@ int main() {
         assert(!result.success);
         assert(result.project.types.empty());
         assert(result.diagnostics.size() == 1);
-        assert(result.diagnostics[0].message ==
-               "unsupported JSON field type: std::function<void()>");
+        assert(
+            result.diagnostics[0].message ==
+            "unsupported field type for JSON mapping: std::function<void()>");
+    }
+    {
+        // Bare string is not accepted until parser syntax records using
+        // declarations such as `using std::string`.
+        cjm::parser::FieldSyntax field_name;
+        field_name.name = "name";
+        field_name.type_spelling = "string";
+        field_name.comments = {{R"(json:"name")"}};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.fields = {field_name};
+
+        cjm::parser::SourceFileSyntax file;
+        file.declarations = {user};
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(!result.success);
+        assert(result.project.types.empty());
+        assert(result.diagnostics.size() == 1);
+        std::cerr << "diagnostics[0].message = "
+                  << result.diagnostics[0].message << "\n";
+        assert(result.diagnostics[0].message.find(
+                   "unsupported field type for JSON mapping") !=
+               std::string::npos);
     }
     {
         cjm::parser::SourceFileSyntax file;
