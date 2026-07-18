@@ -1,10 +1,18 @@
 # CJM
 
-> Go-style JSON tags for Modern C++
+> Build-time Metadata Compiler for Modern C++
 
-**CJM** is a build-time code generator that brings Go-style JSON tags to standard C++.
+**CJM** is a build-time metadata compiler for Modern C++.
 
-Instead of writing repetitive serialization code or relying on macros and runtime reflection, CJM generates ordinary C++ code during the build process while keeping your source files valid, standard C++.
+It extracts source-level metadata from ordinary C++ declarations, builds a
+stable Metadata IR, and generates backend-specific C++ code during the build.
+
+The first official backend generates `nlohmann/json` integration from Go-style
+field metadata.
+
+Instead of writing repetitive integration code or relying on macros and runtime
+reflection, CJM generates ordinary C++ code while keeping your source files
+valid, standard C++.
 
 CJM keeps your C++ models as the source of truth. It generates the JSON integration around them, not the models themselves.
 
@@ -30,7 +38,8 @@ C++ developers often have to choose between:
 - runtime reflection libraries
 - compiler-specific extensions
 
-CJM aims to provide a Go-like developer experience while remaining:
+CJM aims to provide a compiler-style metadata pipeline while preserving a
+Go-like developer experience for its first JSON backend:
 
 - Build-time only
 - Standard C++
@@ -135,24 +144,29 @@ CJM follows a few core principles:
 User C++ Source
         │
         ▼
-   CMake Build
+ C++ Frontend
         │
         ▼
-      CJM
+ Metadata IR
+        │
+        ▼
+ nlohmann/json Backend
         │
         ▼
  Generated C++
         │
         ▼
-   Normal Compiler
+ Normal Compiler
         │
         ▼
      Executable
 ```
 
-The parser and code generator are implementation details.
+The Metadata IR is the stable boundary between source-language understanding
+and backend-specific code generation.
 
-Users only interact with standard C++ source code and generated C++ files.
+Users only interact with standard C++ source code, CMake, and generated C++
+files.
 
 ---
 
@@ -162,7 +176,7 @@ Current status:
 
 - v0.1.0 has been released 
 - Minimal end-to-end JSON code generation pipeline is available 
-- Initial backend: `nlohmann/json` 
+- First official backend: `nlohmann/json` 
 
 ---
 
