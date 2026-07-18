@@ -462,4 +462,38 @@ int main() {
         assert(result.diagnostics[0].message.find(
                    "cyclic type alias detected") != std::string::npos);
     }
+    {
+        cjm::parser::SourceFileSyntax file;
+
+        cjm::parser::FieldSyntax field_city;
+        field_city.name = "city";
+        field_city.type_spelling = "std::string";
+        field_city.comments.push_back({R"(json:"city")"});
+
+        cjm::parser::DeclarationSyntax address;
+        address.name = "Address";
+        address.namespace_path = {"company", "model"};
+        address.fields = {field_city};
+
+        cjm::parser::FieldSyntax field_address;
+        field_address.name = "address";
+        field_address.type_spelling = "Address";
+        field_address.comments.push_back({R"(json:"address")"});
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model", "detail"};
+        user.fields = {field_address};
+
+        file.declarations = {address, user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(result.success);
+        assert(result.project.types.size() == 2); // Address, User
+        assert(result.project.types[1].fields.size() == 1);
+        assert(result.project.types[1].fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::UserDefined);
+        assert(result.project.types[1].fields[0].type.qualified_name ==
+               "company::model::Address");
+    }
 }

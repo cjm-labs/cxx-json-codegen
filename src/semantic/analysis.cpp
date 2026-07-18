@@ -51,6 +51,40 @@ bool ends_with(const std::string& text, const std::string& suffix) {
                0;
 }
 
+/*
+ * Build a qualified candidate name from the first namespace_count namespace
+ * components and an unqualified type name.
+ *
+ * This supports parent namespace lookup. For a field declared in
+ * company::model::detail, semantic analysis should try candidates such as:
+ *
+ *   company::model::detail::Address
+ *   company::model::Address
+ *   company::Address
+ *
+ * This helper only constructs one candidate name. It does not decide whether
+ * the candidate exists and does not perform type classification.
+ */
+
+std::string
+join_qualified_name_prefix(const std::vector<std::string>& namespace_path,
+                           std::size_t namespace_count,
+                           const std::string& name) {
+    std::string result;
+    for (auto i = 0; i < namespace_count; ++i) {
+        const auto& namespace_name = namespace_path[i];
+        if (!result.empty()) {
+            result += "::";
+        }
+        result += namespace_name;
+    }
+    if (!result.empty()) {
+        result += "::";
+    }
+    result += name;
+    return result;
+}
+
 std::string join_qualified_name(const std::vector<std::string>& namespace_path,
                                 const std::string& name) {
     std::string result;
@@ -220,10 +254,15 @@ std::string resolve_named_type(const std::set<std::string>& names,
 
     const auto normalized = strip_global_prefix(strip_cv_ref(spelling));
 
-    const auto scoped = join_qualified_name(namespace_path, normalized);
-    if (names.count(scoped) != 0) {
-        return scoped;
+    for (auto namespace_count = namespace_path.size(); namespace_count > 0;
+         --namespace_count) {
+        const auto scoped = join_qualified_name_prefix(
+            namespace_path, namespace_count, normalized);
+        if (names.count(scoped) != 0) {
+            return scoped;
+        }
     }
+
     if (names.count(normalized) != 0) {
         return normalized;
     }
