@@ -239,6 +239,10 @@ analyze_field_type(const TypeSymbols& symbols,
     const auto original_spelling = strip_cv_ref(field.type_spelling);
     const auto spelling = resolve_alias(
         symbols, namespace_path, original_spelling, diagnostics, success);
+    if (!success) {
+        return make_type(metadata::FieldTypeKind::UserDefined,
+                         original_spelling, "");
+    }
 
     static const std::set<std::string> signed_integers = {
         "char",          "signed char", "short",        "short int",

@@ -426,4 +426,40 @@ int main() {
                "company::model::User");
         assert(result.project.types[0].fields[0].type.qualified_name == "int");
     }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "cyclic_aliases.hpp";
+
+        cjm::parser::TypeAliasSyntax alias_A;
+        alias_A.name = "A";
+        alias_A.target_type_spelling = "B";
+        alias_A.namespace_path = {"company", "model"};
+
+        cjm::parser::TypeAliasSyntax alias_B;
+        alias_B.name = "B";
+        alias_B.target_type_spelling = "A";
+        alias_B.namespace_path = {"company", "model"};
+
+        file.type_aliases = {alias_A, alias_B};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+
+        cjm::parser::FieldSyntax field_id;
+        field_id.name = "id";
+        field_id.type_spelling = "A";
+        field_id.comments.push_back({R"(json:"id")"});
+
+        user.fields.push_back(field_id);
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success == false);
+        assert(result.project.types.empty());
+        assert(result.diagnostics.size() == 1);
+        assert(result.diagnostics[0].message.find(
+                   "cyclic type alias detected") != std::string::npos);
+    }
 }
