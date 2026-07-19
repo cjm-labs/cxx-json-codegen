@@ -86,6 +86,12 @@ ProjectModel make_basic_user_project() {
             SourceLocation{"include/user.hpp", 3, 9},
         },
         FieldModel{
+            "tags",
+            vector_string_type,
+            JsonFieldMetadata{"tags", false},
+            SourceLocation{"include/user.hpp", 6, 37},
+        },
+        FieldModel{
             "nickname",
             optional_string_type,
             JsonFieldMetadata{"nickname", true},
@@ -96,12 +102,6 @@ ProjectModel make_basic_user_project() {
             optional_int_type,
             JsonFieldMetadata{"score", true},
             SourceLocation{"include/user.hpp", 5, 28},
-        },
-        FieldModel{
-            "tags",
-            vector_string_type,
-            JsonFieldMetadata{"tags", false},
-            SourceLocation{"include/user.hpp", 6, 37},
         },
     };
 
