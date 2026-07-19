@@ -356,6 +356,102 @@ This keeps the architecture maintainable as the project grows.
 
 ---
 
+# Long-term Architecture Vision
+
+CJM is evolving from a JSON code generator into a build-time metadata
+compiler.
+
+## Compiler Layers
+
+The long-term architecture separates the project into three independent
+layers:
+
+```text
+Source-language Frontend
+        ↓
+Language-neutral Metadata IR
+        ↓
+Code-generation Backend
+```
+
+Frontends parse source languages and perform source-language semantic
+analysis.
+
+The Metadata IR is a language-neutral intermediate representation describing
+user-defined types, fields, relationships, and metadata.
+
+Backends generate integrations for different libraries, runtimes, or
+programming languages from the Metadata IR.
+
+The Metadata IR is the stable contract between source-language understanding
+and backend-specific code generation.
+
+## Current Implementation
+
+The current implementation is:
+
+```text
+C++ frontend
+        │
+        ▼
+Metadata IR
+        │
+        ▼
+nlohmann/json Backend
+```
+
+The current implementation does not provide multiple frontends or multiple
+backends.
+
+## Dependency Direction
+
+Allowed dependencies:
+
+```text
+frontends ─┐
+           ├──> core
+backends ──┘
+```
+
+Rules:
+
+- Core must not depend on frontends or backends.
+- Frontends may depend on Core.
+- Backends may depend on Core.
+- Frontends and backends must not depend on each other.
+- Backends consume Metadata IR only and must not inspect frontend syntax.
+
+## Possible Future Extensions
+
+Future frontends and backends are architectural possibilities, not current
+implementation commitments.
+
+Possible future frontends:
+
+- C
+- other source-language frontends
+
+Possible future backends:
+
+- RapidJSON
+- yyjson
+- json-c
+- allocation-free C JSON writer
+- JSON Schema
+- Documentation
+- Reflection metadata
+
+## Non-goals
+
+CJM is not intended to become:
+
+- a universal serialization library
+- a runtime reflection system
+- a replacement for the C++ compiler
+- a commitment to implement every possible frontend or backend
+
+---
+
 # Summary
 
 The CJM architecture follows a simple philosophy:

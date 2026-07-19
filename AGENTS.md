@@ -754,3 +754,187 @@ Git history is considered part of the project's engineering documentation.
 Preserve meaningful commit history whenever practical.
 
 Future contributors should be able to understand how major architectural decisions evolved by reading the commit history.
+
+
+## Learning-Oriented Development Protocol
+
+CJM is both a production-oriented developer tool and a learning project.
+
+Code changes must optimize for correctness, maintainability, and human comprehension. Completing an issue quickly is not sufficient if the resulting implementation is difficult to understand incrementally.
+
+### 1. Keep each issue and commit cognitively small
+
+Each commit should introduce one primary concept or behavior.
+
+A commit should normally be understandable without requiring the reader to absorb several unrelated mechanisms at once.
+
+Avoid combining changes such as:
+
+* metadata parsing;
+* symbol-table construction;
+* alias resolution;
+* recursive type analysis;
+* diagnostics;
+* generator behavior;
+
+in a single commit unless they are inseparable.
+
+Large issues must be decomposed into ordered sub-issues or commits. Each step must build naturally on the previous step.
+
+### 2. Explain the design before implementing it
+
+Before producing code, describe:
+
+1. the exact goal of the change;
+2. why the change is needed;
+3. the input and expected output;
+4. the affected modules and files;
+5. what is explicitly out of scope;
+6. how this change connects to the previous and following commits.
+
+Do not begin with a large implementation dump.
+
+### 3. Design top-down and implement bottom-up
+
+Start by defining the high-level workflow.
+
+Example:
+
+```text
+Collect symbols
+    ↓
+Resolve field types
+    ↓
+Validate JSON metadata
+    ↓
+Build Metadata IR
+```
+
+Then define small functions representing the individual steps. Implement and test one step at a time.
+
+Orchestration functions should show the algorithmic structure clearly and delegate details to focused helper functions.
+
+### 4. Document non-trivial functions
+
+Every non-trivial function must have a short documentation comment describing:
+
+* its purpose;
+* each important input parameter;
+* its return value or output effect;
+* its failure behavior;
+* what responsibility does not belong to the function.
+
+Example:
+
+```cpp
+/**
+ * Resolve a parser field type spelling into the Metadata IR type model.
+ *
+ * Inputs:
+ *   symbols        - Known declarations, enums, and aliases.
+ *   namespace_path - Namespace containing the field declaration.
+ *   field          - Parser syntax containing the original type spelling.
+ *
+ * Output:
+ *   Returns a normalized FieldType on success.
+ *   Returns an error diagnostic for unsupported or unresolved types.
+ *
+ * This function performs semantic mapping only. It does not generate C++ code.
+ */
+```
+
+### 5. Show the implementation stages inside orchestration functions
+
+Use numbered comments for important algorithmic stages.
+
+Example:
+
+```cpp
+bool place_elephant_in_refrigerator(
+    Refrigerator& refrigerator,
+    const Elephant& elephant) {
+
+    // 1. Validate that the refrigerator can contain the elephant.
+    if (!can_contain(refrigerator, elephant)) {
+        return false;
+    }
+
+    // 2. Open the refrigerator.
+    refrigerator.open();
+
+    // 3. Place the elephant inside.
+    refrigerator.put_in(elephant);
+
+    // 4. Restore the refrigerator to its closed state.
+    refrigerator.close();
+
+    return true;
+}
+```
+
+Comments should reveal the structure of the algorithm. Do not comment every obvious statement.
+
+### 6. Prefer focused functions and modules
+
+Avoid multi-page functions that combine:
+
+* string parsing;
+* name lookup;
+* symbol management;
+* validation;
+* diagnostics;
+* IR construction.
+
+Extract cohesive concepts into named functions or modules.
+
+A high-level function should primarily coordinate operations. Detailed parsing, lookup, classification, and validation should live in focused components.
+
+### 7. Make tests follow the same incremental structure
+
+Each commit must contain focused tests for the behavior introduced in that commit.
+
+Do not introduce a large integration test as the first explanation of several new concepts.
+
+Recommended order:
+
+1. data model test;
+2. helper-function unit test;
+3. single-feature semantic test;
+4. combined integration test.
+
+### 8. Preserve learning boundaries
+
+When implementing a requested issue, do not silently add adjacent future features.
+
+If an adjacent feature becomes necessary, stop and explain why. Propose a separate follow-up issue or commit.
+
+Prefer an incomplete but well-defined step over a large speculative implementation.
+
+### 9. Present code in reviewable increments
+
+When guiding the developer interactively:
+
+1. explain the current step;
+2. show the function skeleton;
+3. explain the skeleton;
+4. implement one helper;
+5. add its focused test;
+6. summarize what was learned;
+7. only then proceed to the next helper.
+
+Do not present hundreds of lines of code before the developer has understood the design.
+
+### 10. Definition of a good commit
+
+A good CJM commit should answer all of the following clearly:
+
+* What single behavior was added?
+* Why does it belong in this layer?
+* What are its inputs and outputs?
+* Which function or module owns it?
+* How is it tested?
+* What remains intentionally unsupported?
+* What should the next commit build on?
+
+
+

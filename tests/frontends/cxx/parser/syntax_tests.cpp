@@ -1,4 +1,4 @@
-#include "parser/syntax.hpp"
+#include "frontends/cxx/parser/syntax.hpp"
 
 #include <cassert>
 #include <string>

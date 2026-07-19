@@ -1,7 +1,7 @@
 #include <cctype>
 #include <fstream>
 
-#include "parser/parser.hpp"
+#include "frontends/cxx/parser/parser.hpp"
 
 namespace cjm::parser {
 
