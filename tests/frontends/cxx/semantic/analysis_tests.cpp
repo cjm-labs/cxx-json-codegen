@@ -565,4 +565,34 @@ int main() {
         assert(result.project.types[1].qualified_name ==
                "company::model::detail::User");
     }
+    {
+        cjm::parser::FieldSyntax field_b;
+        field_b.name = "b";
+        field_b.type_spelling = "B";
+        field_b.comments = {{R"(json:"b")"}};
+
+        cjm::parser::DeclarationSyntax decl_a;
+        decl_a.name = "A";
+        decl_a.namespace_path = {"company", "model"};
+        decl_a.fields = {field_b};
+
+        cjm::parser::FieldSyntax field_a;
+        field_a.name = "a";
+        field_a.type_spelling = "A";
+        field_a.comments = {{R"(json:"a")"}};
+
+        cjm::parser::DeclarationSyntax decl_b;
+        decl_b.name = "B";
+        decl_b.namespace_path = {"company", "model"};
+        decl_b.fields = {field_a};
+
+        cjm::parser::SourceFileSyntax file;
+        file.declarations = {decl_a, decl_b};
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(!result.success);
+        assert(result.project.types.empty());
+        assert(result.diagnostics.size() == 1);
+        assert(result.diagnostics[0].message.find(
+                   "cyclic generated type dependency") != std::string::npos);
+    }
 }

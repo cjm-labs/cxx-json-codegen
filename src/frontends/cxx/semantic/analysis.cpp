@@ -496,6 +496,11 @@ bool type_depends_on(const metadata::TypeModel& type,
     return false;
 }
 
+struct TypeOrderingResult {
+    std::vector<metadata::TypeModel> types;
+    bool success = true;
+};
+
 /*
  * Repeatedly move ready types into ordered: a type is ready when every
  * generated type it depends on has already been ordered.
@@ -509,12 +514,12 @@ bool type_depends_on(const metadata::TypeModel& type,
  * Second iteration: ordered = {Country, Address}
  * Final iteration: ordered = {Country, Address, User}
  */
-std::vector<metadata::TypeModel>
+TypeOrderingResult
 order_types_by_dependency(const std::vector<metadata::TypeModel>& types) {
-    std::vector<metadata::TypeModel> ordered;
+    TypeOrderingResult result;
     std::set<std::string> ordered_names;
 
-    while (ordered.size() < types.size()) {
+    while (result.types.size() < types.size()) {
         bool progress = false;
 
         for (const auto& type : types) {
@@ -536,16 +541,17 @@ order_types_by_dependency(const std::vector<metadata::TypeModel>& types) {
                 }
             }
             if (!blocked) {
-                ordered.push_back(type);
+                result.types.push_back(type);
                 ordered_names.insert(type.qualified_name);
                 progress = true;
             }
         }
         if (!progress) {
-            return types;
+            result.success = false;
+            return result;
         }
     }
-    return ordered;
+    return result;
 }
 
 // Collect names needed by semantic type resolution before analyzing fields.
@@ -679,7 +685,17 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         return result;
     }
     // 4. Stabilize output order so dependencies appear before their users.
-    result.project.types = order_types_by_dependency(result.project.types);
+    auto ordering_result = order_types_by_dependency(result.project.types);
+    if (!ordering_result.success) {
+        Diagnostic diagnostic;
+        diagnostic.message = "cyclic generated type dependency detected";
+        result.diagnostics.push_back(diagnostic);
+        result.success = false;
+        result.project.types.clear();
+        return result;
+    }
+    result.project.types = ordering_result.types;
+
     return result;
 }
 
