@@ -682,4 +682,33 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
     result.project.types = order_types_by_dependency(result.project.types);
     return result;
 }
+
+// Analyze multiple parser outputs as one semantic unit so symbols can resolve
+// across explicit input files.
+AnalysisResult
+analyze_source_files(const std::vector<parser::SourceFileSyntax>& files) {
+    AnalysisResult result;
+    result.success = true;
+
+    if (files.empty()) {
+        return result;
+    }
+
+    parser::SourceFileSyntax merged;
+    for (const auto& file : files) {
+        merged.declarations.insert(merged.declarations.end(),
+                                   file.declarations.begin(),
+                                   file.declarations.end());
+        merged.enums.insert(merged.enums.end(), file.enums.begin(),
+                            file.enums.end());
+        merged.type_aliases.insert(merged.type_aliases.end(),
+                                   file.type_aliases.begin(),
+                                   file.type_aliases.end());
+        merged.comments.insert(merged.comments.end(), file.comments.begin(),
+                               file.comments.end());
+    }
+
+    return analyze_source_file(merged);
+}
+
 } // namespace cjm::semantic

@@ -39,4 +39,6 @@ parse_json_field_metadata(const std::string& comment,
                           const SourceLocation& location);
 
 AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file);
+AnalysisResult
+analyze_source_files(const std::vector<parser::SourceFileSyntax>& files);
 } // namespace cjm::semantic

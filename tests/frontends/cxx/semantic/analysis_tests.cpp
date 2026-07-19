@@ -529,4 +529,40 @@ int main() {
         assert(result.project.types[1].qualified_name ==
                "company::model::detail::User");
     }
+    {
+        cjm::parser::FieldSyntax field_city;
+        field_city.name = "city";
+        field_city.type_spelling = "std::string";
+        field_city.comments.push_back({R"(json:"city")"});
+
+        cjm::parser::DeclarationSyntax address;
+        address.name = "Address";
+        address.namespace_path = {"company", "model"};
+        address.fields = {field_city};
+
+        cjm::parser::FieldSyntax field_address;
+        field_address.name = "address";
+        field_address.type_spelling = "Address";
+        field_address.comments.push_back({R"(json:"address")"});
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model", "detail"};
+        user.fields = {field_address};
+
+        cjm::parser::SourceFileSyntax address_file;
+        cjm::parser::SourceFileSyntax user_file;
+
+        address_file.declarations = {address};
+        user_file.declarations = {user};
+
+        auto result =
+            cjm::semantic::analyze_source_files({user_file, address_file});
+        assert(result.success);
+        assert(result.project.types.size() == 2);
+        assert(result.project.types[0].qualified_name ==
+               "company::model::Address");
+        assert(result.project.types[1].qualified_name ==
+               "company::model::detail::User");
+    }
 }
