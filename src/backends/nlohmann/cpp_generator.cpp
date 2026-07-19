@@ -39,13 +39,30 @@ void close_namespace(std::ostringstream& out,
     out << "\n";
 }
 
+// Generate one to_json assignment from a validated Metadata IR field.
+void generate_to_json_field(std::ostringstream& out,
+                            const metadata::FieldModel& field) {
+    if (!field.json.name.empty()) {
+        out << "    j[\"" << field.json.name << "\"] = value." << field.name
+            << ";\n";
+    }
+}
+
+// Generate one from_json assignment from a validated Metadata IR field.
+void generate_from_json_field(std::ostringstream& out,
+                              const metadata::FieldModel& field) {
+    if (!field.json.name.empty()) {
+        out << "    j.at(\"" << field.json.name << "\").get_to(value."
+            << field.name << ");\n";
+    }
+}
+
 void generate_to_json(std::ostringstream& out,
                       const metadata::TypeModel& type) {
     out << "inline void to_json(nlohmann::json& j, const " << type.name
         << "& value) {\n";
     for (const auto& field : type.fields) {
-        out << "    j[\"" << field.json.name << "\"] = value." << field.name
-            << ";\n";
+        generate_to_json_field(out, field);
     }
     out << "}\n";
 }
@@ -57,8 +74,7 @@ void generate_from_json(std::ostringstream& out,
         << "& value) {\n";
 
     for (const auto& field : type.fields) {
-        out << "    j.at(\"" << field.json.name << "\").get_to(value."
-            << field.name << ");\n";
+        generate_from_json_field(out, field);
     }
     out << "}\n";
 }
