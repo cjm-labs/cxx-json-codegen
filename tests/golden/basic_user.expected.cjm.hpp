@@ -7,6 +7,18 @@
 
 namespace company::model {
 
+inline void to_json(nlohmann::json& j, const Address& value) {
+    j["city"] = value.city;
+}
+
+inline void from_json(const nlohmann::json& j, Address& value) {
+    j.at("city").get_to(value.city);
+}
+
+} // namespace company::model
+
+namespace company::model {
+
 inline void to_json(nlohmann::json& j, const User& value) {
     j["name"] = value.name;
     j["age"] = value.age;

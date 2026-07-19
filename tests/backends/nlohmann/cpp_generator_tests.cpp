@@ -116,8 +116,22 @@ ProjectModel make_basic_user_project() {
         },
     };
 
+    TypeModel address;
+    address.name = "Address";
+    address.namespace_path = {"company", "model"};
+    address.qualified_name = "company::model::Address";
+    address.source_location = SourceLocation{"include/address.hpp", 1, 8};
+    address.fields = {
+        FieldModel{
+            "city",
+            string_type,
+            JsonFieldMetadata{"city", false},
+            SourceLocation{"include/address.hpp", 2, 17},
+        },
+    };
+
     ProjectModel project;
-    project.types = {user};
+    project.types = {address, user};
     return project;
 }
 
