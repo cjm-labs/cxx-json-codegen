@@ -148,6 +148,16 @@ if (CJM_BUILD_TESTS)
       PASS_REGULAR_EXPRESSION "cjm: generated"
   )
 
+  add_test(NAME cjm_cli_generate_multiple_inputs_golden 
+    COMMAND ${CMAKE_COMMAND} -E compare_files 
+    ${CMAKE_CURRENT_BINARY_DIR}/cli_multi.cjm.hpp 
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/cli_multi.expected.cjm.hpp 
+  )
+  set_tests_properties(
+    cjm_cli_generate_multiple_inputs_golden
+    PROPERTIES
+      DEPENDS cjm_cli_generate_multiple_inputs
+  )
 endif()
 
 

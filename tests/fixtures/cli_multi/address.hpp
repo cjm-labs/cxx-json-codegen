@@ -1,10 +1,10 @@
 #pragma once
 
-#include <std::string>
+#include <string>
 
 namespace company::model {
 struct Address {
-    std::string city; // json"city"
+    std::string city; // json:"city"
 };
 
 } // namespace company::model
