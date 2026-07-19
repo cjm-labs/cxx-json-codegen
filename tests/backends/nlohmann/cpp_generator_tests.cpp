@@ -64,6 +64,11 @@ ProjectModel make_basic_user_project() {
     };
     vector_string_type.arguments = {string_type};
 
+    FieldType address_type{
+        FieldTypeKind::UserDefined,
+        "Address",
+        "company::model::Address",
+    };
     user.fields = {
         FieldModel{
             "name",
@@ -90,6 +95,12 @@ ProjectModel make_basic_user_project() {
             vector_string_type,
             JsonFieldMetadata{"tags", false},
             SourceLocation{"include/user.hpp", 6, 37},
+        },
+        FieldModel{
+            "address",
+            address_type,
+            JsonFieldMetadata{"address", false},
+            SourceLocation{"include/user.hpp", 7, 13},
         },
         FieldModel{
             "nickname",
