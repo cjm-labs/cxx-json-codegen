@@ -69,6 +69,13 @@ ProjectModel make_basic_user_project() {
         "Address",
         "company::model::Address",
     };
+
+    FieldType status_type{
+        FieldTypeKind::Enum,
+        "Status",
+        "company::model::Status",
+    };
+
     user.fields = {
         FieldModel{
             "name",
@@ -101,6 +108,12 @@ ProjectModel make_basic_user_project() {
             address_type,
             JsonFieldMetadata{"address", false},
             SourceLocation{"include/user.hpp", 7, 13},
+        },
+        FieldModel{
+            "status",
+            status_type,
+            JsonFieldMetadata{"status", false},
+            SourceLocation{"include/user.hpp", 8, 12},
         },
         FieldModel{
             "nickname",
