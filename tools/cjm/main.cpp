@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "backends/nlohmann/cpp_generator.hpp"
 #include "frontends/cxx/parser/parser.hpp"
@@ -22,7 +23,7 @@ void print_help(std::ostream& out) {
 }
 
 struct GenerateOptions {
-    std::string input;
+    std::vector<std::string> inputs;
     std::string output;
 };
 
@@ -36,7 +37,7 @@ bool parse_generate_options(int argc, char** argv, GenerateOptions& options) {
                 return false;
             }
 
-            options.input = argv[++i];
+            options.inputs.push_back(argv[++i]);
             continue;
         }
         if (arg == "--output") {
@@ -51,7 +52,7 @@ bool parse_generate_options(int argc, char** argv, GenerateOptions& options) {
         return false;
     }
 
-    if (options.input.empty()) {
+    if (options.inputs.empty()) {
         std::cerr << "cjm: generate requires --input <header>\n";
         return false;
     }
@@ -84,7 +85,8 @@ int main(int argc, char** argv) {
             return kExitUsageError;
         }
 
-        const auto parse_result = cjm::parser::parse_source_file(options.input);
+        const auto& input = options.inputs[0];
+        const auto parse_result = cjm::parser::parse_source_file(input);
         if (!parse_result.success) {
             std::cerr << "cjm: " << parse_result.error.message << ": "
                       << parse_result.error.location.file << "\n";
@@ -115,8 +117,8 @@ int main(int argc, char** argv) {
         }
         output << generated;
 
-        std::cout << "cjm: generated " << options.output << " from "
-                  << options.input << "\n";
+        std::cout << "cjm: generated " << options.output << " from " << input
+                  << "\n";
         return kExitSuccess;
     }
 
