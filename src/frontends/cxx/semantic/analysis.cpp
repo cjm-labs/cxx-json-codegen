@@ -51,6 +51,14 @@ bool ends_with(const std::string& text, const std::string& suffix) {
                0;
 }
 
+Diagnostic make_diagnostic(const SourceLocation& comment_location,
+                           const std::string& message) {
+    Diagnostic diagnostic;
+    diagnostic.location = comment_location;
+    diagnostic.message = message;
+    return diagnostic;
+}
+
 /*
  * Build a qualified candidate name from the first namespace_count namespace
  * components and an unqualified type name.
@@ -143,6 +151,12 @@ struct TypeSymbols {
     std::set<std::string> generated_types;
     std::set<std::string> enums;
     std::map<std::string, std::string> aliases;
+};
+
+struct FieldAnalysisResult {
+    metadata::FieldModel field;
+    bool include = false; // Add field to type.fields when true
+    bool success = true;
 };
 
 metadata::FieldType make_type(metadata::FieldTypeKind kind,
@@ -534,10 +548,8 @@ order_types_by_dependency(const std::vector<metadata::TypeModel>& types) {
     return ordered;
 }
 
-AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
-    AnalysisResult result;
-    result.success = true;
-
+// Collect names needed by semantic type resolution before analyzing fields.
+TypeSymbols collect_type_symbols(const parser::SourceFileSyntax& file) {
     // collect symbols
     TypeSymbols symbols;
     for (const auto& declaration : file.declarations) {
@@ -553,73 +565,107 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
             join_qualified_name(alias.namespace_path, alias.name);
         symbols.aliases[qualified_name] = alias.target_type_spelling;
     }
+    return symbols;
+}
 
-    // analyze declarations into result.project.types
+// Create the TypeModel identity before fields are analyzed.
+metadata::TypeModel
+make_type_model_shell(const parser::DeclarationSyntax& declaration) {
+    metadata::TypeModel type;
+    type.name = declaration.name;
+    type.namespace_path = declaration.namespace_path;
+    type.qualified_name = join_qualified_name(type.namespace_path, type.name);
+    type.source_location = to_metadata_location(declaration.location);
+    return type;
+}
+
+// Record a JSON name within one generated type, reporting duplicates.
+bool record_json_name(const std::string& json_name,
+                      const SourceLocation& location,
+                      std::set<std::string>& json_names,
+                      std::vector<Diagnostic>& diagnostics) {
+    if (json_names.count(json_name) != 0) {
+        diagnostics.push_back(make_diagnostic(
+            location, "duplicate JSON field name: " + json_name));
+        return false;
+    }
+
+    json_names.insert(json_name);
+    return true;
+}
+
+FieldAnalysisResult analyze_field(
+    const TypeSymbols& symbols, const std::vector<std::string>& namespace_path,
+    const parser::FieldSyntax& field_syntax, std::set<std::string>& json_names,
+    std::vector<Diagnostic>& diagnostics) {
+    FieldAnalysisResult result;
+
+    // 1. Find the CJM JSON metadata comment that selects this field.
+    for (const auto& comment : field_syntax.comments) {
+        const auto comment_location = to_semantic_location(comment.location);
+        const auto metadata_result =
+            parse_json_field_metadata(comment.text, comment_location);
+        if (!metadata_result.found) {
+            continue;
+        }
+        if (!metadata_result.success) {
+            result.success = false;
+            diagnostics.push_back(metadata_result.diagnostic);
+            continue;
+        }
+        if (metadata_result.ignored) {
+            return result;
+        }
+
+        if (!record_json_name(metadata_result.json_name, comment_location,
+                              json_names, diagnostics)) {
+            result.success = false;
+            return result;
+        }
+
+        // Build the Metadata IR field after metadata and type validation.
+        metadata::FieldModel field;
+        field.name = field_syntax.name;
+
+        bool type_success = true;
+        field.type = analyze_field_type(symbols, namespace_path, field_syntax,
+                                        diagnostics, type_success);
+
+        field.json.name = metadata_result.json_name;
+        field.json.omit_empty = metadata_result.omit_empty;
+
+        field.source_location = to_metadata_location(field_syntax.location);
+
+        if (!type_success) {
+            result.success = false;
+        }
+        result.field = field;
+        result.include = true;
+        return result;
+    }
+    return result;
+}
+
+AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
+    AnalysisResult result;
+    result.success = true;
+    // 1. Collect symbols before analyzing fields so type lookup can resolve
+    // forward references within the source file.
+    const auto symbols = collect_type_symbols(file);
+    // 2. Convert parser declarations into Metadata IR types.
     for (const auto& declaration : file.declarations) {
-        metadata::TypeModel type;
-        type.name = declaration.name;
-
-        type.namespace_path = declaration.namespace_path;
-        type.qualified_name =
-            join_qualified_name(type.namespace_path, type.name);
-        type.source_location = to_metadata_location(declaration.location);
-
+        auto type = make_type_model_shell(declaration);
         std::set<std::string> json_names;
-
         for (const auto& field_syntax : declaration.fields) {
-            for (const auto& comment : field_syntax.comments) {
-                const auto comment_location =
-                    to_semantic_location(comment.location);
-                const auto metadata_result =
-                    parse_json_field_metadata(comment.text, comment_location);
-
-                if (!metadata_result.found) {
-                    continue;
-                }
-
-                if (!metadata_result.success) {
-                    result.success = false;
-                    result.diagnostics.push_back(metadata_result.diagnostic);
-                    continue;
-                }
-
-                if (metadata_result.ignored) {
-                    break;
-                }
-
-                if (json_names.count(metadata_result.json_name) != 0) {
-                    result.success = false;
-
-                    Diagnostic diagnostic;
-                    diagnostic.location = comment_location;
-                    diagnostic.message = "duplicate JSON field name: " +
-                                         metadata_result.json_name;
-                    result.diagnostics.push_back(diagnostic);
-                    continue;
-                }
-
-                json_names.insert(metadata_result.json_name);
-
-                metadata::FieldModel field;
-                field.name = field_syntax.name;
-
-                bool type_success = true;
-                field.type = analyze_field_type(
-                    symbols, declaration.namespace_path, field_syntax,
-                    result.diagnostics, type_success);
-
-                field.json.name = metadata_result.json_name;
-                field.json.omit_empty = metadata_result.omit_empty;
-
-                field.source_location =
-                    to_metadata_location(field_syntax.location);
-
-                if (!type_success) {
-                    result.success = false;
-                }
-
-                type.fields.push_back(field);
-                break;
+            auto field_result =
+                analyze_field(symbols, declaration.namespace_path, field_syntax,
+                              json_names, result.diagnostics);
+            if (!field_result.success) {
+                result.success = false;
+                continue;
+            }
+            if (field_result.include) {
+                type.fields.push_back(field_result.field);
             }
         }
         if (!type.fields.empty()) {
@@ -627,13 +673,12 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         }
     }
 
-    // if failed, clear project
+    // 3. Do not expose partial Metadata IR when semantic analysis failed.
     if (!result.success) {
         result.project.types.clear();
         return result;
     }
-
-    // otherwise, sort types by dependency
+    // 4. Stabilize output order so dependencies appear before their users.
     result.project.types = order_types_by_dependency(result.project.types);
     return result;
 }
