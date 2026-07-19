@@ -424,10 +424,121 @@ parse_json_field_metadata(const std::string& comment,
     return result;
 }
 
+/**
+ * Check whether a resolved field type references a generated user-defined type.
+ *
+ * Inputs:
+ *   field_type          - Semantic Metadata IR type for one field.
+ *   qualified_type_name - Fully qualified generated type name to look for.
+ *
+ * Output:
+ *   Returns true when field_type directly or recursively references
+ * qualified_type_name.
+ *
+ * This helper only inspects resolved Metadata IR. It does not perform C++ name
+ * lookup, does not resolve aliases, and does not validate whether the field
+ * type is supported.
+ */
+bool field_type_depends_on(const metadata::FieldType& field_type,
+                           const std::string& qualified_type_name) {
+    // A direct user-defined field depends on the generated type it resolved to
+    if (field_type.kind == metadata::FieldTypeKind::UserDefined) {
+        return field_type.qualified_name == qualified_type_name;
+    }
+
+    // Container-like field types may hide dependencies in their arguments.
+    for (const auto& argument : field_type.arguments) {
+        if (field_type_depends_on(argument, qualified_type_name)) {
+            return true;
+        }
+    }
+
+    // Scalar, string, enum, and unsupported fallback types do not add a
+    // generated-type dependency here.
+    return false;
+}
+
+/**
+ * Check whether one generated type depends on another generated type.
+ *
+ * Inputs:
+ *   type        - Candidate type whose fields may reference another type.
+ *   dependency  - Generated type that must appear before type if referenced.
+ *
+ * Output:
+ *   Returns true if any field in type directly or recursively references
+ * dependency through its resolved metadata IR field type.
+ *
+ * This helper only compares already-resolved Metadata IR names. It does not
+ * perform C++ lookup and does not decide final output order.
+ */
+bool type_depends_on(const metadata::TypeModel& type,
+                     const metadata::TypeModel& dependency) {
+    for (const auto& field : type.fields) {
+        if (field_type_depends_on(field.type, dependency.qualified_name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+ * Repeatedly move ready types into ordered: a type is ready when every
+ * generated type it depends on has already been ordered.
+ *
+ * e.g. {User, Address,Country}
+ * struct User { Address address, Country country};
+ * struct Address { Country country };
+ * Here User depends on Address and Country.
+ *
+ * First iteration: ordered = {Country}
+ * Second iteration: ordered = {Country, Address}
+ * Final iteration: ordered = {Country, Address, User}
+ */
+std::vector<metadata::TypeModel>
+order_types_by_dependency(const std::vector<metadata::TypeModel>& types) {
+    std::vector<metadata::TypeModel> ordered;
+    std::set<std::string> ordered_names;
+
+    while (ordered.size() < types.size()) {
+        bool progress = false;
+
+        for (const auto& type : types) {
+            if (ordered_names.count(type.qualified_name) != 0) {
+                continue;
+            }
+
+            bool blocked = false;
+
+            for (const auto& possible_dependency : types) {
+                if (possible_dependency.qualified_name == type.qualified_name) {
+                    continue;
+                }
+
+                if (type_depends_on(type, possible_dependency) &&
+                    ordered_names.count(possible_dependency.qualified_name) ==
+                        0) {
+                    blocked = true;
+                }
+            }
+            if (!blocked) {
+                ordered.push_back(type);
+                ordered_names.insert(type.qualified_name);
+                progress = true;
+            }
+        }
+        if (!progress) {
+            return types;
+        }
+    }
+    return ordered;
+}
+
 AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
     AnalysisResult result;
     result.success = true;
 
+    // collect symbols
     TypeSymbols symbols;
     for (const auto& declaration : file.declarations) {
         symbols.generated_types.insert(
@@ -443,6 +554,7 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         symbols.aliases[qualified_name] = alias.target_type_spelling;
     }
 
+    // analyze declarations into result.project.types
     for (const auto& declaration : file.declarations) {
         metadata::TypeModel type;
         type.name = declaration.name;
@@ -515,9 +627,14 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         }
     }
 
+    // if failed, clear project
     if (!result.success) {
         result.project.types.clear();
+        return result;
     }
+
+    // otherwise, sort types by dependency
+    result.project.types = order_types_by_dependency(result.project.types);
     return result;
 }
 } // namespace cjm::semantic

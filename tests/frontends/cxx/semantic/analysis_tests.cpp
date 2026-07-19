@@ -2,7 +2,6 @@
 #include "frontends/cxx/semantic/analysis.hpp"
 
 #include <cassert>
-#include <iostream>
 
 int main() {
     {
@@ -406,8 +405,6 @@ int main() {
         assert(!result.success);
         assert(result.project.types.empty());
         assert(result.diagnostics.size() == 1);
-        std::cerr << "diagnostics[0].message = "
-                  << result.diagnostics[0].message << "\n";
         assert(result.diagnostics[0].message.find(
                    "unsupported field type for JSON mapping") !=
                std::string::npos);
@@ -510,8 +507,12 @@ int main() {
         user.name = "User";
         user.namespace_path = {"company", "model", "detail"};
         user.fields = {field_address};
-
-        file.declarations = {address, user};
+        // Put User before Address to verify semantic analysis reorders
+        // generated types by resolved user-defined dependencies.
+        file.declarations = {
+            user,
+            address,
+        };
 
         auto result = cjm::semantic::analyze_source_file(file);
         assert(result.success);
@@ -521,5 +522,11 @@ int main() {
                cjm::metadata::FieldTypeKind::UserDefined);
         assert(result.project.types[1].fields[0].type.qualified_name ==
                "company::model::Address");
+
+        assert(result.project.types.size() == 2);
+        assert(result.project.types[0].qualified_name ==
+               "company::model::Address");
+        assert(result.project.types[1].qualified_name ==
+               "company::model::detail::User");
     }
 }
