@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 #include "backends/nlohmann/cpp_generator.hpp"
 #include "frontends/cxx/parser/parser.hpp"
@@ -63,6 +64,17 @@ bool parse_generate_options(int argc, char** argv, GenerateOptions& options) {
     return true;
 }
 
+std::string join_inputs(const std::vector<std::string>& inputs) {
+    std::string result;
+    for (std::size_t i = 0; i < inputs.size(); ++i) {
+        if (i > 0) {
+            result += ", ";
+        }
+        result += inputs[i];
+    }
+    return result;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -85,16 +97,17 @@ int main(int argc, char** argv) {
             return kExitUsageError;
         }
 
-        const auto& input = options.inputs[0];
-        const auto parse_result = cjm::parser::parse_source_file(input);
-        if (!parse_result.success) {
-            std::cerr << "cjm: " << parse_result.error.message << ": "
-                      << parse_result.error.location.file << "\n";
-            return kExitFailure;
+        std::vector<cjm::parser::SourceFileSyntax> files;
+        for (const auto& input : options.inputs) {
+            const auto parse_result = cjm::parser::parse_source_file(input);
+            if (!parse_result.success) {
+                std::cerr << "cjm: " << parse_result.error.message << ": "
+                          << parse_result.error.location.file << "\n";
+                return kExitFailure;
+            }
+            files.push_back(parse_result.file);
         }
-
-        const auto analysis_result =
-            cjm::semantic::analyze_source_file(parse_result.file);
+        const auto analysis_result = cjm::semantic::analyze_source_files(files);
 
         if (!analysis_result.success) {
             for (const auto& diagnostic : analysis_result.diagnostics) {
@@ -117,8 +130,8 @@ int main(int argc, char** argv) {
         }
         output << generated;
 
-        std::cout << "cjm: generated " << options.output << " from " << input
-                  << "\n";
+        std::cout << "cjm: generated " << options.output << " from "
+                  << join_inputs(options.inputs) << "\n";
         return kExitSuccess;
     }
 
