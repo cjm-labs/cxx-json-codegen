@@ -33,6 +33,18 @@ ProjectModel make_basic_user_project() {
     user.qualified_name = "company::model::User";
     user.source_location = SourceLocation{"include/user.hpp", 1, 8};
 
+    FieldType string_type{
+        FieldTypeKind::String,
+        "std::string",
+        "std::string",
+    };
+    FieldType optional_string_type{
+        FieldTypeKind::Optional,
+        "std::optional<std::string>",
+        "std::optional",
+    };
+    optional_string_type.arguments = {string_type};
+
     user.fields = {
         FieldModel{
             "name",
@@ -53,6 +65,12 @@ ProjectModel make_basic_user_project() {
             },
             JsonFieldMetadata{"age", false},
             SourceLocation{"include/user.hpp", 3, 9},
+        },
+        FieldModel{
+            "nickname",
+            optional_string_type,
+            JsonFieldMetadata{"nickname", true},
+            SourceLocation{"include/user.hpp", 4, 39},
         },
     };
 

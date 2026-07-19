@@ -42,19 +42,39 @@ void close_namespace(std::ostringstream& out,
 // Generate one to_json assignment from a validated Metadata IR field.
 void generate_to_json_field(std::ostringstream& out,
                             const metadata::FieldModel& field) {
-    if (!field.json.name.empty()) {
-        out << "    j[\"" << field.json.name << "\"] = value." << field.name
-            << ";\n";
+    if (field.json.name.empty()) {
+        return;
     }
+    if (field.type.kind == metadata::FieldTypeKind::Optional &&
+        field.json.omit_empty) {
+        out << "    if (value." << field.name << ".has_value()) {\n"
+            << "        j[\"" << field.json.name << "\"] = *value."
+            << field.name << ";\n"
+            << "    }\n";
+
+        return;
+    }
+    out << "    j[\"" << field.json.name << "\"] = value." << field.name
+        << ";\n";
 }
 
 // Generate one from_json assignment from a validated Metadata IR field.
 void generate_from_json_field(std::ostringstream& out,
                               const metadata::FieldModel& field) {
-    if (!field.json.name.empty()) {
-        out << "    j.at(\"" << field.json.name << "\").get_to(value."
-            << field.name << ");\n";
+    if (field.json.name.empty()) {
+        return;
     }
+    if (field.type.kind == metadata::FieldTypeKind::Optional &&
+        field.json.omit_empty) {
+        out << "    if (j.contains(\"" << field.json.name << "\")) {\n"
+            << "        value." << field.name << " = j.at(\"" << field.json.name
+            << "\").get<std::string>();\n"
+            << "    }\n";
+        return;
+    }
+
+    out << "    j.at(\"" << field.json.name << "\").get_to(value." << field.name
+        << ");\n";
 }
 
 void generate_to_json(std::ostringstream& out,
