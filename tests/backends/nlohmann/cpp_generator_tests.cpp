@@ -57,6 +57,13 @@ ProjectModel make_basic_user_project() {
     };
     optional_int_type.arguments = {int_type};
 
+    FieldType vector_string_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::string>",
+        "std::vector",
+    };
+    vector_string_type.arguments = {string_type};
+
     user.fields = {
         FieldModel{
             "name",
@@ -89,6 +96,12 @@ ProjectModel make_basic_user_project() {
             optional_int_type,
             JsonFieldMetadata{"score", true},
             SourceLocation{"include/user.hpp", 5, 28},
+        },
+        FieldModel{
+            "tags",
+            vector_string_type,
+            JsonFieldMetadata{"tags", false},
+            SourceLocation{"include/user.hpp", 6, 37},
         },
     };
 

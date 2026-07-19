@@ -10,6 +10,7 @@ namespace company::model {
 inline void to_json(nlohmann::json& j, const User& value) {
     j["name"] = value.name;
     j["age"] = value.age;
+    j["tags"] = value.tags;
     if (value.nickname.has_value()) {
         j["nickname"] = *value.nickname;
     }
@@ -21,6 +22,7 @@ inline void to_json(nlohmann::json& j, const User& value) {
 inline void from_json(const nlohmann::json& j, User& value) {
     j.at("name").get_to(value.name);
     j.at("age").get_to(value.age);
+    j.at("tags").get_to(value.tags);
     if (j.contains("nickname")) {
         value.nickname = j.at("nickname").get<std::string>();
     }
