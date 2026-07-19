@@ -21,30 +21,12 @@ namespace company::model {
 
 inline void to_json(nlohmann::json& j, const User& value) {
     j["name"] = value.name;
-    j["age"] = value.age;
-    j["tags"] = value.tags;
     j["address"] = value.address;
-    j["status"] = value.status;
-    if (value.nickname.has_value()) {
-        j["nickname"] = *value.nickname;
-    }
-    if (value.score.has_value()) {
-        j["score"] = *value.score;
-    }
 }
 
 inline void from_json(const nlohmann::json& j, User& value) {
     j.at("name").get_to(value.name);
-    j.at("age").get_to(value.age);
-    j.at("tags").get_to(value.tags);
     j.at("address").get_to(value.address);
-    j.at("status").get_to(value.status);
-    if (j.contains("nickname")) {
-        value.nickname = j.at("nickname").get<std::string>();
-    }
-    if (j.contains("score")) {
-        value.score = j.at("score").get<int>();
-    }
 }
 
 } // namespace company::model

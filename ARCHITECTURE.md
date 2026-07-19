@@ -452,6 +452,16 @@ CJM is not intended to become:
 
 ---
 
+## CJM prioritizes:
+
+1. Correctness
+2. User experience
+3. Maintainability
+4. Predictable generated code
+5. Performance
+
+---
+
 # Summary
 
 The CJM architecture follows a simple philosophy:

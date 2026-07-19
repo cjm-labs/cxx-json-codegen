@@ -130,6 +130,34 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_semantic_tests PRIVATE cjm_semantic)
   add_test(NAME cjm_semantic_tests COMMAND cjm_semantic_tests)
 
-endif()
+  # practical generated compile tests below...
+  add_executable(cjm_practical_generated_compile_tests tests/backends/nlohmann/practical_generated_compile_tests.cpp)
+  target_compile_features(cjm_practical_generated_compile_tests PRIVATE cxx_std_17)
+  target_include_directories(cjm_practical_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(cjm_practical_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
+  add_test(NAME cjm_practical_generated_compile_tests COMMAND cjm_practical_generated_compile_tests)
 
+  add_test(NAME cjm_cli_generate_multiple_inputs
+    COMMAND cjm generate
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/address.hpp
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/user.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/cli_multi.cjm.hpp 
+  )
+  set_tests_properties(
+    cjm_cli_generate_multiple_inputs
+    PROPERTIES 
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
+  add_test(NAME cjm_cli_generate_multiple_inputs_golden 
+    COMMAND ${CMAKE_COMMAND} -E compare_files 
+    ${CMAKE_CURRENT_BINARY_DIR}/cli_multi.cjm.hpp 
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/cli_multi.expected.cjm.hpp 
+  )
+  set_tests_properties(
+    cjm_cli_generate_multiple_inputs_golden
+    PROPERTIES
+      DEPENDS cjm_cli_generate_multiple_inputs
+  )
+endif()
 

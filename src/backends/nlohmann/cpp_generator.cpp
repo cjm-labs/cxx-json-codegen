@@ -6,6 +6,26 @@
 
 namespace cjm::generator {
 
+// Return the generated C++ spelling for a validated Metadata IR type.
+std::string cpp_type_name(const metadata::FieldType& type) {
+    switch (type.kind) {
+    case metadata::FieldTypeKind::Bool:
+    case metadata::FieldTypeKind::SignedInteger:
+    case metadata::FieldTypeKind::UnsignedInteger:
+    case metadata::FieldTypeKind::FloatingPoint:
+    case metadata::FieldTypeKind::String:
+    case metadata::FieldTypeKind::Enum:
+    case metadata::FieldTypeKind::UserDefined:
+        return type.qualified_name.empty() ? type.spelling
+                                           : type.qualified_name;
+    case metadata::FieldTypeKind::Vector:
+        return "std::vector<" + cpp_type_name(type.arguments[0]) + ">";
+    case metadata::FieldTypeKind::Optional:
+        return "std::optional<" + cpp_type_name(type.arguments[0]) + ">";
+    }
+    return type.spelling;
+}
+
 void open_namespace(std::ostringstream& out,
                     const std::vector<std::string>& namespace_path) {
 
@@ -39,13 +59,50 @@ void close_namespace(std::ostringstream& out,
     out << "\n";
 }
 
+// Generate one to_json assignment from a validated Metadata IR field.
+void generate_to_json_field(std::ostringstream& out,
+                            const metadata::FieldModel& field) {
+    if (field.json.name.empty()) {
+        return;
+    }
+    if (field.type.kind == metadata::FieldTypeKind::Optional &&
+        field.json.omit_empty) {
+        out << "    if (value." << field.name << ".has_value()) {\n"
+            << "        j[\"" << field.json.name << "\"] = *value."
+            << field.name << ";\n"
+            << "    }\n";
+
+        return;
+    }
+    out << "    j[\"" << field.json.name << "\"] = value." << field.name
+        << ";\n";
+}
+
+// Generate one from_json assignment from a validated Metadata IR field.
+void generate_from_json_field(std::ostringstream& out,
+                              const metadata::FieldModel& field) {
+    if (field.json.name.empty()) {
+        return;
+    }
+    if (field.type.kind == metadata::FieldTypeKind::Optional &&
+        field.json.omit_empty) {
+        out << "    if (j.contains(\"" << field.json.name << "\")) {\n"
+            << "        value." << field.name << " = j.at(\"" << field.json.name
+            << "\").get<" << cpp_type_name(field.type.arguments[0]) << ">();\n"
+            << "    }\n";
+        return;
+    }
+
+    out << "    j.at(\"" << field.json.name << "\").get_to(value." << field.name
+        << ");\n";
+}
+
 void generate_to_json(std::ostringstream& out,
                       const metadata::TypeModel& type) {
     out << "inline void to_json(nlohmann::json& j, const " << type.name
         << "& value) {\n";
     for (const auto& field : type.fields) {
-        out << "    j[\"" << field.json.name << "\"] = value." << field.name
-            << ";\n";
+        generate_to_json_field(out, field);
     }
     out << "}\n";
 }
@@ -57,8 +114,7 @@ void generate_from_json(std::ostringstream& out,
         << "& value) {\n";
 
     for (const auto& field : type.fields) {
-        out << "    j.at(\"" << field.json.name << "\").get_to(value."
-            << field.name << ");\n";
+        generate_from_json_field(out, field);
     }
     out << "}\n";
 }
