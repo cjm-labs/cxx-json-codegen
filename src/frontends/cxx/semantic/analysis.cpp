@@ -1,8 +1,8 @@
 #include <cctype>
 #include <map>
 #include <set>
-#include "semantic/analysis.hpp"
-#include "metadata/model.hpp"
+#include "frontends/cxx/semantic/analysis.hpp"
+#include "core/ir/model.hpp"
 
 namespace cjm::semantic {
 

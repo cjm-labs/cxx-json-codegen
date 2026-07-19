@@ -1,5 +1,5 @@
-#include "parser/syntax.hpp"
-#include "semantic/analysis.hpp"
+#include "frontends/cxx/parser/syntax.hpp"
+#include "frontends/cxx/semantic/analysis.hpp"
 
 #include <cassert>
 #include <iostream>

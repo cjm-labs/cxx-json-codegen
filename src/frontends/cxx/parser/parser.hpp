@@ -1,6 +1,6 @@
 #pragma once
 
-#include "parser/syntax.hpp"
+#include "frontends/cxx/parser/syntax.hpp"
 
 #include <string>
 

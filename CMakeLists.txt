@@ -27,18 +27,18 @@ target_include_directories(cjm_metadata INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/sr
 target_compile_features(cjm_metadata INTERFACE cxx_std_17)
 
 # generator library
-add_library(cjm_generator src/generator/cpp_generator.cpp)
+add_library(cjm_generator src/backends/nlohmann/cpp_generator.cpp)
 target_link_libraries(cjm_generator PUBLIC cjm_metadata)
 target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_generator PUBLIC cxx_std_17)
 
 # parser library
-add_library(cjm_parser src/parser/parser.cpp)
+add_library(cjm_parser src/frontends/cxx/parser/parser.cpp)
 target_include_directories(cjm_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_parser PUBLIC cxx_std_17)
 
 # semantic library 
-add_library(cjm_semantic src/semantic/analysis.cpp)
+add_library(cjm_semantic src/frontends/cxx/semantic/analysis.cpp)
 target_include_directories(cjm_semantic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(cjm_semantic PUBLIC cjm_metadata cjm_parser)
 target_compile_features(cjm_semantic PUBLIC cxx_std_17)
@@ -52,20 +52,20 @@ if (CJM_BUILD_TESTS)
 
   # METADATA tests below...
   add_executable(cjm_metadata_tests
-    tests/metadata/model_tests.cpp
+    tests/core/ir/model_tests.cpp
   )
   target_link_libraries(cjm_metadata_tests PRIVATE cjm_metadata)
   add_test(NAME cjm_metadata_tests COMMAND cjm_metadata_tests)
 
 
   # GENERATOR tests below...
-  add_executable(cjm_generator_tests tests/generator/cpp_generator_tests.cpp)
+  add_executable(cjm_generator_tests tests/backends/nlohmann/cpp_generator_tests.cpp)
   target_link_libraries(cjm_generator_tests PRIVATE cjm_generator)
   add_test(NAME cjm_generator_tests COMMAND cjm_generator_tests)
   set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   # PIPELINE GOLDEN tests below...
-  add_executable(cjm_pipeline_golden_tests tests/generator/pipeline_golden_tests.cpp)
+  add_executable(cjm_pipeline_golden_tests tests/backends/nlohmann/pipeline_golden_tests.cpp)
   target_link_libraries(cjm_pipeline_golden_tests PRIVATE cjm_generator cjm_parser cjm_semantic)
   add_test(NAME cjm_pipeline_golden_tests COMMAND cjm_pipeline_golden_tests)
   set_tests_properties(cjm_pipeline_golden_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -115,18 +115,18 @@ if (CJM_BUILD_TESTS)
             ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp
   )
   # parser tests below...
-  add_executable(cjm_parser_tests tests/parser/syntax_tests.cpp)
+  add_executable(cjm_parser_tests tests/frontends/cxx/parser/syntax_tests.cpp)
   target_link_libraries(cjm_parser_tests PRIVATE cjm_parser)
   add_test(NAME cjm_parser_tests COMMAND cjm_parser_tests)
   set_tests_properties(cjm_parser_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   
-  add_executable(cjm_parser_file_tests tests/parser/parser_tests.cpp)
+  add_executable(cjm_parser_file_tests tests/frontends/cxx/parser/parser_tests.cpp)
   target_link_libraries(cjm_parser_file_tests PRIVATE cjm_parser)
   add_test(NAME cjm_parser_file_tests COMMAND cjm_parser_file_tests)
   set_tests_properties(cjm_parser_file_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   # semantic tests below...
-  add_executable(cjm_semantic_tests tests/semantic/analysis_tests.cpp)
+  add_executable(cjm_semantic_tests tests/frontends/cxx/semantic/analysis_tests.cpp)
   target_link_libraries(cjm_semantic_tests PRIVATE cjm_semantic)
   add_test(NAME cjm_semantic_tests COMMAND cjm_semantic_tests)
 

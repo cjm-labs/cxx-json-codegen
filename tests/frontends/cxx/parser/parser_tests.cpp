@@ -1,4 +1,4 @@
-#include "parser/parser.hpp"
+#include "frontends/cxx/parser/parser.hpp"
 #include <cassert>
 #include <iostream>
 

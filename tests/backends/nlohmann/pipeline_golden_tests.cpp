@@ -1,6 +1,6 @@
-#include "generator/cpp_generator.hpp"
-#include "parser/parser.hpp"
-#include "semantic/analysis.hpp"
+#include "backends/nlohmann/cpp_generator.hpp"
+#include "frontends/cxx/parser/parser.hpp"
+#include "frontends/cxx/semantic/analysis.hpp"
 
 #include <cassert>
 #include <fstream>

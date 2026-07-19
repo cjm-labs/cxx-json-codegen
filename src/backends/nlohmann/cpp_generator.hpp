@@ -1,6 +1,6 @@
 #pragma once
 
-#include "metadata/model.hpp"
+#include "core/ir/model.hpp"
 
 #include <string>
 

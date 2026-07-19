@@ -1,7 +1,7 @@
 #pragma once
 
-#include "metadata/model.hpp"
-#include "parser/syntax.hpp"
+#include "core/ir/model.hpp"
+#include "frontends/cxx/parser/syntax.hpp"
 
 #include <string>
 #include <vector>
