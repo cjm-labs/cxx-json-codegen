@@ -132,6 +132,7 @@ if (CJM_BUILD_TESTS)
 
   # practical generated compile tests below...
   add_executable(cjm_practical_generated_compile_tests tests/backends/nlohmann/practical_generated_compile_tests.cpp)
+  target_compile_features(cjm_practical_generated_compile_tests PRIVATE cxx_std_17)
   target_include_directories(cjm_practical_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_link_libraries(cjm_practical_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
   add_test(NAME cjm_practical_generated_compile_tests COMMAND cjm_practical_generated_compile_tests)
@@ -159,5 +160,4 @@ if (CJM_BUILD_TESTS)
       DEPENDS cjm_cli_generate_multiple_inputs
   )
 endif()
-
 
