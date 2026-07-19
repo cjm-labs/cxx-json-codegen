@@ -127,6 +127,16 @@ ProjectModel make_basic_user_project() {
             JsonFieldMetadata{"score", true},
             SourceLocation{"include/user.hpp", 5, 28},
         },
+        FieldModel{
+            "internal_id",
+            FieldType{
+                FieldTypeKind::SignedInteger,
+                "int",
+                "int",
+            },
+            JsonFieldMetadata{"", false},
+            SourceLocation{"include/user.hpp", 9, 9},
+        },
     };
 
     TypeModel address;
