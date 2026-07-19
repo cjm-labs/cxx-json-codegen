@@ -135,6 +135,19 @@ if (CJM_BUILD_TESTS)
   target_include_directories(cjm_practical_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_link_libraries(cjm_practical_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
   add_test(NAME cjm_practical_generated_compile_tests COMMAND cjm_practical_generated_compile_tests)
+
+  add_test(NAME cjm_cli_generate_multiple_inputs
+    COMMAND cjm generate
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/address.hpp
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/user.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/cli_multi.cjm.hpp 
+  )
+  set_tests_properties(
+    cjm_cli_generate_multiple_inputs
+    PROPERTIES 
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
 endif()
 
 
