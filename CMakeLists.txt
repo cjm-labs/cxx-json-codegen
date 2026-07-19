@@ -130,6 +130,11 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_semantic_tests PRIVATE cjm_semantic)
   add_test(NAME cjm_semantic_tests COMMAND cjm_semantic_tests)
 
+  # practical generated compile tests below...
+  add_executable(cjm_practical_generated_compile_tests tests/backends/nlohmann/practical_generated_compile_tests.cpp)
+  target_include_directories(cjm_practical_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(cjm_practical_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
+  add_test(NAME cjm_practical_generated_compile_tests COMMAND cjm_practical_generated_compile_tests)
 endif()
 
 
