@@ -45,6 +45,18 @@ ProjectModel make_basic_user_project() {
     };
     optional_string_type.arguments = {string_type};
 
+    FieldType int_type{
+        FieldTypeKind::SignedInteger,
+        "int",
+        "int",
+    };
+    FieldType optional_int_type{
+        FieldTypeKind::Optional,
+        "std::optional<int>",
+        "std::optional",
+    };
+    optional_int_type.arguments = {int_type};
+
     user.fields = {
         FieldModel{
             "name",
@@ -72,6 +84,12 @@ ProjectModel make_basic_user_project() {
             JsonFieldMetadata{"nickname", true},
             SourceLocation{"include/user.hpp", 4, 39},
         },
+        FieldModel{
+            "score",
+            optional_int_type,
+            JsonFieldMetadata{"score", true},
+            SourceLocation{"include/user.hpp", 5, 28},
+        },
     };
 
     ProjectModel project;
@@ -94,8 +112,8 @@ int main() {
     if (generated != expected) {
         write_file(actual_path, generated);
         std::cerr << "golden mismatch\n"
-                  << "expected: " << expected_path << "\n"
-                  << "actual: " << actual_path << "\n";
+                  << "expected: " << expected << "\n"
+                  << "actual: " << generated << "\n";
     }
     assert(generated == expected);
     return 0;

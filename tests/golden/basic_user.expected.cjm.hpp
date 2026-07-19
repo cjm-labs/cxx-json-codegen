@@ -13,6 +13,9 @@ inline void to_json(nlohmann::json& j, const User& value) {
     if (value.nickname.has_value()) {
         j["nickname"] = *value.nickname;
     }
+    if (value.score.has_value()) {
+        j["score"] = *value.score;
+    }
 }
 
 inline void from_json(const nlohmann::json& j, User& value) {
@@ -20,6 +23,9 @@ inline void from_json(const nlohmann::json& j, User& value) {
     j.at("age").get_to(value.age);
     if (j.contains("nickname")) {
         value.nickname = j.at("nickname").get<std::string>();
+    }
+    if (j.contains("score")) {
+        value.score = j.at("score").get<int>();
     }
 }
 
