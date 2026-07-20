@@ -138,6 +138,29 @@ bool parse_template_argument(const std::string& spelling,
     return !argument.empty();
 }
 
+bool parse_two_template_arguments(const std::string& spelling,
+                                  const std::string& prefix, std::string& first,
+                                  std::string& second) {
+    if (!starts_with(spelling, prefix + "<") || !ends_with(spelling, ">")) {
+        return false;
+    }
+
+    auto body = trim(spelling.substr(prefix.size() + 1,
+                                     spelling.size() - prefix.size() - 2));
+    if (body.empty()) {
+        return false;
+    }
+
+    const auto comma = body.find(",");
+    if (comma == std::string::npos) {
+        return false;
+    }
+
+    first = trim(body.substr(0, comma));
+    second = trim(body.substr(comma + 1));
+    return !first.empty() && !second.empty();
+}
+
 metadata::SourceLocation
 to_metadata_location(const parser::SourceLocation& location) {
     metadata::SourceLocation result;
@@ -354,6 +377,32 @@ analyze_field_type(const TypeSymbols& symbols,
         nested.type_spelling = argument;
         type.arguments.push_back(analyze_field_type(
             symbols, namespace_path, nested, diagnostics, success));
+        return type;
+    }
+
+    std::string key_arg, value_arg;
+    if (parse_two_template_arguments(spelling, "std::map", key_arg,
+                                     value_arg)) {
+        auto type = make_type(metadata::FieldTypeKind::Map, original_spelling,
+                              "std::map");
+
+        parser::FieldSyntax key_field = field;
+        key_field.type_spelling = key_arg;
+        auto key_type = analyze_field_type(symbols, namespace_path, key_field,
+                                           diagnostics, success);
+        parser::FieldSyntax value_field = field;
+        value_field.type_spelling = value_arg;
+        auto value_type = analyze_field_type(symbols, namespace_path,
+                                             value_field, diagnostics, success);
+
+        if (key_type.kind != metadata::FieldTypeKind::String) {
+            success = false;
+            diagnostics.push_back(make_diagnostic(
+                field.location,
+                "unsupported map key type for JSON mapping: " + key_arg));
+        }
+        type.arguments.push_back(key_type);
+        type.arguments.push_back(value_type);
         return type;
     }
 

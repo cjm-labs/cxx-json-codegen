@@ -93,8 +93,8 @@ int main() {
         name_comment.location.line = 4;
         name_comment.location.column = 30;
         name.comments.push_back(name_comment);
-
         user.fields.push_back(name);
+
         file.declarations.push_back(user);
 
         auto result = cjm::semantic::analyze_source_file(file);
@@ -320,11 +320,22 @@ int main() {
         status_comment.location.column = 30;
         user_status.comments.push_back(status_comment);
 
+        cjm::parser::FieldSyntax counters;
+        counters.name = "counters";
+        counters.type_spelling = "std::map<std::string, int>";
+        counters.location = {"practical.hpp", 18, 5};
+
+        cjm::parser::CommentSyntax counters_comment;
+        counters_comment.text = R"(json:"counters")";
+        counters_comment.location = {"practical.hpp", 18, 45};
+        counters.comments = {counters_comment};
+
         user.fields.push_back(id);
         user.fields.push_back(user_address);
         user.fields.push_back(tags);
         user.fields.push_back(nickname);
         user.fields.push_back(user_status);
+        user.fields.push_back(counters);
 
         file.declarations.push_back(address);
         file.declarations.push_back(user);
@@ -339,7 +350,7 @@ int main() {
                "company::model::User");
 
         const auto& fields = result.project.types[1].fields;
-        assert(fields.size() == 5);
+        assert(fields.size() == 6);
         assert(fields[0].type.kind ==
                cjm::metadata::FieldTypeKind::SignedInteger);
         assert(fields[1].type.kind ==
@@ -353,6 +364,14 @@ int main() {
                cjm::metadata::FieldTypeKind::String);
         assert(fields[4].type.kind == cjm::metadata::FieldTypeKind::Enum);
         assert(fields[4].type.qualified_name == "company::model::Status");
+
+        assert(fields[5].name == "counters");
+        assert(fields[5].type.kind == cjm::metadata::FieldTypeKind::Map);
+        assert(fields[5].type.arguments.size() == 2);
+        assert(fields[5].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(fields[5].type.arguments[1].kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
     }
     {
         cjm::parser::SourceFileSyntax file;
