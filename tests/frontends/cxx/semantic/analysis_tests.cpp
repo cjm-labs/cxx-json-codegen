@@ -704,4 +704,33 @@ int main() {
                    .arguments[0]
                    .kind == cjm::metadata::FieldTypeKind::String);
     }
+    {
+        cjm::parser::FieldSyntax callbacks;
+        callbacks.name = "callback";
+        callbacks.type_spelling =
+            "std::map<std::string, std::function<void()>>";
+        callbacks.location = {"map_values.hpp", 8, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"callback")";
+        comment.location = {"map_values.hpp", 8, 70};
+        callbacks.comments = {comment};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+        user.fields = {callbacks};
+
+        cjm::parser::SourceFileSyntax file;
+        file.path = "map_values.hpp";
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(!result.success);
+        assert(result.project.types.empty());
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find(
+                   "unsupported field type for JSON mapping") !=
+               std::string::npos);
+    }
 }
