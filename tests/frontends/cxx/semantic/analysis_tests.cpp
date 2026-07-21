@@ -634,4 +634,31 @@ int main() {
         assert(result.diagnostics[0].message.find(
                    "cyclic generated type dependency") != std::string::npos);
     }
+    {
+        cjm::parser::FieldSyntax counters;
+        counters.name = "counters";
+        counters.type_spelling = "std::map<int, std::string>";
+        counters.location = {"map_keys.hpp", 4, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"counters")";
+        comment.location = {"map_keys.hpp", 4, 15};
+        counters.comments = {comment};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.location = {"user.hpp", 6, 12};
+        user.namespace_path = {"company", "model"};
+        user.fields = {counters};
+
+        cjm::parser::SourceFileSyntax file;
+        file.path = "map_keys.hpp";
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(!result.success);
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find("unsupported map key type") !=
+               std::string::npos);
+    }
 }
