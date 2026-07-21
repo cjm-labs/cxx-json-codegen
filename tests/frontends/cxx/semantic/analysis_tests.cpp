@@ -661,4 +661,47 @@ int main() {
         assert(result.diagnostics[0].message.find("unsupported map key type") !=
                std::string::npos);
     }
+
+    {
+        cjm::parser::FieldSyntax labels;
+        labels.name = "labels";
+        labels.type_spelling =
+            "std::map<std::string, std::vector<std::string>>";
+        labels.location = {"map_values.hpp", 4, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"labels")";
+        comment.location = {"map_values.hpp", 4, 65};
+        labels.comments = {comment};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+        user.fields = {labels};
+
+        cjm::parser::SourceFileSyntax file;
+        file.path = "map_values.hpp";
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+        assert(result.project.types[0].fields.size() == 1);
+        assert(result.project.types[0].fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::Map);
+        assert(result.project.types[0].fields[0].type.arguments.size() == 2);
+        assert(result.project.types[0].fields[0].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(result.project.types[0].fields[0].type.arguments[1].kind ==
+               cjm::metadata::FieldTypeKind::Vector);
+        assert(result.project.types[0]
+                   .fields[0]
+                   .type.arguments[1]
+                   .arguments.size() == 1);
+        assert(result.project.types[0]
+                   .fields[0]
+                   .type.arguments[1]
+                   .arguments[0]
+                   .kind == cjm::metadata::FieldTypeKind::String);
+    }
 }
