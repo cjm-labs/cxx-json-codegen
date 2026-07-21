@@ -330,12 +330,23 @@ int main() {
         counters_comment.location = {"practical.hpp", 18, 45};
         counters.comments = {counters_comment};
 
+        cjm::parser::FieldSyntax lookup;
+        lookup.name = "lookup";
+        lookup.type_spelling = "std::unordered_map<std::string, int>";
+        lookup.location = {"practical.hpp", 9, 15};
+
+        cjm::parser::CommentSyntax lookup_comment;
+        lookup_comment.text = R"(json:"lookup")";
+        lookup_comment.location = {"practical.hpp", 19, 60};
+        lookup.comments = {lookup_comment};
+
         user.fields.push_back(id);
         user.fields.push_back(user_address);
         user.fields.push_back(tags);
         user.fields.push_back(nickname);
         user.fields.push_back(user_status);
         user.fields.push_back(counters);
+        user.fields.push_back(lookup);
 
         file.declarations.push_back(address);
         file.declarations.push_back(user);
@@ -350,7 +361,7 @@ int main() {
                "company::model::User");
 
         const auto& fields = result.project.types[1].fields;
-        assert(fields.size() == 6);
+        assert(fields.size() == 7);
         assert(fields[0].type.kind ==
                cjm::metadata::FieldTypeKind::SignedInteger);
         assert(fields[1].type.kind ==
@@ -371,6 +382,15 @@ int main() {
         assert(fields[5].type.arguments[0].kind ==
                cjm::metadata::FieldTypeKind::String);
         assert(fields[5].type.arguments[1].kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+
+        assert(fields[6].name == "lookup");
+        assert(fields[6].type.kind == cjm::metadata::FieldTypeKind::Map);
+        assert(fields[6].type.qualified_name == "std::unordered_map");
+        assert(fields[6].type.arguments.size() == 2);
+        assert(fields[6].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(fields[6].type.arguments[1].kind ==
                cjm::metadata::FieldTypeKind::SignedInteger);
     }
     {
