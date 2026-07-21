@@ -185,7 +185,8 @@ Success criteria:
 
 ## Phase 1 - Adoption Documentation
 
-This phase belongs with v0.3 Adoption.
+This phase belongs with an adoption-focused milestone after the practical type
+surface is strong enough for new users to try.
 
 Goal:
 
@@ -361,50 +362,99 @@ Success criteria:
 
 ---
 
-# v0.3 - Adoption
+# v0.3 - Practical Type Coverage
 
 Goal:
 
-> Make CJM easy for other C++ projects to try and adopt.
+> Cover the next set of common JSON data shapes after v0.2 practical models.
 
 Add:
 
-- FetchContent support
-- `install()` rules
-- CMake package config
-- version command
-- release artifacts
-- cross-platform CI
-- GitHub Action
-- examples
-- complete quick start
-- troubleshooting documentation
-- documentation site foundation
-- getting started guide
-- installation guide
-- CMake integration guide
-- JSON tags guide
-- FAQ
-- user-facing architecture overview
+- `std::map<std::string, T>`
+- `std::unordered_map<std::string, T>`
+- nested supported map value types
+- fixed-width integer type coverage
+- verification for composed practical types
+- generated compile/run tests for the expanded mapping surface
 
 Mapping scope:
 
-- no new core mapping requirements
-- examples should cover the complete v0.2 supported mapping surface
-- installation workflows should make generated headers usable without manual
-  internal tool invocation
+- JSON objects with dynamic string keys through supported map types
+- nested combinations of supported vectors, optionals, maps, enums, and
+  generated structs
+- common signed and unsigned fixed-width integer spellings
 
-Target platforms:
+Out of scope:
 
-- macOS arm64
-- Linux x86_64
-- Windows x86_64
+- arbitrary JSON values
+- `std::variant`
+- `std::any`
+- pointer fields
+- polymorphism
+- custom converters
+- enum string policies
+- time and datetime mappings
+- automatic header discovery
+- frontend parser migration
 
 Success criteria:
 
-- users can consume CJM through normal CMake workflows
-- users do not manually invoke internal tools during normal development
-- examples demonstrate the supported v0.2 model surface
+- string-keyed maps work through Parser, Semantic Analysis, Metadata IR, and
+  the nlohmann backend
+- generated map code compiles and round-trips for practical fixtures
+- unsupported map forms fail before generation
+- generated output remains deterministic
+
+---
+
+# v0.3.5 - Frontend Parser Research
+
+Goal:
+
+> Evaluate Tree-sitter as a future C++ frontend foundation without replacing
+> the production parser prematurely.
+
+Evaluate:
+
+- `tree-sitter-cpp` as an implementation detail of the C++ frontend
+- strict fail-closed parsing behavior
+- deterministic comment-to-field attachment
+- multiline declarations
+- nested template type spellings
+- source range and diagnostic quality
+- preprocessor behavior
+- grammar and runtime version pinning
+- FetchContent versus vendored generated sources
+- license and notice requirements
+
+Deliver:
+
+- Tree-sitter architecture note
+- dependency assessment
+- isolated adapter prototype
+- correctness report
+- staged migration plan
+- evidence-based recommendation
+
+Out of scope:
+
+- CJM-C
+- attribute metadata syntax
+- full C++ grammar support
+- Clang/LLVM integration
+- Metadata IR redesign
+- Semantic Analysis redesign
+- backend changes
+- removing the handwritten parser
+
+Success criteria:
+
+- current supported fixtures can be represented correctly
+- unsupported or malformed managed syntax fails closed
+- Tree-sitter code remains isolated inside the frontend layer
+- Semantic Analysis, Metadata IR, backends, CLI behavior, and generated output
+  remain unchanged during the spike
+- users do not need Node.js, Rust, npm, Cargo, Python, or the Tree-sitter CLI
 
 ---
 
@@ -427,8 +477,6 @@ Add or design:
 Expand the mapping matrix:
 
 - `std::array<T, N>`
-- `std::map<std::string, T>`
-- `std::unordered_map<std::string, T>`
 - `enum` and `enum class` string mappings
 - custom converter design for future non-core types
 
