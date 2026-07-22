@@ -48,44 +48,62 @@ Go-like developer experience for its first JSON backend:
 
 ---
 
-## Example
+## Usage Example
 
-The target user experience is intentionally simple.
+Write ordinary C++ models and put JSON metadata next to the fields:
 
 ```cpp
+#pragma once
+
+#include <string>
+
 struct User {
-    std::string name;   // json:"name"
-    int age;            // json:"age"
+    std::string name; // json:"name"
+    int age = 0;      // json:"age"
 };
 ```
 
-Configure your project:
+After building the CLI, run CJM:
 
-```cmake
-find_package(CJM REQUIRED)
-
-add_executable(app main.cpp)
-
-cjm_generate(
-    TARGET app
-    HEADERS
-        user.hpp
-)
+```sh
+./build/cjm generate \
+  --input user.hpp \
+  --output user.cjm.hpp
 ```
 
-During the build, CJM generates:
+CJM generates ordinary C++ integration code:
 
-```text
-user.cjm.hpp
+```cpp
+inline void to_json(nlohmann::json& j, const User& value) {
+    j["name"] = value.name;
+    j["age"] = value.age;
+}
+
+inline void from_json(const nlohmann::json& j, User& value) {
+    j.at("name").get_to(value.name);
+    j.at("age").get_to(value.age);
+}
 ```
 
-which contains ordinary C++ serialization code.
+Use it like normal `nlohmann/json` code:
 
-No macros.
+```cpp
+#include "user.hpp"
+#include "user.cjm.hpp"
 
-No compiler plugins.
+#include <nlohmann/json.hpp>
 
-No runtime reflection.
+int main() {
+    User user;
+    user.name = "Ada";
+    user.age = 42;
+
+    nlohmann::json json = user;
+    User round_trip = json.get<User>();
+}
+```
+
+No macros. No compiler plugins. No runtime reflection.
 
 ---
 
