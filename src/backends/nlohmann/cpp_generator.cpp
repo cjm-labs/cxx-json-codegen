@@ -22,6 +22,9 @@ std::string cpp_type_name(const metadata::FieldType& type) {
         return "std::vector<" + cpp_type_name(type.arguments[0]) + ">";
     case metadata::FieldTypeKind::Optional:
         return "std::optional<" + cpp_type_name(type.arguments[0]) + ">";
+    case metadata::FieldTypeKind::Map:
+        return type.qualified_name + "<" + cpp_type_name(type.arguments[0]) +
+               ", " + cpp_type_name(type.arguments[1]) + ">";
     }
     return type.spelling;
 }
