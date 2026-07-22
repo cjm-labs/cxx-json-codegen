@@ -89,63 +89,28 @@ No runtime reflection.
 
 ---
 
-## Try From Source
+## Quickstart
 
-CJM can be tried directly from the source tree.
+The fastest way to try CJM today is from this repository checkout.
 
 Requirements:
 
 - CMake
 - a C++17 compiler
-- `nlohmann/json`
+- `nlohmann/json` available locally or downloadable by CMake
 
-Build and run the included example:
-
-```sh
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-The basic example lives in:
-
-```text
-examples/basic/
-```
-
-It demonstrates:
-
-- a standard C++ model in `user.hpp`
-- field metadata written next to the fields
-- generated `user.cjm.hpp`
-- normal `nlohmann::json` conversion
-
-Packaged installation through `find_package(CJM REQUIRED)` is part of the
-Adoption roadmap rather than the current release surface.
-
----
-
-## Use CJM Today
-
-The easiest way to try CJM today is from this repository checkout.
-
-### 1. Build the CLI
+### Run the Example
 
 ```sh
 cmake -S . -B build
-cmake --build build --target cjm
+cmake --build build --target cjm_basic_example
+./build/examples/basic/cjm_basic_example
 ```
 
-This produces the local CLI:
+That builds the CJM CLI, generates `user.cjm.hpp`, compiles the example, and
+runs a tiny JSON round trip.
 
-```text
-build/cjm
-```
-
-### 2. Write an annotated C++ model
-
-CJM reads ordinary C++ headers. Metadata is written as same-line field
-comments:
+The example model is ordinary C++:
 
 ```cpp
 #pragma once
@@ -158,15 +123,19 @@ struct User {
 };
 ```
 
-### 3. Generate a nlohmann/json header
+### Generate Code Manually
 
-Run the CLI against one or more explicit input headers:
+You can also run the local CLI directly:
 
 ```sh
+cmake --build build --target cjm
 ./build/cjm generate \
   --input examples/basic/user.hpp \
   --output /tmp/user.cjm.hpp
 ```
+
+The generated file contains ordinary C++ `to_json` and `from_json` functions
+for `nlohmann/json`.
 
 For multiple related headers, repeat `--input`:
 
@@ -177,12 +146,9 @@ For multiple related headers, repeat `--input`:
   --output model.cjm.hpp
 ```
 
-The generated file contains ordinary C++ `to_json` and `from_json` functions
-for `nlohmann/json`.
+### Use the Generated Header
 
-### 4. Use the generated header
-
-Include your model header first, then the generated CJM header:
+Include your model first, then the generated CJM header:
 
 ```cpp
 #include "user.hpp"
@@ -200,24 +166,36 @@ int main() {
 }
 ```
 
-### 5. Try the included CMake example
+### Use CJM From CMake
 
-The repository includes a working CMake integration example:
-
-```sh
-cmake -S . -B build
-cmake --build build --target cjm_basic_example
-./build/examples/basic/cjm_basic_example
-```
-
-The example uses:
+Inside this source tree, the example uses `cjm_generate`:
 
 ```cmake
+add_executable(app main.cpp)
+
+target_link_libraries(app PRIVATE nlohmann_json::nlohmann_json)
+
 cjm_generate(
-  TARGET cjm_basic_example
+  TARGET app
   HEADERS user.hpp
 )
 ```
+
+During the build, CJM generates:
+
+```text
+generated/cjm/user.cjm.hpp
+```
+
+and adds the generated directory to the target include path.
+
+### Try the Full Test Suite
+
+```sh
+ctest --test-dir build --output-on-failure
+```
+
+### Keep the First Try Smooth
 
 Current parser notes:
 
@@ -225,6 +203,9 @@ Current parser notes:
 - put `json:"..."` metadata in a same-line `//` comment
 - use qualified standard types such as `std::string`
 - pass every related header explicitly with `--input`
+
+Packaged installation through `find_package(CJM REQUIRED)` is part of the
+Adoption roadmap rather than the current release surface.
 
 ---
 
