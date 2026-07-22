@@ -91,7 +91,7 @@ No runtime reflection.
 
 ## Try From Source
 
-CJM v0.1 can be tried directly from the source tree.
+CJM can be tried directly from the source tree.
 
 Requirements:
 
@@ -121,7 +121,7 @@ It demonstrates:
 - normal `nlohmann::json` conversion
 
 Packaged installation through `find_package(CJM REQUIRED)` is part of the
-Adoption roadmap rather than the current v0.1 release surface.
+Adoption roadmap rather than the current release surface.
 
 ---
 
@@ -174,31 +174,59 @@ files.
 
 Current status:
 
-- v0.1.0 has been released 
-- Minimal end-to-end JSON code generation pipeline is available 
-- First official backend: `nlohmann/json` 
+- v0.3.0 Practical Type Coverage is the current release line
+- CJM has a parser -> semantic analysis -> Metadata IR -> nlohmann backend
+  pipeline
+- First official backend: `nlohmann/json`
+- The supported model surface is still a documented practical subset, not full
+  C++ grammar support
 
 ---
 
-## Current Limitations 
+## Current Mapping Surface
 
-CJM v0.1 is intentionally minimal.
+CJM currently supports a practical JSON mapping subset.
 
 Supported:
 
 - explicit CMake header registration with `cjm_generate`
-- simple `struct` declarations 
-- simple fields with `json:"name"` comments 
-- generated `to_json` / `from_json` for `nlohmann/json` 
-- basic scalar and `std::string` field spelling 
+- one or more explicit input headers
+- public `struct` declarations in the supported parser subset
+- fields with Go-style `json:"name"` comments
+- generated `to_json` / `from_json` for `nlohmann/json`
+- `bool`
+- signed and unsigned integer types
+- common fixed-width integer spellings from `<cstdint>`
+- floating-point types
+- `std::string`
+- enums
+- nested generated structs
+- namespaces
+- supported type aliases
+- `std::vector<T>`
+- `std::optional<T>`
+- `std::map<std::string, T>`
+- `std::unordered_map<std::string, T>`
+- `json:"-"` ignored fields
+- `omitempty` for supported optional fields
+
+## Current Limitations
+
+CJM intentionally remains a practical subset.
 
 Not yet supported:
 
 - full C++ parsing 
 - automatic header discovery 
-- nested structs 
-- STL containers 
-- templates 
+- arbitrary dynamic JSON values
+- `std::variant`
+- `std::any`
+- pointer fields
+- polymorphism
+- custom converters
+- enum string mapping policies
+- time and datetime mappings
+- multiline field declarations in the current handwritten parser
 - private fields 
 - native JSON backend 
 - install/package distribution
@@ -218,6 +246,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Philosophy](docs/philosophy.md)
 - [Roadmap](ROADMAP.md)
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
+- [v0.3.0 Release Notes](docs/releases/v0.3.0.md)
 - [Competitive Landscape](docs/design/competitive-landscape.md)
 - [Design Notes](docs/design/)
 

@@ -68,6 +68,10 @@ Purpose:
 
 ## v0.3 - Practical Type Coverage
 
+Status:
+
+- implemented for v0.3.0
+
 Mapping scope:
 
 - `std::map<std::string, T>`

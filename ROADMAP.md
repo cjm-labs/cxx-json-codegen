@@ -114,15 +114,15 @@ CJM should remain focused:
 
 CJM is in early development.
 
-The current focus is to preserve the architecture while making the first
-end-to-end workflow practical:
+The current focus is to preserve the compiler architecture while expanding the
+documented practical mapping surface:
 
 - product identity
 - architecture
 - build pipeline
 - metadata model
-- initial CMake integration
-- first working JSON code generation path
+- explicit CMake integration
+- practical JSON code generation through the first official backend
 
 ---
 
@@ -180,13 +180,14 @@ Success criteria:
 
 - Google can discover the CJM website
 - GitHub clearly communicates what CJM is
-- project metadata consistently describes CJM as a C++ JSON code generator
+- project metadata consistently describes CJM as a build-time metadata compiler
+  for Modern C++
 - indexing work can be left alone while product development continues
 
 ## Phase 1 - Adoption Documentation
 
-This phase belongs with an adoption-focused milestone after the practical type
-surface is strong enough for new users to try.
+This phase belongs with an adoption-focused milestone after v0.3.0, when the
+practical type surface is strong enough for new users to try.
 
 Goal:
 
@@ -205,8 +206,9 @@ Scope:
 
 ## Phase 2 - Content and Dogfooding
 
-This phase should begin only after CJM has practical product value and real
-dogfooding.
+Dogfooding may begin after v0.3.0 so a downstream project can consume a real
+tag. Content work should begin only after that dogfooding produces real
+results.
 
 Dogfooding requirement:
 
@@ -364,6 +366,10 @@ Success criteria:
 
 # v0.3 - Practical Type Coverage
 
+Status:
+
+> Completed for v0.3.0.
+
 Goal:
 
 > Cover the next set of common JSON data shapes after v0.2 practical models.
@@ -404,6 +410,39 @@ Success criteria:
 - generated map code compiles and round-trips for practical fixtures
 - unsupported map forms fail before generation
 - generated output remains deterministic
+
+---
+
+# v0.3.2 - Adoption and Dogfooding
+
+Goal:
+
+> Let v0.3.0 be tried from real downstream and documentation workflows without
+> blocking the v0.3.0 release tag.
+
+Scope:
+
+- use `ull-md-engine` as the first dogfood project for simple JSON logging
+  models
+- capture CMake, CLI, diagnostics, installation, and documentation friction as
+  follow-up issues
+- improve getting-started and adoption documentation
+- keep GitHub, README, and website messaging aligned with the metadata compiler
+  positioning
+
+Out of scope:
+
+- Tree-sitter frontend migration
+- broad content marketing
+- benchmark or case-study claims before dogfooding produces real results
+- new practical mapping categories beyond the v0.3.0 surface
+
+Success criteria:
+
+- `ull-md-engine` has an experimental CJM integration path for a real logging
+  use case
+- friction discovered during dogfooding is captured as CJM follow-up work
+- adoption documentation explains how to try the current supported workflow
 
 ---
 
