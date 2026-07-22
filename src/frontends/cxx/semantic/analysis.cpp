@@ -138,6 +138,29 @@ bool parse_template_argument(const std::string& spelling,
     return !argument.empty();
 }
 
+bool parse_two_template_arguments(const std::string& spelling,
+                                  const std::string& prefix, std::string& first,
+                                  std::string& second) {
+    if (!starts_with(spelling, prefix + "<") || !ends_with(spelling, ">")) {
+        return false;
+    }
+
+    auto body = trim(spelling.substr(prefix.size() + 1,
+                                     spelling.size() - prefix.size() - 2));
+    if (body.empty()) {
+        return false;
+    }
+
+    const auto comma = body.find(",");
+    if (comma == std::string::npos) {
+        return false;
+    }
+
+    first = trim(body.substr(0, comma));
+    second = trim(body.substr(comma + 1));
+    return !first.empty() && !second.empty();
+}
+
 metadata::SourceLocation
 to_metadata_location(const parser::SourceLocation& location) {
     metadata::SourceLocation result;
@@ -282,6 +305,14 @@ std::string resolve_named_type(const std::set<std::string>& names,
     }
     return {};
 }
+// analyze_field_type dispatches map templates here; this helper recursively
+// classifies map key/value types through analyze_field_type.
+metadata::FieldType analyze_map_field_type(
+    const TypeSymbols& symbols, const std::vector<std::string>& namespace_path,
+    const parser::FieldSyntax& field, const std::string& original_spelling,
+    const std::string& qualified_name, const std::string& key_arg,
+    const std::string& value_arg, std::vector<Diagnostic>& diagnostics,
+    bool& success);
 
 metadata::FieldType
 analyze_field_type(const TypeSymbols& symbols,
@@ -357,6 +388,20 @@ analyze_field_type(const TypeSymbols& symbols,
         return type;
     }
 
+    std::string key_arg, value_arg;
+    if (parse_two_template_arguments(spelling, "std::map", key_arg,
+                                     value_arg)) {
+        return analyze_map_field_type(symbols, namespace_path, field,
+                                      original_spelling, "std::map", key_arg,
+                                      value_arg, diagnostics, success);
+    }
+    if (parse_two_template_arguments(spelling, "std::unordered_map", key_arg,
+                                     value_arg)) {
+        return analyze_map_field_type(symbols, namespace_path, field,
+                                      original_spelling, "std::unordered_map",
+                                      key_arg, value_arg, diagnostics, success);
+    }
+
     const auto enum_name =
         resolve_named_type(symbols.enums, namespace_path, spelling);
     if (!enum_name.empty()) {
@@ -377,6 +422,41 @@ analyze_field_type(const TypeSymbols& symbols,
         "unsupported field type for JSON mapping: " + field.type_spelling));
     return make_type(metadata::FieldTypeKind::UserDefined, original_spelling,
                      "");
+}
+
+// Build a Map FieldType from already-split key/value template arguments.
+// This performs semantic classification only; it does not generate code.
+metadata::FieldType analyze_map_field_type(
+    const TypeSymbols& symbols, const std::vector<std::string>& namespace_path,
+    const parser::FieldSyntax& field, const std::string& original_spelling,
+    const std::string& qualified_name, const std::string& key_arg,
+    const std::string& value_arg, std::vector<Diagnostic>& diagnostics,
+    bool& success) {
+    // 1. Classify the key and value types through the normal field-type path.
+    auto type = make_type(metadata::FieldTypeKind::Map, original_spelling,
+                          qualified_name);
+
+    // 2. JSON object keys are string-only in v0.3
+    parser::FieldSyntax key_field = field;
+    key_field.type_spelling = key_arg;
+    auto key_type = analyze_field_type(symbols, namespace_path, key_field,
+                                       diagnostics, success);
+    parser::FieldSyntax value_field = field;
+    value_field.type_spelling = value_arg;
+    auto value_type = analyze_field_type(symbols, namespace_path, value_field,
+                                         diagnostics, success);
+
+    if (key_type.kind != metadata::FieldTypeKind::String) {
+        success = false;
+        diagnostics.push_back(make_diagnostic(
+            field.location,
+            "unsupported map key type for JSON mapping: " + key_arg));
+    }
+
+    // 3. Store key/value as Map arguments for backend consumption.
+    type.arguments.push_back(key_type);
+    type.arguments.push_back(value_type);
+    return type;
 }
 
 } // namespace

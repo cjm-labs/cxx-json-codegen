@@ -93,8 +93,8 @@ int main() {
         name_comment.location.line = 4;
         name_comment.location.column = 30;
         name.comments.push_back(name_comment);
-
         user.fields.push_back(name);
+
         file.declarations.push_back(user);
 
         auto result = cjm::semantic::analyze_source_file(file);
@@ -320,11 +320,33 @@ int main() {
         status_comment.location.column = 30;
         user_status.comments.push_back(status_comment);
 
+        cjm::parser::FieldSyntax counters;
+        counters.name = "counters";
+        counters.type_spelling = "std::map<std::string, int>";
+        counters.location = {"practical.hpp", 18, 5};
+
+        cjm::parser::CommentSyntax counters_comment;
+        counters_comment.text = R"(json:"counters")";
+        counters_comment.location = {"practical.hpp", 18, 45};
+        counters.comments = {counters_comment};
+
+        cjm::parser::FieldSyntax lookup;
+        lookup.name = "lookup";
+        lookup.type_spelling = "std::unordered_map<std::string, int>";
+        lookup.location = {"practical.hpp", 9, 15};
+
+        cjm::parser::CommentSyntax lookup_comment;
+        lookup_comment.text = R"(json:"lookup")";
+        lookup_comment.location = {"practical.hpp", 19, 60};
+        lookup.comments = {lookup_comment};
+
         user.fields.push_back(id);
         user.fields.push_back(user_address);
         user.fields.push_back(tags);
         user.fields.push_back(nickname);
         user.fields.push_back(user_status);
+        user.fields.push_back(counters);
+        user.fields.push_back(lookup);
 
         file.declarations.push_back(address);
         file.declarations.push_back(user);
@@ -339,7 +361,7 @@ int main() {
                "company::model::User");
 
         const auto& fields = result.project.types[1].fields;
-        assert(fields.size() == 5);
+        assert(fields.size() == 7);
         assert(fields[0].type.kind ==
                cjm::metadata::FieldTypeKind::SignedInteger);
         assert(fields[1].type.kind ==
@@ -353,6 +375,23 @@ int main() {
                cjm::metadata::FieldTypeKind::String);
         assert(fields[4].type.kind == cjm::metadata::FieldTypeKind::Enum);
         assert(fields[4].type.qualified_name == "company::model::Status");
+
+        assert(fields[5].name == "counters");
+        assert(fields[5].type.kind == cjm::metadata::FieldTypeKind::Map);
+        assert(fields[5].type.arguments.size() == 2);
+        assert(fields[5].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(fields[5].type.arguments[1].kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+
+        assert(fields[6].name == "lookup");
+        assert(fields[6].type.kind == cjm::metadata::FieldTypeKind::Map);
+        assert(fields[6].type.qualified_name == "std::unordered_map");
+        assert(fields[6].type.arguments.size() == 2);
+        assert(fields[6].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(fields[6].type.arguments[1].kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
     }
     {
         cjm::parser::SourceFileSyntax file;
@@ -409,6 +448,91 @@ int main() {
                    "unsupported field type for JSON mapping") !=
                std::string::npos);
     }
+    {
+        // Fixed-width integers from <cstdint> map to existing numeric IR kinds.
+        cjm::parser::DeclarationSyntax metrics;
+        metrics.name = "Metrics";
+        metrics.namespace_path = {"company", "model"};
+
+        cjm::parser::FieldSyntax s8;
+        s8.name = "s8";
+        s8.type_spelling = "std::int8_t";
+        s8.comments = {{R"(json:"s8")"}};
+
+        cjm::parser::FieldSyntax s16;
+        s16.name = "s16";
+        s16.type_spelling = "std::int16_t";
+        s16.comments = {{R"(json:"s16")"}};
+
+        cjm::parser::FieldSyntax s32;
+        s32.name = "s32";
+        s32.type_spelling = "std::int32_t";
+        s32.comments = {{R"(json:"s32")"}};
+
+        cjm::parser::FieldSyntax s64;
+        s64.name = "s64";
+        s64.type_spelling = "std::int64_t";
+        s64.comments = {{R"(json:"s64")"}};
+
+        cjm::parser::FieldSyntax u8;
+        u8.name = "u8";
+        u8.type_spelling = "std::uint8_t";
+        u8.comments = {{R"(json:"u8")"}};
+
+        cjm::parser::FieldSyntax u16;
+        u16.name = "u16";
+        u16.type_spelling = "std::uint16_t";
+        u16.comments = {{R"(json:"u16")"}};
+
+        cjm::parser::FieldSyntax u32;
+        u32.name = "u32";
+        u32.type_spelling = "std::uint32_t";
+        u32.comments = {{R"(json:"u32")"}};
+
+        cjm::parser::FieldSyntax u64;
+        u64.name = "u64";
+        u64.type_spelling = "std::uint64_t";
+        u64.comments = {{R"(json:"u64")"}};
+
+        metrics.fields = {s8, s16, s32, s64, u8, u16, u32, u64};
+
+        cjm::parser::SourceFileSyntax file;
+        file.declarations = {metrics};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+
+        const auto& fields = result.project.types[0].fields;
+        assert(fields.size() == 8);
+
+        // 1. Signed fixed-width types stay in the signed integer category.
+        assert(fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(fields[1].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(fields[2].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(fields[3].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+
+        // 2. Unsigned fixed-width types stay in the unsigned integer category.
+        assert(fields[4].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+        assert(fields[5].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+        assert(fields[6].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+        assert(fields[7].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+
+        assert(fields[0].type.qualified_name == "std::int8_t");
+        assert(fields[3].type.qualified_name == "std::int64_t");
+        assert(fields[4].type.qualified_name == "std::uint8_t");
+        assert(fields[7].type.qualified_name == "std::uint64_t");
+    }
+
     {
         cjm::parser::SourceFileSyntax file;
         file.path = "aliases.hpp";
@@ -594,5 +718,104 @@ int main() {
         assert(result.diagnostics.size() == 1);
         assert(result.diagnostics[0].message.find(
                    "cyclic generated type dependency") != std::string::npos);
+    }
+    {
+        cjm::parser::FieldSyntax counters;
+        counters.name = "counters";
+        counters.type_spelling = "std::map<int, std::string>";
+        counters.location = {"map_keys.hpp", 4, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"counters")";
+        comment.location = {"map_keys.hpp", 4, 15};
+        counters.comments = {comment};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.location = {"user.hpp", 6, 12};
+        user.namespace_path = {"company", "model"};
+        user.fields = {counters};
+
+        cjm::parser::SourceFileSyntax file;
+        file.path = "map_keys.hpp";
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(!result.success);
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find("unsupported map key type") !=
+               std::string::npos);
+    }
+
+    {
+        cjm::parser::FieldSyntax labels;
+        labels.name = "labels";
+        labels.type_spelling =
+            "std::map<std::string, std::vector<std::string>>";
+        labels.location = {"map_values.hpp", 4, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"labels")";
+        comment.location = {"map_values.hpp", 4, 65};
+        labels.comments = {comment};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+        user.fields = {labels};
+
+        cjm::parser::SourceFileSyntax file;
+        file.path = "map_values.hpp";
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+        assert(result.project.types[0].fields.size() == 1);
+        assert(result.project.types[0].fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::Map);
+        assert(result.project.types[0].fields[0].type.arguments.size() == 2);
+        assert(result.project.types[0].fields[0].type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::String);
+        assert(result.project.types[0].fields[0].type.arguments[1].kind ==
+               cjm::metadata::FieldTypeKind::Vector);
+        assert(result.project.types[0]
+                   .fields[0]
+                   .type.arguments[1]
+                   .arguments.size() == 1);
+        assert(result.project.types[0]
+                   .fields[0]
+                   .type.arguments[1]
+                   .arguments[0]
+                   .kind == cjm::metadata::FieldTypeKind::String);
+    }
+    {
+        cjm::parser::FieldSyntax callbacks;
+        callbacks.name = "callback";
+        callbacks.type_spelling =
+            "std::map<std::string, std::function<void()>>";
+        callbacks.location = {"map_values.hpp", 8, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"callback")";
+        comment.location = {"map_values.hpp", 8, 70};
+        callbacks.comments = {comment};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+        user.fields = {callbacks};
+
+        cjm::parser::SourceFileSyntax file;
+        file.path = "map_values.hpp";
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(!result.success);
+        assert(result.project.types.empty());
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find(
+                   "unsupported field type for JSON mapping") !=
+               std::string::npos);
     }
 }

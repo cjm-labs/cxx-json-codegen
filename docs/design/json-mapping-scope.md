@@ -66,25 +66,44 @@ Purpose:
 
 - make CJM useful for realistic but simple production models
 
-## v0.3 - Adoption
+## v0.3 - Practical Type Coverage
+
+Status:
+
+- implemented for v0.3.0
 
 Mapping scope:
 
-- no new core mapping requirements
-- examples should cover the full v0.2 mapping surface
-- installation and CMake workflows should make generated headers easy to consume
+- `std::map<std::string, T>`
+- `std::unordered_map<std::string, T>`
+- nested supported map value types
+- common fixed-width integer spellings
+- composed supported containers and generated structs
 
 Purpose:
 
-- make the existing mapping surface easy to try in other projects
+- cover common JSON object shapes with dynamic string keys
+- keep unsupported dynamic JSON shapes explicit and fail-closed
+
+## v0.3.5 - Frontend Parser Research
+
+Mapping scope:
+
+- no new public mapping semantics
+- evaluate whether Tree-sitter can parse current and near-future mapping inputs
+  more safely than the handwritten parser
+- preserve current metadata syntax and Metadata IR boundaries
+
+Purpose:
+
+- decide whether CJM should migrate the C++ frontend implementation to
+  Tree-sitter before larger extensibility work
 
 ## v0.4 - Extensibility
 
 Expanded mappings and extension points:
 
 - `std::array<T, N>`
-- `std::map<std::string, T>`
-- `std::unordered_map<std::string, T>`
 - `enum` and `enum class` string mappings
 - explicit type mapping policies
 - custom converter design for future non-core types

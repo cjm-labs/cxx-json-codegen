@@ -137,6 +137,17 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_practical_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
   add_test(NAME cjm_practical_generated_compile_tests COMMAND cjm_practical_generated_compile_tests)
 
+  add_executable(cjm_map_generated_compile_tests tests/backends/nlohmann/map_generated_compile_tests.cpp)
+  target_compile_features(cjm_map_generated_compile_tests PRIVATE cxx_std_17)
+  target_include_directories(cjm_map_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(cjm_map_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
+  add_test(NAME cjm_map_generated_compile_tests COMMAND cjm_map_generated_compile_tests)
+
+  add_executable(cjm_fixed_width_generated_compile_tests tests/backends/nlohmann/fixed_width_generated_compile_tests.cpp)
+  target_compile_features(cjm_fixed_width_generated_compile_tests PRIVATE cxx_std_17)
+  target_link_libraries(cjm_fixed_width_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
+  add_test(NAME cjm_fixed_width_generated_compile_tests COMMAND cjm_fixed_width_generated_compile_tests)
+
   add_test(NAME cjm_cli_generate_multiple_inputs
     COMMAND cjm generate
     --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/address.hpp
@@ -158,6 +169,28 @@ if (CJM_BUILD_TESTS)
     cjm_cli_generate_multiple_inputs_golden
     PROPERTIES
       DEPENDS cjm_cli_generate_multiple_inputs
+  )
+
+  add_test(NAME cjm_cli_generate_v03_practical
+    COMMAND cjm generate
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/v03_practical_models.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/v03_practical.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_v03_practical
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
+  add_test(NAME cjm_cli_generate_v03_practical_golden
+    COMMAND ${CMAKE_COMMAND} -E compare_files
+    ${CMAKE_CURRENT_BINARY_DIR}/v03_practical.cjm.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/v03_practical.expected.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_v03_practical_golden
+    PROPERTIES
+      DEPENDS cjm_cli_generate_v03_practical
   )
 endif()
 

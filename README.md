@@ -48,80 +48,196 @@ Go-like developer experience for its first JSON backend:
 
 ---
 
-## Example
+## Usage Example
 
-The target user experience is intentionally simple.
+Write ordinary C++ models and put JSON metadata next to the fields:
 
 ```cpp
+#pragma once
+
+#include <string>
+
 struct User {
-    std::string name;   // json:"name"
-    int age;            // json:"age"
+    std::string name; // json:"name"
+    int age = 0;      // json:"age"
 };
 ```
 
-Configure your project:
+After building the CLI, run CJM:
 
-```cmake
-find_package(CJM REQUIRED)
-
-add_executable(app main.cpp)
-
-cjm_generate(
-    TARGET app
-    HEADERS
-        user.hpp
-)
+```sh
+./build/cjm generate \
+  --input user.hpp \
+  --output user.cjm.hpp
 ```
 
-During the build, CJM generates:
+CJM generates ordinary C++ integration code:
 
-```text
-user.cjm.hpp
+```cpp
+inline void to_json(nlohmann::json& j, const User& value) {
+    j["name"] = value.name;
+    j["age"] = value.age;
+}
+
+inline void from_json(const nlohmann::json& j, User& value) {
+    j.at("name").get_to(value.name);
+    j.at("age").get_to(value.age);
+}
 ```
 
-which contains ordinary C++ serialization code.
+Use it like normal `nlohmann/json` code:
 
-No macros.
+```cpp
+#include "user.hpp"
+#include "user.cjm.hpp"
 
-No compiler plugins.
+#include <nlohmann/json.hpp>
 
-No runtime reflection.
+int main() {
+    User user;
+    user.name = "Ada";
+    user.age = 42;
+
+    nlohmann::json json = user;
+    User round_trip = json.get<User>();
+}
+```
+
+No macros. No compiler plugins. No runtime reflection.
 
 ---
 
-## Try From Source
+## Quickstart
 
-CJM v0.1 can be tried directly from the source tree.
+The fastest way to try CJM today is from this repository checkout.
 
 Requirements:
 
 - CMake
 - a C++17 compiler
-- `nlohmann/json`
+- `nlohmann/json` available locally or downloadable by CMake
 
-Build and run the included example:
+### Run the Example
 
 ```sh
 cmake -S . -B build
-cmake --build build
+cmake --build build --target cjm_basic_example
+./build/examples/basic/cjm_basic_example
+```
+
+That builds the CJM CLI, generates `user.cjm.hpp`, compiles the example, and
+runs a tiny JSON round trip.
+
+The example model is ordinary C++:
+
+```cpp
+#pragma once
+
+#include <string>
+
+struct User {
+    std::string name; // json:"name"
+    int age = 0;      // json:"age"
+};
+```
+
+### Generate Code Manually
+
+You can also run the local CLI directly:
+
+```sh
+cmake --build build --target cjm
+./build/cjm generate \
+  --input examples/basic/user.hpp \
+  --output /tmp/user.cjm.hpp
+```
+
+The generated file contains ordinary C++ `to_json` and `from_json` functions
+for `nlohmann/json`.
+
+For multiple related headers, repeat `--input` in the same command:
+
+```sh
+./build/cjm generate \
+  --input address.hpp \
+  --input user.hpp \
+  --output model.cjm.hpp
+```
+
+CJM does not automatically discover `#include` dependencies yet, so pass every
+related model header explicitly.
+
+A less repetitive file-list or manifest-based input workflow is planned for a
+future adoption milestone.
+
+### Use the Generated Header
+
+Include your model first, then the generated CJM header:
+
+```cpp
+#include "user.hpp"
+#include "user.cjm.hpp"
+
+#include <nlohmann/json.hpp>
+
+int main() {
+    User user;
+    user.name = "Ada";
+    user.age = 42;
+
+    nlohmann::json json = user;
+    User round_trip = json.get<User>();
+}
+```
+
+### Use CJM From CMake
+
+Inside this source tree, the example uses `cjm_generate`:
+
+```cmake
+add_executable(app main.cpp)
+
+target_link_libraries(app PRIVATE nlohmann_json::nlohmann_json)
+
+cjm_generate(
+  TARGET app
+  HEADERS user.hpp
+)
+```
+
+In this snippet:
+
+- `app` is your normal C++ executable.
+- `nlohmann_json::nlohmann_json` provides the JSON library used by the
+  generated backend code.
+- `cjm_generate` wires CJM into the build: it reads `user.hpp`, generates
+  `user.cjm.hpp`, and makes the generated header available to `app`.
+
+During the build, CJM generates:
+
+```text
+generated/cjm/user.cjm.hpp
+```
+
+and adds the generated directory to the target include path.
+
+### Try the Full Test Suite
+
+```sh
 ctest --test-dir build --output-on-failure
 ```
 
-The basic example lives in:
+### Keep the First Try Smooth
 
-```text
-examples/basic/
-```
+Current parser notes:
 
-It demonstrates:
-
-- a standard C++ model in `user.hpp`
-- field metadata written next to the fields
-- generated `user.cjm.hpp`
-- normal `nlohmann::json` conversion
+- write one supported field declaration per line
+- put `json:"..."` metadata in a same-line `//` comment
+- use qualified standard types such as `std::string`
+- pass every related header explicitly with `--input`
 
 Packaged installation through `find_package(CJM REQUIRED)` is part of the
-Adoption roadmap rather than the current v0.1 release surface.
+Adoption roadmap rather than the current release surface.
 
 ---
 
@@ -174,31 +290,59 @@ files.
 
 Current status:
 
-- v0.1.0 has been released 
-- Minimal end-to-end JSON code generation pipeline is available 
-- First official backend: `nlohmann/json` 
+- v0.3.0 Practical Type Coverage is the current release line
+- CJM has a parser -> semantic analysis -> Metadata IR -> nlohmann backend
+  pipeline
+- First official backend: `nlohmann/json`
+- The supported model surface is still a documented practical subset, not full
+  C++ grammar support
 
 ---
 
-## Current Limitations 
+## Current Mapping Surface
 
-CJM v0.1 is intentionally minimal.
+CJM currently supports a practical JSON mapping subset.
 
 Supported:
 
 - explicit CMake header registration with `cjm_generate`
-- simple `struct` declarations 
-- simple fields with `json:"name"` comments 
-- generated `to_json` / `from_json` for `nlohmann/json` 
-- basic scalar and `std::string` field spelling 
+- one or more explicit input headers
+- public `struct` declarations in the supported parser subset
+- fields with Go-style `json:"name"` comments
+- generated `to_json` / `from_json` for `nlohmann/json`
+- `bool`
+- signed and unsigned integer types
+- common fixed-width integer spellings from `<cstdint>`
+- floating-point types
+- `std::string`
+- enums
+- nested generated structs
+- namespaces
+- supported type aliases
+- `std::vector<T>`
+- `std::optional<T>`
+- `std::map<std::string, T>`
+- `std::unordered_map<std::string, T>`
+- `json:"-"` ignored fields
+- `omitempty` for supported optional fields
+
+## Current Limitations
+
+CJM intentionally remains a practical subset.
 
 Not yet supported:
 
 - full C++ parsing 
 - automatic header discovery 
-- nested structs 
-- STL containers 
-- templates 
+- arbitrary dynamic JSON values
+- `std::variant`
+- `std::any`
+- pointer fields
+- polymorphism
+- custom converters
+- enum string mapping policies
+- time and datetime mappings
+- multiline field declarations in the current handwritten parser
 - private fields 
 - native JSON backend 
 - install/package distribution
@@ -218,6 +362,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Philosophy](docs/philosophy.md)
 - [Roadmap](ROADMAP.md)
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
+- [v0.3.0 Release Notes](docs/releases/v0.3.0.md)
 - [Competitive Landscape](docs/design/competitive-landscape.md)
 - [Design Notes](docs/design/)
 

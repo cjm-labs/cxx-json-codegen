@@ -158,15 +158,10 @@ ProjectModel make_basic_user_project() {
     return project;
 }
 
-} // namespace
-
-int main() {
-    const ProjectModel project = make_basic_user_project();
-
-    const std::string expected_path =
-        "tests/golden/basic_user.expected.cjm.hpp";
-    const std::string actual_path = "tests/golden/basic_user.actual.cjm.hpp";
-
+// Compare generated output with a golden file.
+void assert_generated_matches(const ProjectModel& project,
+                              const std::string& expected_path,
+                              const std::string& actual_path) {
     const std::string generated = generate_header(project);
     const std::string expected = read_file(expected_path);
 
@@ -177,5 +172,80 @@ int main() {
                   << "actual: " << generated << "\n";
     }
     assert(generated == expected);
+}
+
+// Build a minimal project that exercises map backend generation.
+ProjectModel make_map_user_project() {
+    TypeModel user;
+    user.name = "User";
+    user.namespace_path = {"company", "model"};
+    user.qualified_name = "company::model::User";
+    user.source_location = SourceLocation{"include/map_user.hpp", 1, 8};
+
+    // 1. Define scalar and map field types.
+    FieldType string_type{FieldTypeKind::String, "std::string", "std::string"};
+    FieldType int_type{FieldTypeKind::SignedInteger, "int", "int"};
+
+    FieldType map_string_int_type{
+        FieldTypeKind::Map,
+        "std::map<std::string, int>",
+        "std::map",
+    };
+    map_string_int_type.arguments = {string_type, int_type};
+
+    FieldType unordered_map_string_string_type{
+        FieldTypeKind::Map,
+        "std::unordered_map<std::string, std::string>",
+        "std::unordered_map",
+    };
+    unordered_map_string_string_type.arguments = {string_type, string_type};
+
+    FieldType optional_map_string_int_type{
+        FieldTypeKind::Optional,
+        "std::optional<std::map<std::string, int>>",
+        "std::optional",
+    };
+    optional_map_string_int_type.arguments = {map_string_int_type};
+
+    FieldType optional_unordered_map_string_string_type{
+        FieldTypeKind::Optional,
+        "std::optional<std::unordered_map<std::string, std::string>>",
+        "std::optional",
+    };
+    optional_unordered_map_string_string_type.arguments = {
+        unordered_map_string_string_type};
+
+    // 2. Add required and optional map fields.
+    user.fields = {
+        FieldModel{"labels", map_string_int_type,
+                   JsonFieldMetadata{"labels", false},
+                   SourceLocation{"include/map_user.hpp", 2, 37}},
+        FieldModel{"aliases", unordered_map_string_string_type,
+                   JsonFieldMetadata{"aliases", false},
+                   SourceLocation{"include/map_user.hpp", 3, 58}},
+        FieldModel{"optional_labels", optional_map_string_int_type,
+                   JsonFieldMetadata{"optional_labels", true},
+                   SourceLocation{"include/map_user.hpp", 4, 52}},
+        FieldModel{"optional_aliases",
+                   optional_unordered_map_string_string_type,
+                   JsonFieldMetadata{"optional_aliases", true},
+                   SourceLocation{"include/map_user.hpp", 5, 73}},
+    };
+
+    // 3. Return the one-type project.
+    ProjectModel project;
+    project.types = {user};
+    return project;
+}
+
+} // namespace
+
+int main() {
+    assert_generated_matches(make_basic_user_project(),
+                             "tests/golden/basic_user.expected.cjm.hpp",
+                             "tests/golden/basic_user.actual.cjm.hpp");
+    assert_generated_matches(make_map_user_project(),
+                             "tests/golden/map_user.expected.cjm.hpp",
+                             "tests/golden/map_user.actual.cjm.hpp");
     return 0;
 }

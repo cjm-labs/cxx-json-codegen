@@ -66,10 +66,15 @@ CJM does not expose parser-specific APIs.
 
 Possible parser implementations include:
 
+- The current handwritten bootstrap parser
+- Tree-sitter-based frontend adapters
 - Clang
 - Future parser implementations
 
 The public API should remain unchanged regardless of parser implementation.
+
+Parser implementation details must not leak into Semantic Analysis, Metadata
+IR, backends, generated code, or public user workflows.
 
 ---
 
@@ -122,6 +127,10 @@ std::string name; // json:"name"
 
 Whether a comment represents metadata is determined by semantic analysis.
 
+When a parser implementation provides concrete comment nodes, CJM still owns
+comment-to-field attachment rules. A parser must not attach metadata by tree
+proximity alone.
+
 ---
 
 # Error Handling
@@ -129,6 +138,15 @@ Whether a comment represents metadata is determined by semantic analysis.
 Parser errors should stop the generation process.
 
 Diagnostics should reference the user's original source code whenever possible.
+
+Parser implementations must fail closed. Producing a syntax tree is not enough
+to continue generation. If a parser recovers from malformed input, CJM must
+still detect unsupported or ambiguous managed declarations and reject them
+before Semantic Analysis receives partial source facts.
+
+For Tree-sitter specifically, a future adapter must inspect error recovery
+signals such as `has_error`, `ERROR` nodes, and `MISSING` nodes for managed
+declarations.
 
 ---
 

@@ -28,6 +28,7 @@ enum class FieldTypeKind {
     String,
     Enum,
     Vector,
+    Map,
     Optional,
     UserDefined
 };
