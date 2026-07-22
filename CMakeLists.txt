@@ -170,5 +170,27 @@ if (CJM_BUILD_TESTS)
     PROPERTIES
       DEPENDS cjm_cli_generate_multiple_inputs
   )
+
+  add_test(NAME cjm_cli_generate_v03_practical
+    COMMAND cjm generate
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/v03_practical_models.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/v03_practical.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_v03_practical
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
+  add_test(NAME cjm_cli_generate_v03_practical_golden
+    COMMAND ${CMAKE_COMMAND} -E compare_files
+    ${CMAKE_CURRENT_BINARY_DIR}/v03_practical.cjm.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/v03_practical.expected.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_v03_practical_golden
+    PROPERTIES
+      DEPENDS cjm_cli_generate_v03_practical
+  )
 endif()
 

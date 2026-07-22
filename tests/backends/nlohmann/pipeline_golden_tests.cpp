@@ -62,5 +62,8 @@ int main() {
     assert_pipeline_matches("tests/fixtures/pipeline_map_user.hpp",
                             "tests/golden/map_user.expected.cjm.hpp",
                             "tests/golden/pipeline_map_user.actual.cjm.hpp");
+    assert_pipeline_matches("tests/fixtures/v03_practical_models.hpp",
+                            "tests/golden/v03_practical.expected.cjm.hpp",
+                            "tests/golden/v03_practical.actual.cjm.hpp");
     return 0;
 }
