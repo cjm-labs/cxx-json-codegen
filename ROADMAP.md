@@ -426,6 +426,8 @@ Scope:
   models
 - capture CMake, CLI, diagnostics, installation, and documentation friction as
   follow-up issues
+- explore a less repetitive file-list or manifest-based input workflow for
+  projects with many related model headers
 - improve getting-started and adoption documentation
 - keep GitHub, README, and website messaging aligned with the metadata compiler
   positioning

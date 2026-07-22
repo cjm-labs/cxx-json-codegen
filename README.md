@@ -168,6 +168,9 @@ The trailing `\` characters are shell line continuations; the example above is
 one command. CJM does not automatically discover `#include` dependencies yet,
 so pass every related model header explicitly.
 
+A less repetitive file-list or manifest-based input workflow is planned for a
+future adoption milestone.
+
 ### Use the Generated Header
 
 Include your model first, then the generated CJM header:
