@@ -449,6 +449,91 @@ int main() {
                std::string::npos);
     }
     {
+        // Fixed-width integers from <cstdint> map to existing numeric IR kinds.
+        cjm::parser::DeclarationSyntax metrics;
+        metrics.name = "Metrics";
+        metrics.namespace_path = {"company", "model"};
+
+        cjm::parser::FieldSyntax s8;
+        s8.name = "s8";
+        s8.type_spelling = "std::int8_t";
+        s8.comments = {{R"(json:"s8")"}};
+
+        cjm::parser::FieldSyntax s16;
+        s16.name = "s16";
+        s16.type_spelling = "std::int16_t";
+        s16.comments = {{R"(json:"s16")"}};
+
+        cjm::parser::FieldSyntax s32;
+        s32.name = "s32";
+        s32.type_spelling = "std::int32_t";
+        s32.comments = {{R"(json:"s32")"}};
+
+        cjm::parser::FieldSyntax s64;
+        s64.name = "s64";
+        s64.type_spelling = "std::int64_t";
+        s64.comments = {{R"(json:"s64")"}};
+
+        cjm::parser::FieldSyntax u8;
+        u8.name = "u8";
+        u8.type_spelling = "std::uint8_t";
+        u8.comments = {{R"(json:"u8")"}};
+
+        cjm::parser::FieldSyntax u16;
+        u16.name = "u16";
+        u16.type_spelling = "std::uint16_t";
+        u16.comments = {{R"(json:"u16")"}};
+
+        cjm::parser::FieldSyntax u32;
+        u32.name = "u32";
+        u32.type_spelling = "std::uint32_t";
+        u32.comments = {{R"(json:"u32")"}};
+
+        cjm::parser::FieldSyntax u64;
+        u64.name = "u64";
+        u64.type_spelling = "std::uint64_t";
+        u64.comments = {{R"(json:"u64")"}};
+
+        metrics.fields = {s8, s16, s32, s64, u8, u16, u32, u64};
+
+        cjm::parser::SourceFileSyntax file;
+        file.declarations = {metrics};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+
+        const auto& fields = result.project.types[0].fields;
+        assert(fields.size() == 8);
+
+        // 1. Signed fixed-width types stay in the signed integer category.
+        assert(fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(fields[1].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(fields[2].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(fields[3].type.kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+
+        // 2. Unsigned fixed-width types stay in the unsigned integer category.
+        assert(fields[4].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+        assert(fields[5].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+        assert(fields[6].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+        assert(fields[7].type.kind ==
+               cjm::metadata::FieldTypeKind::UnsignedInteger);
+
+        assert(fields[0].type.qualified_name == "std::int8_t");
+        assert(fields[3].type.qualified_name == "std::int64_t");
+        assert(fields[4].type.qualified_name == "std::uint8_t");
+        assert(fields[7].type.qualified_name == "std::uint64_t");
+    }
+
+    {
         cjm::parser::SourceFileSyntax file;
         file.path = "aliases.hpp";
 
