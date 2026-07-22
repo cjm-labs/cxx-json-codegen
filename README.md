@@ -199,6 +199,14 @@ cjm_generate(
 )
 ```
 
+In this snippet:
+
+- `app` is your normal C++ executable.
+- `nlohmann_json::nlohmann_json` provides the JSON library used by the
+  generated backend code.
+- `cjm_generate` wires CJM into the build: it reads `user.hpp`, generates
+  `user.cjm.hpp`, and makes the generated header available to `app`.
+
 During the build, CJM generates:
 
 ```text
