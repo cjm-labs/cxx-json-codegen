@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(CJM VERSION 0.1.0 LANGUAGES CXX)
+project(CJM VERSION 0.3.0 LANGUAGES CXX)
 
 include(FetchContent)
 
@@ -193,4 +193,3 @@ if (CJM_BUILD_TESTS)
       DEPENDS cjm_cli_generate_v03_practical
   )
 endif()
-
