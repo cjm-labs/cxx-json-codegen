@@ -125,6 +125,109 @@ Adoption roadmap rather than the current release surface.
 
 ---
 
+## Use CJM Today
+
+The easiest way to try CJM today is from this repository checkout.
+
+### 1. Build the CLI
+
+```sh
+cmake -S . -B build
+cmake --build build --target cjm
+```
+
+This produces the local CLI:
+
+```text
+build/cjm
+```
+
+### 2. Write an annotated C++ model
+
+CJM reads ordinary C++ headers. Metadata is written as same-line field
+comments:
+
+```cpp
+#pragma once
+
+#include <string>
+
+struct User {
+    std::string name; // json:"name"
+    int age = 0;      // json:"age"
+};
+```
+
+### 3. Generate a nlohmann/json header
+
+Run the CLI against one or more explicit input headers:
+
+```sh
+./build/cjm generate \
+  --input examples/basic/user.hpp \
+  --output /tmp/user.cjm.hpp
+```
+
+For multiple related headers, repeat `--input`:
+
+```sh
+./build/cjm generate \
+  --input address.hpp \
+  --input user.hpp \
+  --output model.cjm.hpp
+```
+
+The generated file contains ordinary C++ `to_json` and `from_json` functions
+for `nlohmann/json`.
+
+### 4. Use the generated header
+
+Include your model header first, then the generated CJM header:
+
+```cpp
+#include "user.hpp"
+#include "user.cjm.hpp"
+
+#include <nlohmann/json.hpp>
+
+int main() {
+    User user;
+    user.name = "Ada";
+    user.age = 42;
+
+    nlohmann::json json = user;
+    User round_trip = json.get<User>();
+}
+```
+
+### 5. Try the included CMake example
+
+The repository includes a working CMake integration example:
+
+```sh
+cmake -S . -B build
+cmake --build build --target cjm_basic_example
+./build/examples/basic/cjm_basic_example
+```
+
+The example uses:
+
+```cmake
+cjm_generate(
+  TARGET cjm_basic_example
+  HEADERS user.hpp
+)
+```
+
+Current parser notes:
+
+- write one supported field declaration per line
+- put `json:"..."` metadata in a same-line `//` comment
+- use qualified standard types such as `std::string`
+- pass every related header explicitly with `--input`
+
+---
+
 ## Design Philosophy
 
 CJM follows a few core principles:
