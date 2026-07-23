@@ -294,8 +294,30 @@ Current status:
 - CJM has a parser -> semantic analysis -> Metadata IR -> nlohmann backend
   pipeline
 - First official backend: `nlohmann/json`
+- CJM v0.3.0 has been dogfooded in a real downstream CMake project:
+  [ull-md-engine](https://github.com/lmingzhi618/ull-md-engine)
 - The supported model surface is still a documented practical subset, not full
   C++ grammar support
+
+---
+
+## Early Adopters Welcome
+
+CJM v0.3.0 is ready for early adopters who want to try build-time JSON
+integration for ordinary Modern C++ models.
+
+The current release has been dogfooded through the public
+`FetchContent` + `cjm_generate` workflow in
+[ull-md-engine](https://github.com/lmingzhi618/ull-md-engine), covering
+optionals, vectors, ordered and unordered string-keyed maps, nested generated
+structs, enums, ignored fields, `omitempty`, and fixed-width integers.
+
+If CJM fails on a practical model you expected to work, or if the CMake,
+diagnostics, or documentation feel confusing, please open an issue with the
+smallest reproducible header and build command.
+
+See the [ull-md-engine dogfood report](docs/dogfood/ull-md-engine-v0.3.0.md)
+for the current downstream validation record.
 
 ---
 
@@ -362,6 +384,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Philosophy](docs/philosophy.md)
 - [Roadmap](ROADMAP.md)
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
+- [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [v0.3.0 Release Notes](docs/releases/v0.3.0.md)
 - [Competitive Landscape](docs/design/competitive-landscape.md)
 - [Third-Party Notices](THIRD_PARTY_NOTICES.md)
