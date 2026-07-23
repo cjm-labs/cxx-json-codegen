@@ -20,6 +20,26 @@ CJM keeps your C++ models as the source of truth. It generates the JSON integrat
 
 ---
 
+## Early Adopters Welcome
+
+CJM v0.3.0 is ready for early adopters who want to try build-time JSON
+integration for ordinary Modern C++ models.
+
+The current release has been dogfooded through the public
+`FetchContent` + `cjm_generate` workflow in
+[ull-md-engine](https://github.com/lmingzhi618/ull-md-engine), covering
+optionals, vectors, ordered and unordered string-keyed maps, nested generated
+structs, enums, ignored fields, `omitempty`, and fixed-width integers.
+
+If CJM fails on a practical model you expected to work, or if the CMake,
+diagnostics, or documentation feel confusing, please open an issue with the
+smallest reproducible header and build command.
+
+See the [ull-md-engine dogfood report](docs/dogfood/ull-md-engine-v0.3.0.md)
+for the current downstream validation record.
+
+---
+
 ## Why CJM?
 
 Modern C++ still lacks a simple and ergonomic way to associate metadata with user-defined types.
@@ -298,26 +318,6 @@ Current status:
   [ull-md-engine](https://github.com/lmingzhi618/ull-md-engine)
 - The supported model surface is still a documented practical subset, not full
   C++ grammar support
-
----
-
-## Early Adopters Welcome
-
-CJM v0.3.0 is ready for early adopters who want to try build-time JSON
-integration for ordinary Modern C++ models.
-
-The current release has been dogfooded through the public
-`FetchContent` + `cjm_generate` workflow in
-[ull-md-engine](https://github.com/lmingzhi618/ull-md-engine), covering
-optionals, vectors, ordered and unordered string-keyed maps, nested generated
-structs, enums, ignored fields, `omitempty`, and fixed-width integers.
-
-If CJM fails on a practical model you expected to work, or if the CMake,
-diagnostics, or documentation feel confusing, please open an issue with the
-smallest reproducible header and build command.
-
-See the [ull-md-engine dogfood report](docs/dogfood/ull-md-engine-v0.3.0.md)
-for the current downstream validation record.
 
 ---
 
