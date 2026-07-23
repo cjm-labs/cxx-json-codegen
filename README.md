@@ -419,6 +419,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
+- [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
 - [v0.3.0 Release Notes](docs/releases/v0.3.0.md)
 - [Competitive Landscape](docs/design/competitive-landscape.md)
 - [Third-Party Notices](THIRD_PARTY_NOTICES.md)
