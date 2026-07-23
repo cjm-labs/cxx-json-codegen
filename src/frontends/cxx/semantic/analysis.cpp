@@ -79,7 +79,7 @@ join_qualified_name_prefix(const std::vector<std::string>& namespace_path,
                            std::size_t namespace_count,
                            const std::string& name) {
     std::string result;
-    for (auto i = 0; i < namespace_count; ++i) {
+    for (std::size_t i = 0; i < namespace_count; ++i) {
         const auto& namespace_name = namespace_path[i];
         if (!result.empty()) {
             result += "::";
