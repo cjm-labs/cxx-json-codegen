@@ -1,0 +1,32 @@
+name: Question
+description: Ask about CJM usage, support, or adoption.
+title: "question: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Questions are welcome, especially from early adopters trying CJM on real C++ headers.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to understand or decide?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Include a small model snippet, CMake snippet, or downstream workflow if relevant.
+      render: cpp
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Link docs you read or commands you ran.
+  - type: textarea
+    id: expected
+    attributes:
+      label: What answer would help?
+      description: For example, support confirmation, workaround, roadmap guidance, or design rationale.

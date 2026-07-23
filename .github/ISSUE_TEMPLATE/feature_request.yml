@@ -1,0 +1,61 @@
+name: Feature request
+description: Request a practical CJM mapping or workflow improvement.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        CJM prioritizes practical C++ model workflows. Please describe the real use case behind the request.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Parser
+        - Semantic Analysis
+        - Metadata IR
+        - Backend / Generated Code
+        - CLI
+        - CMake Integration
+        - Documentation
+        - Adoption Workflow
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What real project or model shape needs this?
+    validations:
+      required: true
+  - type: textarea
+    id: model
+    attributes:
+      label: Example C++ model
+      description: Show the declaration shape you want CJM to support.
+      render: cpp
+    validations:
+      required: true
+  - type: textarea
+    id: expected_json
+    attributes:
+      label: Expected JSON shape or generated behavior
+      render: json
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Impact
+      options:
+        - Blocks trying CJM on a real project
+        - Important before v1.0
+        - Nice to have later
+        - Research / design discussion
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing workaround, handwritten code, or another library.

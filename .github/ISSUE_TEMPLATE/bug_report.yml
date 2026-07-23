@@ -1,0 +1,77 @@
+name: Bug report
+description: Report a reproducible CJM failure.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying CJM. Small reproducible headers are the most useful bug reports.
+  - type: input
+    id: version
+    attributes:
+      label: CJM version or commit
+      description: For example, v0.3.0 or a commit hash.
+      placeholder: v0.3.0
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, compiler, CMake version, and build system if relevant.
+      placeholder: macOS 15, Clang 18, CMake 3.30, Ninja
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Parser
+        - Semantic Analysis
+        - Metadata IR
+        - nlohmann Backend
+        - CLI
+        - CMake Integration
+        - Generated Code
+        - Documentation
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: model
+    attributes:
+      label: Minimal C++ header
+      description: Paste the smallest model header that reproduces the problem.
+      render: cpp
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command or CMake snippet
+      description: Include the `cjm generate` command or `cjm_generate(...)` snippet.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect CJM to parse, validate, or generate?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Paste the full diagnostic, compiler error, or generated-code issue.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional notes
+      description: Downstream repo link, workaround, or related context.

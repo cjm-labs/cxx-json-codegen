@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: CJM Discussions
+    url: https://github.com/cjm-labs/cxx-json-codegen/discussions
+    about: Ask open-ended usage, adoption, and design questions.
+  - name: CJM documentation
+    url: https://github.com/cjm-labs/cxx-json-codegen#readme
+    about: Read the README, current mapping surface, and early-adopter notes.
+  - name: ull-md-engine dogfood report
+    url: https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/dogfood/ull-md-engine-v0.3.0.md
+    about: See a real downstream CMake dogfood record for CJM v0.3.0.
+  - name: CJM website
+    url: https://cjm-labs.org
+    about: Visit the project website.

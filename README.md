@@ -35,6 +35,12 @@ If CJM fails on a practical model you expected to work, or if the CMake,
 diagnostics, or documentation feel confusing, please open an issue with the
 smallest reproducible header and build command.
 
+For open-ended usage or design feedback, use
+[GitHub Discussions](https://github.com/cjm-labs/cxx-json-codegen/discussions).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for bug reports, questions, feature
+requests, and pull request guidance.
+
 See the [ull-md-engine dogfood report](docs/dogfood/ull-md-engine-v0.3.0.md)
 for the current downstream validation record.
 
@@ -241,6 +247,34 @@ generated/cjm/user.cjm.hpp
 
 and adds the generated directory to the target include path.
 
+### Use CJM From A Downstream Project
+
+Early adopters can consume CJM by pinning a release tag with CMake
+`FetchContent`:
+
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(
+  cxx_json_codegen
+  GIT_REPOSITORY https://github.com/cjm-labs/cxx-json-codegen.git
+  GIT_TAG v0.3.0
+)
+
+FetchContent_MakeAvailable(cxx_json_codegen)
+
+add_executable(app main.cpp)
+target_link_libraries(app PRIVATE nlohmann_json::nlohmann_json)
+
+cjm_generate(
+  TARGET app
+  HEADERS user.hpp
+)
+```
+
+This is the workflow used by the downstream `ull-md-engine` dogfood run.
+Packaged installation through `find_package(CJM REQUIRED)` is planned later.
+
 ### Try the Full Test Suite
 
 ```sh
@@ -255,9 +289,6 @@ Current parser notes:
 - put `json:"..."` metadata in a same-line `//` comment
 - use qualified standard types such as `std::string`
 - pass every related header explicitly with `--input`
-
-Packaged installation through `find_package(CJM REQUIRED)` is part of the
-Adoption roadmap rather than the current release surface.
 
 ---
 
@@ -382,9 +413,12 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Project Vision](docs/vision.md)
 - [Architecture](ARCHITECTURE.md)
 - [Philosophy](docs/philosophy.md)
+- [Contributing](CONTRIBUTING.md)
+- [Discussions](DISCUSSIONS.md)
 - [Roadmap](ROADMAP.md)
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
+- [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [v0.3.0 Release Notes](docs/releases/v0.3.0.md)
 - [Competitive Landscape](docs/design/competitive-landscape.md)
 - [Third-Party Notices](THIRD_PARTY_NOTICES.md)
