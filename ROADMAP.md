@@ -144,6 +144,10 @@ indexing and discovery rather than ranking optimization.
 
 ## Phase 0 - Indexing and Discovery
 
+Status:
+
+> Completed for the current early-adopter stage.
+
 This phase may be completed once before or during v0.2.
 
 Goal:
@@ -186,6 +190,11 @@ Success criteria:
 
 ## Phase 1 - Adoption Documentation
 
+Status:
+
+> Initial repo and website adoption messaging is complete. A full documentation
+> site remains future work.
+
 This phase belongs with an adoption-focused milestone after v0.3.0, when the
 practical type surface is strong enough for new users to try.
 
@@ -205,6 +214,11 @@ Scope:
 - architecture overview for users
 
 ## Phase 2 - Content and Dogfooding
+
+Status:
+
+> Initial dogfooding has completed through `ull-md-engine`. Broader content
+> work should still wait for more real adoption data.
 
 Dogfooding may begin after v0.3.0 so a downstream project can consume a real
 tag. Content work should begin only after that dogfooding produces real
@@ -415,6 +429,10 @@ Success criteria:
 
 # v0.3.2 - Adoption and Dogfooding
 
+Status:
+
+> Completed for the initial v0.3.2 adoption pass.
+
 Goal:
 
 > Let v0.3.0 be tried from real downstream and documentation workflows without
@@ -445,6 +463,24 @@ Success criteria:
   use case
 - friction discovered during dogfooding is captured as CJM follow-up work
 - adoption documentation explains how to try the current supported workflow
+
+Completed:
+
+- `ull-md-engine` consumed CJM v0.3.0 through the public
+  `FetchContent` + `cjm_generate` workflow
+- dogfood covered a simple JSON logging model and a broader practical mapping
+  surface model
+- downstream warning friction was fixed in CJM
+- README, release notes, dogfood report, issue templates, Discussions, and
+  contributing guidance were updated for early adopters
+- cjm-labs.org messaging was updated for early-adopter outreach
+- first outreach posts were published to LinkedIn and the r/cpp Show and Tell
+  thread
+
+Deferred follow-up:
+
+- a less repetitive file-list or manifest-based input workflow remains a
+  future adoption improvement, to be driven by real downstream need
 
 ---
 
