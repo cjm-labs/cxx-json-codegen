@@ -339,7 +339,7 @@ The current parser must not be removed during the spike.
 The v0.3.5 spike should produce:
 
 - architecture note
-- dependency assessment
+- dependency assessment (`docs/design/tree-sitter-dependency-assessment.md`)
 - adapter prototype
 - correctness report
 - staged migration plan
@@ -390,4 +390,3 @@ Tree-sitter should be adopted only if the spike demonstrates that:
 - version pinning is reproducible
 - adapter complexity is lower than continued handwritten parser maintenance
 - the design does not block a future C frontend
-
