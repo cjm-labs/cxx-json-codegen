@@ -310,12 +310,12 @@ void extract_declarations(const std::string& path, const std::string& source,
 /**
  * Find the first concrete Tree-sitter syntax error marker under `node`.
  *
- * `ts_node_has_error(node)` tells us a subtree contains an eror. This helper
+ * `ts_node_has_error(node)` tells us a subtree contains an error. This helper
  * locates the first ERROR or MISSING node so diagnostics can point closer to
  * the malformed source.
  */
 TSNode find_first_error_node(const TSNode& node) {
-    if (ts_node_has_error(node)) {
+    if (ts_node_is_error(node)) {
         return node;
     }
     if (ts_node_is_missing(node)) {
@@ -325,11 +325,12 @@ TSNode find_first_error_node(const TSNode& node) {
     const auto count = ts_node_named_child_count(node);
     for (uint32_t i = 0; i < count; ++i) {
         const auto child = ts_node_named_child(node, i);
-        if (ts_node_has_error(child)) {
-            const auto found = find_first_error_node(child);
-            if (ts_node_is_null(found)) {
-                return found;
-            }
+        if (!ts_node_has_error(child)) {
+            continue;
+        }
+        const auto found = find_first_error_node(child);
+        if (!ts_node_is_null(found)) {
+            return found;
         }
     }
     return TSNode{};
