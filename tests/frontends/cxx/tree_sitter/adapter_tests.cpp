@@ -202,6 +202,7 @@ struct User {
         assert(result.diagnostics[0].message.find("syntax errors") !=
                std::string::npos);
         assert(result.diagnostics[0].location.file == "broken.hpp");
+        assert(result.diagnostics[0].location.line >= 2);
     }
 
     return 0;

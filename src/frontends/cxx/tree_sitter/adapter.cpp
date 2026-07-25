@@ -306,6 +306,35 @@ void extract_declarations(const std::string& path, const std::string& source,
                              namespace_path, file);
     }
 }
+
+/**
+ * Find the first concrete Tree-sitter syntax error marker under `node`.
+ *
+ * `ts_node_has_error(node)` tells us a subtree contains an eror. This helper
+ * locates the first ERROR or MISSING node so diagnostics can point closer to
+ * the malformed source.
+ */
+TSNode find_first_error_node(const TSNode& node) {
+    if (ts_node_has_error(node)) {
+        return node;
+    }
+    if (ts_node_is_missing(node)) {
+        return node;
+    }
+
+    const auto count = ts_node_named_child_count(node);
+    for (uint32_t i = 0; i < count; ++i) {
+        const auto child = ts_node_named_child(node, i);
+        if (ts_node_has_error(child)) {
+            const auto found = find_first_error_node(child);
+            if (ts_node_is_null(found)) {
+                return found;
+            }
+        }
+    }
+    return TSNode{};
+}
+
 } // namespace
 
 TreeSitterParseResult parse_source_text(const std::string& path,
@@ -349,9 +378,14 @@ TreeSitterParseResult parse_source_text(const std::string& path,
     // 3. Fail closed if the root tree contains syntax errors.
     const auto root = ts_tree_root_node(tree);
     if (ts_node_has_error(root)) {
+        const auto error_node = find_first_error_node(root);
+        auto location_node = root;
+        if (!ts_node_is_null(error_node)) {
+            location_node = error_node;
+        }
         result.diagnostics.push_back(ParseDiagnostic{
             "Tree-sitter reported syntax errors",
-            to_source_location(path, ts_node_start_point(root)),
+            to_source_location(path, ts_node_start_point(location_node)),
         });
         ts_tree_delete(tree);
         ts_parser_delete(parser);
