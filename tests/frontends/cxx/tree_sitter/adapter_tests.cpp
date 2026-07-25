@@ -18,7 +18,19 @@ struct User {
 
         assert(result.success);
         assert(result.file.path == "user.hpp");
-        assert(result.file.declarations.empty());
+
+        assert(result.file.declarations.size() == 1);
+
+        const auto& user = result.file.declarations[0];
+        assert(user.name == "User");
+        assert(user.namespace_path.size() == 2);
+        assert(user.namespace_path[0] == "company");
+        assert(user.namespace_path[1] == "model");
+        assert(user.location.file == "user.hpp");
+        assert(user.location.line == 3);
+        assert(user.location.column == 1);
+        assert(user.fields.empty());
+
         assert(result.file.enums.empty());
         assert(result.file.type_aliases.empty());
         assert(result.diagnostics.empty());
