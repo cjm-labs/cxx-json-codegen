@@ -7,7 +7,14 @@ int main() {
     {
         const std::string source = R"cpp(
 namespace company::model {
+enum class Status {
+    Ok,
+};
+
+using Sequence = std::uint64_t;
+
 struct User {
+    Sequence id; // json:"id"
     std::string name; // json:"name"
 };
 }
@@ -27,25 +34,41 @@ struct User {
         assert(user.namespace_path[0] == "company");
         assert(user.namespace_path[1] == "model");
         assert(user.location.file == "user.hpp");
-        assert(user.location.line == 3);
+        assert(user.location.line == 9);
         assert(user.location.column == 1);
 
-        assert(user.fields.size() == 1);
+        assert(user.fields.size() == 2);
 
         const auto& name = user.fields[0];
-        assert(name.name == "name");
-        assert(name.type_spelling == "std::string");
+        assert(name.name == "id");
+        assert(name.type_spelling == "Sequence");
         assert(name.location.file == "user.hpp");
-        assert(name.location.line == 4);
+        assert(name.location.line == 10);
         assert(name.location.column == 5);
         assert(name.comments.size() == 1);
-        assert(name.comments[0].text == "// json:\"name\"");
+        assert(name.comments[0].text == "// json:\"id\"");
         assert(name.comments[0].location.file == "user.hpp");
-        assert(name.comments[0].location.line == 4);
-        assert(name.comments[0].location.column == 23);
+        assert(name.comments[0].location.line == 10);
+        assert(name.comments[0].location.column == 18);
 
-        assert(result.file.enums.empty());
-        assert(result.file.type_aliases.empty());
+        assert(result.file.enums.size() == 1);
+        auto status = result.file.enums[0];
+        assert(status.name == "Status");
+        assert(status.namespace_path.size() == 2);
+        assert(status.namespace_path[0] == "company");
+        assert(status.namespace_path[1] == "model");
+        assert(status.location.file == "user.hpp");
+        assert(status.location.line == 3);
+        assert(status.location.column == 1);
+
+        assert(result.file.type_aliases.size() == 1);
+        auto sequence = result.file.type_aliases[0];
+        assert(sequence.name == "Sequence");
+        assert(sequence.target_type_spelling == "std::uint64_t");
+        assert(sequence.namespace_path.size() == 2);
+        assert(sequence.namespace_path[0] == "company");
+        assert(sequence.namespace_path[1] == "model");
+
         assert(result.diagnostics.empty());
     }
     {

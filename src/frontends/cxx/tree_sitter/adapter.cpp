@@ -202,6 +202,50 @@ void collect_namespace_parts(const TSNode& node, const std::string& source,
 }
 
 /**
+ * Convert one supported Tree-sitter enum_specifier into EnumSyntax.
+ *
+ * This records only the enum name, namespace, and source location.
+ * Enumerator values are not part of the current parser syntax contract.
+ */
+bool extract_enum(const std::string& path, const std::string& source,
+                  const TSNode& enum_node,
+                  const std::vector<std::string>& namespace_path,
+                  parser::EnumSyntax& out) {
+    const auto name_node = ts_node_child_by_field_name(enum_node, "name", 4);
+    if (ts_node_is_null(name_node)) {
+        return false;
+    }
+
+    out.name = node_text(source, name_node);
+    out.namespace_path = namespace_path;
+    out.location = to_source_location(path, ts_node_start_point(enum_node));
+    return true;
+}
+
+/**
+ * Convert one supported Tree-sitter alias_declaration into TypeAliasSyntax.
+ *
+ * This preserves the target type spelling exactly as source text.
+ * Alias resolution belongs to Semantic Analysis.
+ */
+bool extract_alias(const std::string& path, const std::string& source,
+                   const TSNode& alias_node,
+                   const std::vector<std::string>& namespace_path,
+                   parser::TypeAliasSyntax& out) {
+    const auto name_node = ts_node_child_by_field_name(alias_node, "name", 4);
+    const auto type_node = ts_node_child_by_field_name(alias_node, "type", 4);
+    if (ts_node_is_null(name_node) || ts_node_is_null(type_node)) {
+        return false;
+    }
+
+    out.name = node_text(source, name_node);
+    out.target_type_spelling = trim_copy(node_text(source, type_node));
+    out.namespace_path = namespace_path;
+    out.location = to_source_location(path, ts_node_start_point(alias_node));
+    return true;
+}
+
+/**
  * Extract supported struct declarations into SourceFileSyntax.
  *
  * This only builds declarations shells. Field extraction is a later step.
@@ -226,6 +270,22 @@ void extract_declarations(const std::string& path, const std::string& source,
         return;
     }
 
+    if (node_type_is(node, "enum_specifier")) {
+        parser::EnumSyntax enum_syntax;
+        if (extract_enum(path, source, node, namespace_path, enum_syntax)) {
+            file.enums.push_back(enum_syntax);
+        }
+        return;
+    }
+
+    if (node_type_is(node, "alias_declaration")) {
+        parser::TypeAliasSyntax alias_syntax;
+        if (extract_alias(path, source, node, namespace_path, alias_syntax)) {
+            file.type_aliases.push_back(alias_syntax);
+        }
+        return;
+    }
+
     if (node_type_is(node, "struct_specifier")) {
         const auto name_node = ts_node_child_by_field_name(node, "name", 4);
         if (!ts_node_is_null(name_node)) {
@@ -246,7 +306,6 @@ void extract_declarations(const std::string& path, const std::string& source,
                              namespace_path, file);
     }
 }
-
 } // namespace
 
 TreeSitterParseResult parse_source_text(const std::string& path,
