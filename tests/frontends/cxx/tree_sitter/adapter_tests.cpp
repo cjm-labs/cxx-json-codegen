@@ -29,7 +29,16 @@ struct User {
         assert(user.location.file == "user.hpp");
         assert(user.location.line == 3);
         assert(user.location.column == 1);
-        assert(user.fields.empty());
+
+        assert(user.fields.size() == 1);
+
+        const auto& name = user.fields[0];
+        assert(name.name == "name");
+        assert(name.type_spelling == "std::string");
+        assert(name.location.file == "user.hpp");
+        assert(name.location.line == 4);
+        assert(name.location.column == 5);
+        assert(name.comments.empty());
 
         assert(result.file.enums.empty());
         assert(result.file.type_aliases.empty());

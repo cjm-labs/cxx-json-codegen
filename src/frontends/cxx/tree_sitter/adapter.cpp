@@ -1,5 +1,6 @@
 #include "frontends/cxx/tree_sitter/adapter.hpp"
 
+#include <cctype>
 #include <cstdint>
 #include <cstring>
 #include <tree_sitter/api.h>
@@ -7,6 +8,26 @@
 
 namespace cjm::frontends::cxx::tree_sitter {
 namespace {
+
+/**
+ * Trim whitespace around a source spelling slice.
+ */
+std::string trim_copy(std::string text) {
+    auto begin = text.begin();
+    while (begin != text.end() &&
+           std::isspace(static_cast<unsigned char>(*begin))) {
+        ++begin;
+    }
+
+    auto end = text.end();
+    while (end != begin &&
+           std::isspace(static_cast<unsigned char>(*(end - 1)))) {
+        --end;
+    }
+
+    return std::string(begin, end);
+}
+
 /**
  * Convert a Tree-sitter point to CJM's source location shape.
  */
@@ -31,6 +52,65 @@ std::string node_text(const std::string& source, const TSNode& node) {
     const auto begin = ts_node_start_byte(node);
     const auto end = ts_node_end_byte(node);
     return source.substr(begin, end - begin);
+}
+
+/**
+ * Find the first named child with the requested Tree-sitter node type.
+ */
+TSNode find_first_named_child_of_type(const TSNode& node, const char* type) {
+    const auto count = ts_node_named_child_count(node);
+    for (uint32_t i = 0; i < count; ++i) {
+        const auto child = ts_node_named_child(node, i);
+        if (node_type_is(child, type)) {
+            return child;
+        }
+    }
+    return TSNode{};
+}
+
+/**
+ * Convert one supported Tree-sitter field_declaration into FieldSyntax.
+ */
+bool extract_field(const std::string& path, const std::string& source,
+                   const TSNode& field_node, parser::FieldSyntax& field) {
+    const auto name_node =
+        find_first_named_child_of_type(field_node, "field_identifier");
+    if (ts_node_is_null(name_node)) {
+        return false;
+    }
+
+    const auto type_begin = ts_node_start_byte(field_node);
+    const auto type_end = ts_node_start_byte(name_node);
+    field.type_spelling =
+        trim_copy(source.substr(type_begin, type_end - type_begin));
+    field.name = node_text(source, name_node);
+    field.location = to_source_location(path, ts_node_start_point(field_node));
+    return true;
+}
+
+/**
+ * Extract supported ordinary fields from a struct body.
+ */
+void extract_fields(const std::string& path, const std::string& source,
+                    const TSNode& struct_node,
+                    parser::DeclarationSyntax& declaration) {
+    const auto body_node = ts_node_child_by_field_name(struct_node, "body", 4);
+    if (ts_node_is_null(body_node)) {
+        return;
+    }
+
+    const auto count = ts_node_named_child_count(body_node);
+    for (uint32_t i = 0; i < count; ++i) {
+        const auto child = ts_node_named_child(body_node, i);
+        if (!node_type_is(child, "field_declaration")) {
+            continue;
+        }
+
+        parser::FieldSyntax field;
+        if (extract_field(path, source, child, field)) {
+            declaration.fields.push_back(field);
+        }
+    }
 }
 
 /**
@@ -89,6 +169,7 @@ void extract_declarations(const std::string& path, const std::string& source,
             declaration.namespace_path = namespace_path;
             declaration.location =
                 to_source_location(path, ts_node_start_point(node));
+            extract_fields(path, source, node, declaration);
             file.declarations.push_back(declaration);
         }
         return;
