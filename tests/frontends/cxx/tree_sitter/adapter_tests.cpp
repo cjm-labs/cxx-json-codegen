@@ -8,7 +8,7 @@ int main() {
         const std::string source = R"cpp(
 namespace company::model {
 struct User {
-    std::string name;
+    std::string name; // json:"name"
 };
 }
 )cpp";
@@ -38,7 +38,11 @@ struct User {
         assert(name.location.file == "user.hpp");
         assert(name.location.line == 4);
         assert(name.location.column == 5);
-        assert(name.comments.empty());
+        assert(name.comments.size() == 1);
+        assert(name.comments[0].text == "// json:\"name\"");
+        assert(name.comments[0].location.file == "user.hpp");
+        assert(name.comments[0].location.line == 4);
+        assert(name.comments[0].location.column == 23);
 
         assert(result.file.enums.empty());
         assert(result.file.type_aliases.empty());

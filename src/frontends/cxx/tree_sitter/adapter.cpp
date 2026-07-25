@@ -89,6 +89,65 @@ bool extract_field(const std::string& path, const std::string& source,
 }
 
 /**
+ * Convert one Tree-sitter comment node into CJM CommentSyntax.
+ *
+ * This function preserves the original comment text. Metadata validation
+ * belongs to Semantic Analysis, not the frontend adapter.
+ */
+parser::CommentSyntax extract_comment(const std::string& path,
+                                      const std::string& source,
+                                      const TSNode& comment_node) {
+    parser::CommentSyntax comment;
+    comment.text = node_text(source, comment_node);
+    comment.location =
+        to_source_location(path, ts_node_start_point(comment_node));
+    return comment;
+}
+
+/**
+ * Return true when `comment_node` is a trailing same-line comment for
+ * `field_node`.
+ *
+ * This function only checks source positions. It does not parse the comment
+ * text and does not decide whether the comment contains CJM metadata.
+ */
+bool is_same_line_trailing_comment(const TSNode& field_node,
+                                   const TSNode& comment_node) {
+    const auto field_end = ts_node_end_point(field_node);
+    const auto comment_start = ts_node_start_point(comment_node);
+
+    return field_end.row == comment_start.row &&
+           comment_start.column > field_end.column;
+}
+
+/**
+ * Attach the next same-line comment to a field when the Tree-sitter sibling
+ * sequence is:
+ *
+ *     field_declaration
+ *     comment
+ *
+ * This keeps comment binding local to the struct body traversal.
+ */
+void bind_trailing_comment_if_present(const std::string& path,
+                                      const std::string& source,
+                                      const TSNode& field_node,
+                                      const TSNode& maybe_comment_node,
+                                      parser::FieldSyntax& field) {
+    if (ts_node_is_null(maybe_comment_node)) {
+        return;
+    }
+
+    if (!node_type_is(maybe_comment_node, "comment")) {
+        return;
+    }
+    if (!is_same_line_trailing_comment(field_node, maybe_comment_node)) {
+        return;
+    }
+    field.comments.push_back(extract_comment(path, source, maybe_comment_node));
+}
+
+/**
  * Extract supported ordinary fields from a struct body.
  */
 void extract_fields(const std::string& path, const std::string& source,
@@ -107,9 +166,15 @@ void extract_fields(const std::string& path, const std::string& source,
         }
 
         parser::FieldSyntax field;
-        if (extract_field(path, source, child, field)) {
-            declaration.fields.push_back(field);
+        if (!extract_field(path, source, child, field)) {
+            continue;
         }
+        if ((i + 1) < count) {
+            const auto next_child = ts_node_named_child(body_node, i + 1);
+            bind_trailing_comment_if_present(path, source, child, next_child,
+                                             field);
+        }
+        declaration.fields.push_back(field);
     }
 }
 
