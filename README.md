@@ -247,6 +247,27 @@ generated/cjm/user.cjm.hpp
 
 and adds the generated directory to the target include path.
 
+If another target needs to consume the generated CJM headers, ask
+`cjm_generate` to expose the generated artifact contract:
+
+```cmake
+cjm_generate(
+  TARGET app
+  HEADERS user.hpp
+  GENERATED_TARGET app_cjm_generated
+  GENERATED_HEADERS_VAR app_cjm_headers
+  GENERATED_INCLUDE_DIR_VAR app_cjm_include_dir
+)
+
+add_executable(tool tool.cpp)
+add_dependencies(tool app_cjm_generated)
+target_sources(tool PRIVATE ${app_cjm_headers})
+target_include_directories(tool PRIVATE ${app_cjm_include_dir})
+```
+
+This keeps generated files in the build directory while giving downstream
+targets a stable dependency and include path.
+
 ### Use CJM From A Downstream Project
 
 Early adopters can consume CJM by pinning a release tag with CMake
