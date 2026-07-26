@@ -548,6 +548,41 @@ Decision:
 
 ---
 
+# v0.3.6 - Tree-sitter Production Parser Migration
+
+Status:
+
+> Completed. Tree-sitter is now the default C++ frontend parser for CJM's
+> supported practical syntax surface.
+
+Goal:
+
+> Promote the validated Tree-sitter frontend from research spike to production
+> parser while preserving CJM's public CLI, CMake, Metadata IR, and generated
+> output behavior.
+
+Delivered:
+
+- Tree-sitter runtime and `tree-sitter-cpp` grammar sources are built as normal
+  CJM frontend implementation details
+- dependency fetching is centralized and cached for normal CMake builds
+- parser parity fixtures cover the existing supported v0.3 syntax surface
+- unsupported managed declarations fail closed instead of being silently
+  partially parsed
+- CLI and `cjm_generate` use the Tree-sitter-backed parser by default
+- Tree-sitter smoke and adapter tests run in the normal test suite
+- existing golden, semantic, CLI, generated compile, and example tests pass
+
+Out of scope:
+
+- expanding beyond the v0.3 practical mapping surface
+- public Tree-sitter APIs
+- full C++ grammar support
+- removing every historical handwritten-parser implementation detail
+- changing generated C++ output intentionally
+
+---
+
 # v0.4 - Extensibility
 
 Goal:
