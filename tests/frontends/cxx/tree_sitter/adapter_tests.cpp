@@ -204,6 +204,21 @@ struct User {
         assert(result.diagnostics[0].location.file == "broken.hpp");
         assert(result.diagnostics[0].location.line >= 2);
     }
+    {
+        const std::string source = R"cpp(
+struct User {
+    static int count; // json:"count"
+};
+)cpp";
+        const auto result =
+            cjm::frontends::cxx ::tree_sitter::parse_source_text("static.hpp",
+                                                                 source);
+        assert(!result.success);
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find("static data members") !=
+               std::string::npos);
+        assert(result.diagnostics[0].location.file == "static.hpp");
+    }
 
     return 0;
 }

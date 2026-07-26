@@ -69,10 +69,31 @@ TSNode find_first_named_child_of_type(const TSNode& node, const char* type) {
 }
 
 /**
+ * Return true when a node has a direct named child of the requested type.
+ *
+ * This is used for small fail-closed checks on managed syntax nodes.
+ */
+bool has_direct_named_child_of_type(const TSNode& node, const char* type) {
+    const auto& typed_node = find_first_named_child_of_type(node, type);
+    return !ts_node_is_null(typed_node);
+}
+
+/**
  * Convert one supported Tree-sitter field_declaration into FieldSyntax.
  */
 bool extract_field(const std::string& path, const std::string& source,
-                   const TSNode& field_node, parser::FieldSyntax& field) {
+                   const TSNode& field_node, parser::FieldSyntax& field,
+                   std::vector<ParseDiagnostic>& diagnostics) {
+    if (has_direct_named_child_of_type(field_node, "storage_class_specifier")) {
+        ParseDiagnostic diagnostic;
+        diagnostic.message = "unsupported field declaration: static data "
+                             "members are not supported";
+        diagnostic.location =
+            to_source_location(path, ts_node_start_point(field_node));
+        diagnostics.push_back(diagnostic);
+        return false;
+    }
+
     const auto name_node =
         find_first_named_child_of_type(field_node, "field_identifier");
     if (ts_node_is_null(name_node)) {
@@ -152,7 +173,8 @@ void bind_trailing_comment_if_present(const std::string& path,
  */
 void extract_fields(const std::string& path, const std::string& source,
                     const TSNode& struct_node,
-                    parser::DeclarationSyntax& declaration) {
+                    parser::DeclarationSyntax& declaration,
+                    std::vector<ParseDiagnostic>& diagnostics) {
     const auto body_node = ts_node_child_by_field_name(struct_node, "body", 4);
     if (ts_node_is_null(body_node)) {
         return;
@@ -166,7 +188,7 @@ void extract_fields(const std::string& path, const std::string& source,
         }
 
         parser::FieldSyntax field;
-        if (!extract_field(path, source, child, field)) {
+        if (!extract_field(path, source, child, field, diagnostics)) {
             continue;
         }
         if ((i + 1) < count) {
@@ -253,7 +275,8 @@ bool extract_alias(const std::string& path, const std::string& source,
 void extract_declarations(const std::string& path, const std::string& source,
                           const TSNode& node,
                           const std::vector<std::string>& namespace_path,
-                          parser::SourceFileSyntax& file) {
+                          parser::SourceFileSyntax& file,
+                          std::vector<ParseDiagnostic>& diagnostics) {
     if (node_type_is(node, "namespace_definition")) {
         auto nested_namespace = namespace_path;
 
@@ -265,7 +288,7 @@ void extract_declarations(const std::string& path, const std::string& source,
         const auto body_node = ts_node_child_by_field_name(node, "body", 4);
         if (!ts_node_is_null(body_node)) {
             extract_declarations(path, source, body_node, nested_namespace,
-                                 file);
+                                 file, diagnostics);
         }
         return;
     }
@@ -294,7 +317,7 @@ void extract_declarations(const std::string& path, const std::string& source,
             declaration.namespace_path = namespace_path;
             declaration.location =
                 to_source_location(path, ts_node_start_point(node));
-            extract_fields(path, source, node, declaration);
+            extract_fields(path, source, node, declaration, diagnostics);
             file.declarations.push_back(declaration);
         }
         return;
@@ -303,7 +326,7 @@ void extract_declarations(const std::string& path, const std::string& source,
     const auto count = ts_node_named_child_count(node);
     for (uint32_t i = 0; i < count; ++i) {
         extract_declarations(path, source, ts_node_named_child(node, i),
-                             namespace_path, file);
+                             namespace_path, file, diagnostics);
     }
 }
 
@@ -335,7 +358,6 @@ TSNode find_first_error_node(const TSNode& node) {
     }
     return TSNode{};
 }
-
 } // namespace
 
 TreeSitterParseResult parse_source_text(const std::string& path,
@@ -394,8 +416,14 @@ TreeSitterParseResult parse_source_text(const std::string& path,
     }
 
     // 4. Extract supported declaration shells.
-    extract_declarations(path, source, root, {}, result.file);
-    result.success = true;
+    extract_declarations(path, source, root, {}, result.file,
+                         result.diagnostics);
+
+    if (result.diagnostics.empty()) {
+        result.success = true;
+    } else {
+        result.success = false;
+    }
 
     ts_tree_delete(tree);
     ts_parser_delete(parser);
