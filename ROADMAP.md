@@ -625,7 +625,18 @@ Expand the mapping matrix:
 
 - `std::array<T, N>`
 - `enum` and `enum class` string mappings
-- custom converter design for future non-core types
+- custom converter design for future non-core domain types such as UUID,
+  decimal, filesystem path, duration, and project-specific identifiers
+
+Common type strategy:
+
+- `std::array<T, N>` and enum string mappings are v0.4 implementation targets
+- custom converters are a v0.4 design target, not a blanket implementation
+  target
+- chrono/time mappings should remain deferred until converter boundaries and
+  diagnostics are clearer
+- pointers, variants, `std::any`, polymorphic types, arbitrary containers, and
+  arbitrary map keys remain outside the default practical mapping surface
 
 Initial backend:
 
@@ -776,7 +787,8 @@ Complete semantic mapping features:
 - required metadata
 - optional metadata
 - default value metadata
-- documented time string mappings
+- documented time string mappings, likely through `std::chrono` or converter
+  policy rather than ad hoc built-ins
 - missing required diagnostics
 - type mismatch diagnostics
 - invalid enum string diagnostics
@@ -923,16 +935,27 @@ Required JSON mapping surface:
 - `omitempty` metadata
 - required and optional metadata
 - default value metadata
-- documented time string mappings
+- documented time string mappings for the accepted v1.0 time policy
 - schema output for supported mappings
 - clear diagnostics for unsupported types and invalid metadata
+
+Common types supported through built-ins or documented converter policy:
+
+- fixed-size arrays through `std::array<T, N>`
+- string enum representation for supported enums
+- time/datetime values through the accepted v1.0 time policy
+- domain scalar types such as UUID, decimal, filesystem path, duration, and
+  project-specific identifiers through custom converters where appropriate
 
 Out of scope for v1.0 by default:
 
 - arbitrary C++ templates
 - arbitrary custom containers
 - arbitrary map key conversion
+- built-in support for every domain scalar type
 - pointer ownership semantics
+- `std::variant`
+- `std::any`
 - inheritance and polymorphic serialization
 - native UTF-16 or UTF-32 string conversion
 - Unicode normalization
