@@ -22,7 +22,7 @@ CJM keeps your C++ models as the source of truth. It generates the JSON integrat
 
 ## Early Adopters Welcome
 
-CJM v0.3.0 is ready for early adopters who want to try build-time JSON
+CJM v0.3.6 is ready for early adopters who want to try build-time JSON
 integration for ordinary Modern C++ models.
 
 The current release has been dogfooded through the public
@@ -258,7 +258,7 @@ include(FetchContent)
 FetchContent_Declare(
   cxx_json_codegen
   GIT_REPOSITORY https://github.com/cjm-labs/cxx-json-codegen.git
-  GIT_TAG v0.3.0
+  GIT_TAG v0.3.6
 )
 
 FetchContent_MakeAvailable(cxx_json_codegen)
@@ -285,7 +285,8 @@ ctest --test-dir build --output-on-failure
 
 Current parser notes:
 
-- write one supported field declaration per line
+- CJM uses a Tree-sitter-backed C++ frontend internally
+- write supported managed field declarations in the documented practical subset
 - put `json:"..."` metadata in a same-line `//` comment
 - use qualified standard types such as `std::string`
 - pass every related header explicitly with `--input`
@@ -341,7 +342,7 @@ files.
 
 Current status:
 
-- v0.3.0 Practical Type Coverage is the current release line
+- v0.3.6 Tree-sitter Production Parser Migration is the current release line
 - CJM has a parser -> semantic analysis -> Metadata IR -> nlohmann backend
   pipeline
 - First official backend: `nlohmann/json`
@@ -395,7 +396,7 @@ Not yet supported:
 - custom converters
 - enum string mapping policies
 - time and datetime mappings
-- multiline field declarations in the current handwritten parser
+- multiline managed field declarations are not yet documented as supported
 - private fields 
 - native JSON backend 
 - install/package distribution
@@ -420,6 +421,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
+- [v0.3.6 Release Notes](docs/releases/v0.3.6.md)
 - [v0.3.0 Release Notes](docs/releases/v0.3.0.md)
 - [Competitive Landscape](docs/design/competitive-landscape.md)
 - [Third-Party Notices](THIRD_PARTY_NOTICES.md)
