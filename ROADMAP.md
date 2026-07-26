@@ -638,6 +638,17 @@ Common type strategy:
 - pointers, variants, `std::any`, polymorphic types, arbitrary containers, and
   arbitrary map keys remain outside the default practical mapping surface
 
+Dynamic JSON and sum-type strategy:
+
+- dynamic request/response payloads should be tracked as JSON value passthrough,
+  not as `std::any`
+- `std::variant` should be treated as a future explicit union/sum-type mapping
+  with a documented discriminator policy
+- `std::any` does not fit CJM's build-time contract unless users provide an
+  explicit closed set of possible types, which makes it closer to `variant`
+- inheritance and polymorphic serialization require explicit type identity,
+  ownership, and discriminator policy, and should remain future work
+
 Initial backend:
 
 - nlohmann/json
@@ -944,6 +955,7 @@ Common types supported through built-ins or documented converter policy:
 - fixed-size arrays through `std::array<T, N>`
 - string enum representation for supported enums
 - time/datetime values through the accepted v1.0 time policy
+- dynamic JSON value passthrough only if a backend-neutral policy is accepted
 - domain scalar types such as UUID, decimal, filesystem path, duration, and
   project-specific identifiers through custom converters where appropriate
 
@@ -954,7 +966,7 @@ Out of scope for v1.0 by default:
 - arbitrary map key conversion
 - built-in support for every domain scalar type
 - pointer ownership semantics
-- `std::variant`
+- `std::variant` without an explicit discriminator / union policy
 - `std::any`
 - inheritance and polymorphic serialization
 - native UTF-16 or UTF-32 string conversion
@@ -977,6 +989,10 @@ Possible future work:
 
 - C++26 reflection integration
 - JSON Schema export improvements
+- JSON value passthrough fields
+- `std::variant` support with explicit discriminator policy
+- selected extra containers through documented policies or converters
+- custom map key converters
 - RapidJSON backend
 - YAML backend
 - OpenAPI integration
