@@ -486,6 +486,11 @@ Deferred follow-up:
 
 # v0.3.5 - Frontend Parser Research
 
+Status:
+
+> Recommendation recorded: CJM should adopt Tree-sitter as the C++ frontend
+> implementation through a staged production migration.
+
 Goal:
 
 > Evaluate Tree-sitter as a future C++ frontend foundation without replacing
@@ -532,6 +537,14 @@ Success criteria:
 - Semantic Analysis, Metadata IR, backends, CLI behavior, and generated output
   remain unchanged during the spike
 - users do not need Node.js, Rust, npm, Cargo, Python, or the Tree-sitter CLI
+
+Decision:
+
+- adopt Tree-sitter as the C++ frontend implementation
+- switch the production parser in a dedicated follow-up migration milestone
+- preserve `SourceFileSyntax` as the boundary into Semantic Analysis
+- remove the handwritten parser only after the Tree-sitter path has become the
+  tested production default
 
 ---
 

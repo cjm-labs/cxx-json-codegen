@@ -26,6 +26,9 @@ Tree-sitter is the preferred candidate to evaluate because it can provide:
 The goal of v0.3.5 is to decide whether Tree-sitter should become CJM's future
 C++ frontend foundation.
 
+The resulting recommendation is recorded in
+`docs/design/tree-sitter-frontend-recommendation.md`.
+
 ---
 
 # Architectural Position
@@ -343,7 +346,7 @@ The v0.3.5 spike should produce:
 - adapter prototype
 - correctness report
 - staged migration plan
-- recommendation
+- recommendation (`docs/design/tree-sitter-frontend-recommendation.md`)
 
 The recommendation must be one of:
 
