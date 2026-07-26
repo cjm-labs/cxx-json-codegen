@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(CJM VERSION 0.3.0 LANGUAGES CXX)
 
-include(FetchContent)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMFetchContent.cmake)
 
 find_package(nlohmann_json QUIET)
 
@@ -10,6 +10,8 @@ if (NOT nlohmann_json_FOUND)
   FetchContent_Declare(
     nlohmann_json 
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    URL_HASH SHA256=d6c65aca6b1ed68e7a182f4757257b107ae403032760ed6ef121c9d55e81757d
+    DOWNLOAD_NO_PROGRESS FALSE
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
   )
   FetchContent_MakeAvailable(nlohmann_json)
@@ -18,13 +20,13 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CJM_BUILD_TESTS "Build CJM tests" ON)
-option(CJM_ENABLE_TREE_SITTER_SPIKE "Build the internal Tree-sitter frontend spike" OFF)
+option(CJM_ENABLE_TREE_SITTER_FRONTEND "Build the Tree-sitter C++ frontend" OFF)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
 
-if (CJM_ENABLE_TREE_SITTER_SPIKE)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitterSpike.cmake)
-  cjm_add_tree_sitter_spike()
+if (CJM_ENABLE_TREE_SITTER_FRONTEND)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitter.cmake)
+  cjm_add_tree_sitter_frontend_dependencies()
 
   add_library(cjm_tree_sitter_adapter
     src/frontends/cxx/tree_sitter/adapter.cpp
@@ -156,13 +158,13 @@ if (CJM_BUILD_TESTS)
   add_test(NAME cjm_parser_file_tests COMMAND cjm_parser_file_tests)
   set_tests_properties(cjm_parser_file_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-  if (CJM_ENABLE_TREE_SITTER_SPIKE)
-    add_executable(cjm_tree_sitter_spike_smoke_tests
+  if (CJM_ENABLE_TREE_SITTER_FRONTEND)
+    add_executable(cjm_tree_sitter_smoke_tests
       tests/frontends/cxx/tree_sitter/build_smoke_tests.cpp
     )
-    target_compile_features(cjm_tree_sitter_spike_smoke_tests PRIVATE cxx_std_17)
-    target_link_libraries(cjm_tree_sitter_spike_smoke_tests PRIVATE cjm_tree_sitter_cpp_grammar)
-    add_test(NAME cjm_tree_sitter_spike_smoke_tests COMMAND cjm_tree_sitter_spike_smoke_tests)
+    target_compile_features(cjm_tree_sitter_smoke_tests PRIVATE cxx_std_17)
+    target_link_libraries(cjm_tree_sitter_smoke_tests PRIVATE cjm_tree_sitter_cpp_grammar)
+    add_test(NAME cjm_tree_sitter_smoke_tests COMMAND cjm_tree_sitter_smoke_tests)
   endif()
 
   # semantic tests below...
