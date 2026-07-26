@@ -18,6 +18,10 @@ CJM keeps your C++ models as the source of truth. It generates the JSON integrat
 
 > **Standard C++ in. Standard C++ out.**
 
+CJM targets **strongly typed, structured, modelable JSON**. It intentionally
+does not try to support arbitrary dynamic JSON documents or arbitrary C++
+object graphs.
+
 ---
 
 ## Early Adopters Welcome
