@@ -140,6 +140,11 @@ if (CJM_BUILD_TESTS)
   )
 
   add_test(
+    NAME cjm_basic_downstream_consumer
+    COMMAND cjm_basic_downstream_consumer
+  )
+
+  add_test(
     NAME cjm_basic_example_generated_header
     COMMAND ${CMAKE_COMMAND} -E compare_files
             ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp

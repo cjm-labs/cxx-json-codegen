@@ -58,6 +58,9 @@ Initial signature:
 cjm_generate(
     TARGET <target>
     HEADERS <header>...
+    [GENERATED_TARGET <target>]
+    [GENERATED_HEADERS_VAR <var>]
+    [GENERATED_INCLUDE_DIR_VAR <var>]
 )
 ```
 
@@ -71,6 +74,23 @@ cjm_generate(
         include/order.hpp
 )
 ```
+
+Downstream tooling targets may request generated artifact handles:
+
+```cmake
+cjm_generate(
+    TARGET app
+    HEADERS include/user.hpp
+    GENERATED_TARGET app_cjm_generated
+    GENERATED_HEADERS_VAR app_cjm_headers
+    GENERATED_INCLUDE_DIR_VAR app_cjm_include_dir
+)
+```
+
+- `GENERATED_TARGET` creates a custom target that depends on generated files.
+- `GENERATED_HEADERS_VAR` stores the generated header list in the caller scope.
+- `GENERATED_INCLUDE_DIR_VAR` stores the generated include directory in the
+  caller scope.
 
 ---
 
@@ -128,6 +148,10 @@ The generated include directory is automatically added to the target.
 
 Users should not need to manually include generated paths.
 
+When requested, `cjm_generate()` also exposes the generated include directory to
+the caller through `GENERATED_INCLUDE_DIR_VAR` so another target can consume the
+same generated artifacts explicitly.
+
 ---
 
 # Dependency Tracking
@@ -175,7 +199,21 @@ target_include_directories(app PRIVATE <generated-dir>)
 target_sources(app PRIVATE <generated-files>)
 ```
 
-The exact implementation may evolve.
+When `GENERATED_TARGET` is provided, `cjm_generate()` should also create a
+custom target that depends on the generated files:
+
+```cmake
+add_custom_target(app_cjm_generated DEPENDS <generated-files>)
+```
+
+Another target can then depend on that target and include the generated
+directory without relying on repository internals:
+
+```cmake
+add_dependencies(tool app_cjm_generated)
+target_sources(tool PRIVATE ${app_cjm_headers})
+target_include_directories(tool PRIVATE ${app_cjm_include_dir})
+```
 
 ---
 

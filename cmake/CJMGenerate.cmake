@@ -1,6 +1,11 @@
 function(cjm_generate) 
   set(options)
-  set(one_value_args TARGET)
+  set(one_value_args
+    TARGET
+    GENERATED_TARGET
+    GENERATED_HEADERS_VAR
+    GENERATED_INCLUDE_DIR_VAR
+  )
   set(multi_value_args HEADERS)
 
   cmake_parse_arguments(
@@ -21,6 +26,10 @@ function(cjm_generate)
   
   if (NOT CJM_GENERATE_HEADERS) 
     message(FATAL_ERROR "cjm_generate requires HEADERS <header>...")
+  endif()
+
+  if (CJM_GENERATE_GENERATED_TARGET AND TARGET ${CJM_GENERATE_GENERATED_TARGET})
+    message(FATAL_ERROR "cjm_generate GENERATED_TARGET already exists: ${CJM_GENERATE_GENERATED_TARGET}")
   endif()
 
   set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/cjm")
@@ -45,6 +54,18 @@ function(cjm_generate)
     list(APPEND generated_headers "${generated_header}")
   endforeach()
 
+  # Expose a stable build target for downstream targets that consume CJM output.
+  if (CJM_GENERATE_GENERATED_TARGET)
+    add_custom_target(
+      ${CJM_GENERATE_GENERATED_TARGET}
+      DEPENDS ${generated_headers}
+    )
+    add_dependencies(
+      ${CJM_GENERATE_TARGET}
+      ${CJM_GENERATE_GENERATED_TARGET}
+    )
+  endif()
+
   target_sources(
     ${CJM_GENERATE_TARGET}
     PRIVATE
@@ -56,5 +77,13 @@ function(cjm_generate)
     PRIVATE
       "${generated_dir}"
   )
+
+  if (CJM_GENERATE_GENERATED_HEADERS_VAR)
+    set(${CJM_GENERATE_GENERATED_HEADERS_VAR} ${generated_headers} PARENT_SCOPE)
+  endif()
+
+  if (CJM_GENERATE_GENERATED_INCLUDE_DIR_VAR)
+    set(${CJM_GENERATE_GENERATED_INCLUDE_DIR_VAR} "${generated_dir}" PARENT_SCOPE)
+  endif()
 
 endfunction()
