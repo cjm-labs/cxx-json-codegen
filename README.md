@@ -439,6 +439,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Discussions](DISCUSSIONS.md)
 - [Roadmap](ROADMAP.md)
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
+- [Generated Model Contract](docs/design/generated-model-contract.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
