@@ -406,5 +406,23 @@ struct User {
                std::string::npos);
         assert(result.diagnostics[0].location.file == "macro_field.hpp");
     }
+    {
+        const std::string source = R"cpp(
+struct User {
+#if ENABLE_NAME
+    std::string name; // json:"name"
+#endif
+};
+)cpp";
+
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "preprocessor_field.hpp", source);
+
+        assert(!result.success);
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find("preprocessor-controlled") !=
+               std::string::npos);
+        assert(result.diagnostics[0].location.file == "preprocessor_field.hpp");
+    }
     return 0;
 }

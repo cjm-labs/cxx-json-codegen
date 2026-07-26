@@ -115,6 +115,10 @@ bool has_function_declarator(const TSNode& field_node) {
     return has_direct_named_child_of_type(field_node, "function_declarator");
 }
 
+bool is_preprocessor_node(const TSNode& node) {
+    return std::strncmp(ts_node_type(node), "preproc_", 8) == 0;
+}
+
 /**
  * Return true when an unsupported declaration has a same-line json comment.
  *
@@ -128,6 +132,29 @@ bool has_same_line_json_comment(const TSNode& node, const std::string& source) {
     }
     return ts_node_end_point(node).row == ts_node_start_point(sibling).row &&
            node_text(source, sibling).find("json:") != std::string::npos;
+}
+
+/**
+ * Return true when any descendant comment contains CJM json metadata.
+ *
+ * This is used to reject unsupported syntax containers, such as preprocessors
+ * blocks, without silently dropping managed fields inside them.
+ */
+bool subtree_contains_json_comment(const TSNode& node,
+                                   const std::string& source) {
+    if (node_type_is(node, "comment") &&
+        node_text(source, node).find("json:") != std::string::npos) {
+        return true;
+    }
+
+    const auto count = ts_node_named_child_count(node);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (subtree_contains_json_comment(ts_node_named_child(node, i),
+                                          source)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -263,6 +290,18 @@ void extract_fields(const std::string& path, const std::string& source,
             diagnostic.message =
                 "unsupported field declaration: managed declarations "
                 "must use ordinary field syntax.";
+            diagnostic.location =
+                to_source_location(path, ts_node_start_point(child));
+            diagnostics.push_back(diagnostic);
+            continue;
+        }
+
+        if (is_preprocessor_node(child) &&
+            subtree_contains_json_comment(child, source)) {
+            ParseDiagnostic diagnostic;
+            diagnostic.message =
+                "unsupported field declaration: preprocessor-controlled "
+                "managed fields are not supported";
             diagnostic.location =
                 to_source_location(path, ts_node_start_point(child));
             diagnostics.push_back(diagnostic);
