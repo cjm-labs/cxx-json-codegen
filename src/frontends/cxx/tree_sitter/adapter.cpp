@@ -55,6 +55,19 @@ std::string node_text(const std::string& source, const TSNode& node) {
 }
 
 /**
+ * Normalize a Tree-sitter comment node into CJM's parser comment contract.
+ *
+ * SourceFileSyntax stores comment payload text, not the C++ line-comment token.
+ */
+std::string normalize_comment_text(std::string text) {
+    text = trim_copy(text);
+    if (text.rfind("//", 0) == 0) {
+        return trim_copy(text.substr(2));
+    }
+    return text;
+}
+
+/**
  * Count direct named children with the requested Tree-sitter node type.
  *
  * This is used by fail-closed checks where accepting only the first matching
@@ -220,7 +233,7 @@ parser::CommentSyntax extract_comment(const std::string& path,
                                       const std::string& source,
                                       const TSNode& comment_node) {
     parser::CommentSyntax comment;
-    comment.text = node_text(source, comment_node);
+    comment.text = normalize_comment_text(node_text(source, comment_node));
     comment.location =
         to_source_location(path, ts_node_start_point(comment_node));
     return comment;

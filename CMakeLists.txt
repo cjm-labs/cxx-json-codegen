@@ -20,24 +20,19 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CJM_BUILD_TESTS "Build CJM tests" ON)
-option(CJM_ENABLE_TREE_SITTER_FRONTEND "Build the Tree-sitter C++ frontend" OFF)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitter.cmake)
+cjm_add_tree_sitter_frontend_dependencies()
 
-if (CJM_ENABLE_TREE_SITTER_FRONTEND)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitter.cmake)
-  cjm_add_tree_sitter_frontend_dependencies()
+add_library(cjm_tree_sitter_adapter
+  src/frontends/cxx/tree_sitter/adapter.cpp
+)
+target_compile_features(cjm_tree_sitter_adapter PUBLIC cxx_std_17)
+target_include_directories(cjm_tree_sitter_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(cjm_tree_sitter_adapter PRIVATE cjm_tree_sitter_cpp_grammar)
 
-  add_library(cjm_tree_sitter_adapter
-    src/frontends/cxx/tree_sitter/adapter.cpp
-  )
-  target_compile_features(cjm_tree_sitter_adapter PUBLIC cxx_std_17)
-  target_include_directories(cjm_tree_sitter_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-  target_link_libraries(cjm_tree_sitter_adapter
-    PRIVATE
-      cjm_tree_sitter_cpp_grammar
-  )
-
+if (CJM_BUILD_TESTS)
   add_executable(cjm_tree_sitter_adapter_tests
     tests/frontends/cxx/tree_sitter/adapter_tests.cpp
   )
@@ -70,6 +65,7 @@ target_compile_features(cjm_generator PUBLIC cxx_std_17)
 # parser library
 add_library(cjm_parser src/frontends/cxx/parser/parser.cpp)
 target_include_directories(cjm_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(cjm_parser PRIVATE cjm_tree_sitter_adapter)
 target_compile_features(cjm_parser PUBLIC cxx_std_17)
 
 # semantic library 

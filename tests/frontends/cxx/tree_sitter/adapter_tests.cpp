@@ -62,7 +62,7 @@ struct User {
         assert(name.location.line == 10);
         assert(name.location.column == 5);
         assert(name.comments.size() == 1);
-        assert(name.comments[0].text == "// json:\"id\"");
+        assert(name.comments[0].text == "json:\"id\"");
         assert(name.comments[0].location.file == "user.hpp");
         assert(name.comments[0].location.line == 10);
         assert(name.comments[0].location.column == 18);
@@ -156,12 +156,12 @@ struct Event {
         assert(detail.fields[0].name == "source");
         assert(detail.fields[0].type_spelling == "std::string");
         assert(detail.fields[0].comments.size() == 1);
-        assert(detail.fields[0].comments[0].text == "// json:\"source\"");
+        assert(detail.fields[0].comments[0].text == "json:\"source\"");
 
         assert(detail.fields[1].name == "shard");
         assert(detail.fields[1].type_spelling == "std::uint32_t");
         assert(detail.fields[1].comments.size() == 1);
-        assert(detail.fields[1].comments[0].text == "// json:\"shard\"");
+        assert(detail.fields[1].comments[0].text == "json:\"shard\"");
 
         const auto& event = result.file.declarations[1];
         assert(event.name == "Event");
@@ -172,39 +172,39 @@ struct Event {
 
         assert(event.fields[0].name == "sequence");
         assert(event.fields[0].type_spelling == "Sequence");
-        assert(event.fields[0].comments[0].text == "// json:\"sequence\"");
+        assert(event.fields[0].comments[0].text == "json:\"sequence\"");
 
         assert(event.fields[1].name == "timestamp_ns");
         assert(event.fields[1].type_spelling == "std::int64_t");
-        assert(event.fields[1].comments[0].text == "// json:\"timestamp_ns\"");
+        assert(event.fields[1].comments[0].text == "json:\"timestamp_ns\"");
 
         assert(event.fields[2].name == "status");
         assert(event.fields[2].type_spelling == "Status");
-        assert(event.fields[2].comments[0].text == "// json:\"status\"");
+        assert(event.fields[2].comments[0].text == "json:\"status\"");
 
         assert(event.fields[3].name == "detail");
         assert(event.fields[3].type_spelling == "Detail");
-        assert(event.fields[3].comments[0].text == "// json:\"detail\"");
+        assert(event.fields[3].comments[0].text == "json:\"detail\"");
 
         assert(event.fields[4].name == "tags");
         assert(event.fields[4].type_spelling == "std::vector<std::string>");
-        assert(event.fields[4].comments[0].text == "// json:\"tags\"");
+        assert(event.fields[4].comments[0].text == "json:\"tags\"");
 
         assert(event.fields[5].name == "buckets");
         assert(event.fields[5].type_spelling ==
                "std::map<std::string, std::vector<std::uint64_t>>");
-        assert(event.fields[5].comments[0].text == "// json:\"buckets\"");
+        assert(event.fields[5].comments[0].text == "json:\"buckets\"");
 
         assert(event.fields[6].name == "retry_after");
         assert(event.fields[6].type_spelling == "std::optional<Sequence>");
         assert(event.fields[6].comments[0].text ==
-               "// json:\"retry_after,omitempty\"");
+               "json:\"retry_after,omitempty\"");
 
         assert(event.fields[7].name == "attributes");
         assert(event.fields[7].type_spelling ==
                "std::optional<std::unordered_map<std::string, std::string>>");
         assert(event.fields[7].comments[0].text ==
-               "// json:\"attributes,omitempty\"");
+               "json:\"attributes,omitempty\"");
     }
 
     {
@@ -287,7 +287,7 @@ struct User {
         assert(address.fields[0].name == "city");
         assert(address.fields[0].type_spelling == "std::string");
         assert(address.fields[0].comments.size() == 1);
-        assert(address.fields[0].comments[0].text == "// json:\"city\"");
+        assert(address.fields[0].comments[0].text == "json:\"city\"");
 
         const auto& user = result.file.declarations[1];
         assert(user.name == "User");
@@ -297,7 +297,7 @@ struct User {
         assert(user.fields.size() == 4);
         assert(user.fields[0].name == "id");
         assert(user.fields[0].type_spelling == "UserId");
-        assert(user.fields[0].comments[0].text == "// json:\"id\"");
+        assert(user.fields[0].comments[0].text == "json:\"id\"");
         assert(user.fields[1].name == "address");
         assert(user.fields[1].type_spelling == "Address");
         assert(user.fields[2].name == "tags");
@@ -341,10 +341,10 @@ struct User {
         assert(detail.fields.size() == 2);
         assert(detail.fields[0].name == "source");
         assert(detail.fields[0].type_spelling == "std::string");
-        assert(detail.fields[0].comments[0].text == "// json:\"source\"");
+        assert(detail.fields[0].comments[0].text == "json:\"source\"");
         assert(detail.fields[1].name == "shard");
         assert(detail.fields[1].type_spelling == "std::uint32_t");
-        assert(detail.fields[1].comments[0].text == "// json:\"shard\"");
+        assert(detail.fields[1].comments[0].text == "json:\"shard\"");
 
         const auto& event = result.file.declarations[1];
         assert(event.name == "Event");
@@ -354,7 +354,7 @@ struct User {
         assert(event.fields.size() == 8);
         assert(event.fields[0].name == "sequence");
         assert(event.fields[0].type_spelling == "Sequence");
-        assert(event.fields[0].comments[0].text == "// json:\"sequence\"");
+        assert(event.fields[0].comments[0].text == "json:\"sequence\"");
         assert(event.fields[1].name == "timestamp_ns");
         assert(event.fields[1].type_spelling == "std::int64_t");
         assert(event.fields[2].name == "status");
@@ -369,7 +369,7 @@ struct User {
         assert(event.fields[6].name == "retry_after");
         assert(event.fields[6].type_spelling == "std::optional<Sequence>");
         assert(event.fields[6].comments[0].text ==
-               "// json:\"retry_after,omitempty\"");
+               "json:\"retry_after,omitempty\"");
         assert(event.fields[7].name == "attributes");
         assert(event.fields[7].type_spelling ==
                "std::optional<std::unordered_map<std::string, std::string>>");
