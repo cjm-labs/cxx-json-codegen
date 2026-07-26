@@ -26,6 +26,9 @@ Tree-sitter is the preferred candidate to evaluate because it can provide:
 The goal of v0.3.5 is to decide whether Tree-sitter should become CJM's future
 C++ frontend foundation.
 
+The resulting recommendation is recorded in
+`docs/design/tree-sitter-frontend-recommendation.md`.
+
 ---
 
 # Architectural Position
@@ -339,11 +342,11 @@ The current parser must not be removed during the spike.
 The v0.3.5 spike should produce:
 
 - architecture note
-- dependency assessment
+- dependency assessment (`docs/design/tree-sitter-dependency-assessment.md`)
 - adapter prototype
 - correctness report
 - staged migration plan
-- recommendation
+- recommendation (`docs/design/tree-sitter-frontend-recommendation.md`)
 
 The recommendation must be one of:
 
@@ -390,4 +393,3 @@ Tree-sitter should be adopted only if the spike demonstrates that:
 - version pinning is reproducible
 - adapter complexity is lower than continued handwritten parser maintenance
 - the design does not block a future C frontend
-

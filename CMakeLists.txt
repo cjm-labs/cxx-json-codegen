@@ -18,8 +18,39 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CJM_BUILD_TESTS "Build CJM tests" ON)
+option(CJM_ENABLE_TREE_SITTER_SPIKE "Build the internal Tree-sitter frontend spike" OFF)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
+
+if (CJM_ENABLE_TREE_SITTER_SPIKE)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitterSpike.cmake)
+  cjm_add_tree_sitter_spike()
+
+  add_library(cjm_tree_sitter_adapter
+    src/frontends/cxx/tree_sitter/adapter.cpp
+  )
+  target_compile_features(cjm_tree_sitter_adapter PUBLIC cxx_std_17)
+  target_include_directories(cjm_tree_sitter_adapter PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  target_link_libraries(cjm_tree_sitter_adapter
+    PUBLIC
+      cjm_parser
+    PRIVATE
+      cjm_tree_sitter_cpp_grammar
+  )
+
+  add_executable(cjm_tree_sitter_adapter_tests
+    tests/frontends/cxx/tree_sitter/adapter_tests.cpp
+  )
+  target_compile_features(cjm_tree_sitter_adapter_tests PRIVATE cxx_std_17)
+  target_link_libraries(cjm_tree_sitter_adapter_tests PRIVATE cjm_tree_sitter_adapter)
+  add_test(NAME cjm_tree_sitter_adapter_tests COMMAND cjm_tree_sitter_adapter_tests)
+
+  add_executable(cjm_tree_sitter_dump
+    tools/tree_sitter_dump/main.cpp
+  )
+  target_compile_features(cjm_tree_sitter_dump PRIVATE cxx_std_17)
+  target_link_libraries(cjm_tree_sitter_dump PRIVATE cjm_tree_sitter_cpp_grammar)
+endif()
 
 # metadata library 
 add_library(cjm_metadata INTERFACE)
@@ -124,6 +155,15 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_parser_file_tests PRIVATE cjm_parser)
   add_test(NAME cjm_parser_file_tests COMMAND cjm_parser_file_tests)
   set_tests_properties(cjm_parser_file_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  if (CJM_ENABLE_TREE_SITTER_SPIKE)
+    add_executable(cjm_tree_sitter_spike_smoke_tests
+      tests/frontends/cxx/tree_sitter/build_smoke_tests.cpp
+    )
+    target_compile_features(cjm_tree_sitter_spike_smoke_tests PRIVATE cxx_std_17)
+    target_link_libraries(cjm_tree_sitter_spike_smoke_tests PRIVATE cjm_tree_sitter_cpp_grammar)
+    add_test(NAME cjm_tree_sitter_spike_smoke_tests COMMAND cjm_tree_sitter_spike_smoke_tests)
+  endif()
 
   # semantic tests below...
   add_executable(cjm_semantic_tests tests/frontends/cxx/semantic/analysis_tests.cpp)
