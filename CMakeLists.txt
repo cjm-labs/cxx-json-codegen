@@ -156,14 +156,12 @@ if (CJM_BUILD_TESTS)
   add_test(NAME cjm_parser_file_tests COMMAND cjm_parser_file_tests)
   set_tests_properties(cjm_parser_file_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-  if (CJM_ENABLE_TREE_SITTER_FRONTEND)
-    add_executable(cjm_tree_sitter_smoke_tests
-      tests/frontends/cxx/tree_sitter/build_smoke_tests.cpp
-    )
-    target_compile_features(cjm_tree_sitter_smoke_tests PRIVATE cxx_std_17)
-    target_link_libraries(cjm_tree_sitter_smoke_tests PRIVATE cjm_tree_sitter_cpp_grammar)
-    add_test(NAME cjm_tree_sitter_smoke_tests COMMAND cjm_tree_sitter_smoke_tests)
-  endif()
+  add_executable(cjm_tree_sitter_smoke_tests
+    tests/frontends/cxx/tree_sitter/build_smoke_tests.cpp
+  )
+  target_compile_features(cjm_tree_sitter_smoke_tests PRIVATE cxx_std_17)
+  target_link_libraries(cjm_tree_sitter_smoke_tests PRIVATE cjm_tree_sitter_cpp_grammar)
+  add_test(NAME cjm_tree_sitter_smoke_tests COMMAND cjm_tree_sitter_smoke_tests)
 
   # semantic tests below...
   add_executable(cjm_semantic_tests tests/frontends/cxx/semantic/analysis_tests.cpp)
