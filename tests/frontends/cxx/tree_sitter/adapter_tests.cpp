@@ -390,5 +390,21 @@ struct User {
                std::string::npos);
         assert(result.diagnostics[0].location.file == "function_pointer.hpp");
     }
+    {
+        const std::string source = R"cpp(
+struct User {
+    CJM_FIELD(std::string, name); // json:"name"
+};
+)cpp";
+
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "macro_field.hpp", source);
+
+        assert(!result.success);
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find("managed declarations") !=
+               std::string::npos);
+        assert(result.diagnostics[0].location.file == "macro_field.hpp");
+    }
     return 0;
 }

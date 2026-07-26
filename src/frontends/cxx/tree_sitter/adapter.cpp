@@ -97,6 +97,14 @@ bool has_direct_named_child_of_type(const TSNode& node, const char* type) {
     return !ts_node_is_null(typed_node);
 }
 
+TSNode next_named_sibling(const TSNode& node) {
+    auto sibling = ts_node_next_sibling(node);
+    while (!ts_node_is_null(sibling) && !ts_node_is_named(sibling)) {
+        sibling = ts_node_next_sibling(sibling);
+    }
+    return sibling;
+}
+
 /**
  * Return true for function or function-pointer field declaration shapes.
  *
@@ -105,6 +113,21 @@ bool has_direct_named_child_of_type(const TSNode& node, const char* type) {
  */
 bool has_function_declarator(const TSNode& field_node) {
     return has_direct_named_child_of_type(field_node, "function_declarator");
+}
+
+/**
+ * Return true when an unsupported declaration has a same-line json comment.
+ *
+ * This marks declarations managed by CJM metadata but not represented as
+ * ordinary field_declaration nodes.
+ */
+bool has_same_line_json_comment(const TSNode& node, const std::string& source) {
+    const auto sibling = next_named_sibling(node);
+    if (ts_node_is_null(sibling) || !node_type_is(sibling, "comment")) {
+        return false;
+    }
+    return ts_node_end_point(node).row == ts_node_start_point(sibling).row &&
+           node_text(source, sibling).find("json:") != std::string::npos;
 }
 
 /**
@@ -234,6 +257,18 @@ void extract_fields(const std::string& path, const std::string& source,
     const auto count = ts_node_named_child_count(body_node);
     for (uint32_t i = 0; i < count; ++i) {
         const auto child = ts_node_named_child(body_node, i);
+        if (node_type_is(child, "declaration") &&
+            has_same_line_json_comment(child, source)) {
+            ParseDiagnostic diagnostic;
+            diagnostic.message =
+                "unsupported field declaration: managed declarations "
+                "must use ordinary field syntax.";
+            diagnostic.location =
+                to_source_location(path, ts_node_start_point(child));
+            diagnostics.push_back(diagnostic);
+            continue;
+        }
+
         if (!node_type_is(child, "field_declaration")) {
             continue;
         }
@@ -384,9 +419,9 @@ void extract_declarations(const std::string& path, const std::string& source,
 /**
  * Find the first concrete Tree-sitter syntax error marker under `node`.
  *
- * `ts_node_has_error(node)` tells us a subtree contains an error. This helper
- * locates the first ERROR or MISSING node so diagnostics can point closer to
- * the malformed source.
+ * `ts_node_has_error(node)` tells us a subtree contains an error. This
+ * helper locates the first ERROR or MISSING node so diagnostics can point
+ * closer to the malformed source.
  */
 TSNode find_first_error_node(const TSNode& node) {
     if (ts_node_is_error(node)) {
