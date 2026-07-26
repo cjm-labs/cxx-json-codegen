@@ -583,21 +583,43 @@ Out of scope:
 
 ---
 
-# v0.4 - Extensibility
+# v0.4 - Extensibility and Downstream Workflow
 
 Goal:
 
-> Stabilize the extension points around the Metadata IR.
+> Stabilize CJM as a build-time metadata compiler that downstream CMake
+> projects and tools can consume reliably.
 
 Add or design:
 
 - backend abstraction
-- adapter system
+- generated model contract / traits for downstream tools
+- reliable downstream CMake workflow
 - custom converters
 - metadata extensions
 - stable IR boundaries
 - backend-specific options
 - explicit type mapping policies
+
+Generated model contract:
+
+- expose C++ type identity and qualified name through stable generated artifacts
+- expose fields in deterministic order
+- expose C++ field names and JSON field names
+- expose field type categories such as scalar, string, enum, optional, vector,
+  map, and nested object
+- expose ignored-field and `omitempty` metadata
+- avoid exposing CJM internal IR structures as a public API
+
+Downstream CMake workflow:
+
+- document stable generated include directory behavior
+- document generated artifact paths and target dependencies
+- support another target or downstream tool depending on CJM generated artifacts
+- reduce friction for many related model headers
+- keep generated artifacts in the build directory
+- preserve `FetchContent` and `cjm_generate(...)` as the primary early-adopter
+  workflow
 
 Expand the mapping matrix:
 
@@ -622,6 +644,20 @@ Success criteria:
 - backend-specific code remains isolated
 - public user workflows stay stable as internals evolve
 - custom conversion points do not leak parser-specific details
+- downstream tools can consume generated model information without depending on
+  parser internals or CJM internal IR types
+- CMake users can depend on generated artifacts without relying on repository
+  internals
+
+Out of scope:
+
+- HTTP routing
+- server lifecycle
+- middleware runtime
+- TLS or networking
+- auth, database, or logging policy
+- OpenAPI route definitions
+- application-specific endpoint policy
 
 ---
 
@@ -650,6 +686,14 @@ Schema coverage should align with the supported JSON mapping matrix:
 - required fields when validation metadata has landed
 - default values when default metadata has landed
 - documented time string formats when time mappings have landed
+
+Downstream alignment:
+
+- schema output should let downstream tools generate OpenAPI components for
+  supported DTOs
+- CJM should not own OpenAPI route definitions or HTTP endpoint policy
+- schema generation should consume Metadata IR or stable model-contract data,
+  not parser-specific syntax
 
 Strategic value:
 
@@ -718,6 +762,7 @@ Improve:
 
 - source-location aware diagnostics
 - unsupported-type diagnostics
+- structured JSON decode errors for supported generated readers
 - duplicate tag detection
 - invalid tag syntax diagnostics
 - dependency cycle detection
@@ -735,6 +780,8 @@ Complete semantic mapping features:
 - missing required diagnostics
 - type mismatch diagnostics
 - invalid enum string diagnostics
+- null-where-not-allowed diagnostics when supported by generated decode policy
+- custom conversion failure diagnostics when custom converters exist
 
 Success criteria:
 
@@ -802,6 +849,7 @@ Harden:
 - public CMake API
 - CLI behavior
 - generated file conventions
+- generated model contract / traits compatibility expectations
 - Metadata IR compatibility expectations
 - backend option behavior
 - versioning policy
@@ -825,6 +873,8 @@ Success criteria:
 - supported platforms are tested continuously
 - downstream projects can adopt CJM without relying on repository internals
 - `ull-md-engine` consumes CJM through the supported installation workflow
+- at least one downstream-tool experiment can consume CJM generated model
+  contract without depending on parser internals
 - all supported mappings have tests, examples, and diagnostics
 
 ---
@@ -841,6 +891,7 @@ Definition of done:
 - documented public APIs
 - stable CMake API
 - stable generated file conventions
+- stable generated model contract for downstream tools
 - versioned releases
 - installable packages
 - release artifacts
