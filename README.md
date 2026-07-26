@@ -396,6 +396,7 @@ Not yet supported:
 - custom converters
 - enum string mapping policies
 - time and datetime mappings
+- multiline managed field declarations are not yet documented as supported
 - private fields 
 - native JSON backend 
 - install/package distribution

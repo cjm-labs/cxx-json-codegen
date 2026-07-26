@@ -172,39 +172,47 @@ bool subtree_contains_json_comment(const TSNode& node,
 
 /**
  * Convert one supported Tree-sitter field_declaration into FieldSyntax.
+ * Unsupported field shapes only report diagnostics when they carry CJM metadata.
  */
 bool extract_field(const std::string& path, const std::string& source,
-                   const TSNode& field_node, parser::FieldSyntax& field,
+                   const TSNode& field_node, bool is_managed_field,
+                   parser::FieldSyntax& field,
                    std::vector<ParseDiagnostic>& diagnostics) {
     if (has_direct_named_child_of_type(field_node, "storage_class_specifier")) {
-        ParseDiagnostic diagnostic;
-        diagnostic.message = "unsupported field declaration: static data "
-                             "members are not supported";
-        diagnostic.location =
-            to_source_location(path, ts_node_start_point(field_node));
-        diagnostics.push_back(diagnostic);
+        if (is_managed_field) {
+            ParseDiagnostic diagnostic;
+            diagnostic.message = "unsupported field declaration: static data "
+                                 "members are not supported";
+            diagnostic.location =
+                to_source_location(path, ts_node_start_point(field_node));
+            diagnostics.push_back(diagnostic);
+        }
         return false;
     }
 
     if (has_function_declarator(field_node)) {
-        ParseDiagnostic diagnostic;
-        diagnostic.message = "unsupported field declaration: function "
-                             "declarators are not supported";
-        diagnostic.location =
-            to_source_location(path, ts_node_start_point(field_node));
-        diagnostics.push_back(diagnostic);
+        if (is_managed_field) {
+            ParseDiagnostic diagnostic;
+            diagnostic.message = "unsupported field declaration: function "
+                                 "declarators are not supported";
+            diagnostic.location =
+                to_source_location(path, ts_node_start_point(field_node));
+            diagnostics.push_back(diagnostic);
+        }
         return false;
     }
 
     const auto field_name_count =
         count_direct_named_children_of_type(field_node, "field_identifier");
     if (field_name_count > 1) {
-        ParseDiagnostic diagnostic;
-        diagnostic.message = "unsupported field declaration: multiple field "
-                             "declarators are not supported";
-        diagnostic.location =
-            to_source_location(path, ts_node_start_point(field_node));
-        diagnostics.push_back(diagnostic);
+        if (is_managed_field) {
+            ParseDiagnostic diagnostic;
+            diagnostic.message = "unsupported field declaration: multiple "
+                                 "field declarators are not supported";
+            diagnostic.location =
+                to_source_location(path, ts_node_start_point(field_node));
+            diagnostics.push_back(diagnostic);
+        }
         return false;
     }
 
@@ -325,8 +333,11 @@ void extract_fields(const std::string& path, const std::string& source,
             continue;
         }
 
+        const auto is_managed_field = has_same_line_json_comment(child, source);
+
         parser::FieldSyntax field;
-        if (!extract_field(path, source, child, field, diagnostics)) {
+        if (!extract_field(path, source, child, is_managed_field, field,
+                           diagnostics)) {
             continue;
         }
         if ((i + 1) < count) {

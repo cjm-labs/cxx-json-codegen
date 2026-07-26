@@ -238,6 +238,22 @@ struct User {
     {
         const std::string source = R"cpp(
 struct User {
+    static int count;
+    std::string name; // json:"name"
+};
+)cpp";
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "unmanaged_static.hpp", source);
+
+        assert(result.success);
+        assert(result.diagnostics.empty());
+        assert(result.file.declarations.size() == 1);
+        assert(result.file.declarations[0].fields.size() == 1);
+        assert(result.file.declarations[0].fields[0].name == "name");
+    }
+    {
+        const std::string source = R"cpp(
+struct User {
     int x, y; // json:"x"
 };
 )cpp";
@@ -250,6 +266,23 @@ struct User {
         assert(result.diagnostics[0].message.find(
                    "multiple field declarators") != std::string::npos);
         assert(result.diagnostics[0].location.file == "multiple.hpp");
+    }
+    {
+        const std::string source = R"cpp(
+struct User {
+    int x, y;
+    std::string name; // json:"name"
+};
+)cpp";
+
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "unmanaged_multiple.hpp", source);
+
+        assert(result.success);
+        assert(result.diagnostics.empty());
+        assert(result.file.declarations.size() == 1);
+        assert(result.file.declarations[0].fields.size() == 1);
+        assert(result.file.declarations[0].fields[0].name == "name");
     }
 
     {
@@ -389,6 +422,23 @@ struct User {
         assert(result.diagnostics[0].message.find("function declarators") !=
                std::string::npos);
         assert(result.diagnostics[0].location.file == "function_pointer.hpp");
+    }
+    {
+        const std::string source = R"cpp(
+struct User {
+    void (*callback)();
+    std::string name; // json:"name"
+};
+)cpp";
+
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "unmanaged_function_pointer.hpp", source);
+
+        assert(result.success);
+        assert(result.diagnostics.empty());
+        assert(result.file.declarations.size() == 1);
+        assert(result.file.declarations[0].fields.size() == 1);
+        assert(result.file.declarations[0].fields[0].name == "name");
     }
     {
         const std::string source = R"cpp(
