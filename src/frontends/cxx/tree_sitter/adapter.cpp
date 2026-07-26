@@ -55,6 +55,25 @@ std::string node_text(const std::string& source, const TSNode& node) {
 }
 
 /**
+ * Count direct named children with the requested Tree-sitter node type.
+ *
+ * This is used by fail-closed checks where accepting only the first matching
+ * child would silently drop unsupported source syntax.
+ */
+uint32_t count_direct_named_children_of_type(const TSNode& node,
+                                             const char* type) {
+    uint32_t count = 0;
+    const auto child_count = ts_node_named_child_count(node);
+    for (uint32_t i = 0; i < child_count; ++i) {
+        const auto child = ts_node_named_child(node, i);
+        if (node_type_is(child, type)) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+/**
  * Find the first named child with the requested Tree-sitter node type.
  */
 TSNode find_first_named_child_of_type(const TSNode& node, const char* type) {
@@ -88,6 +107,18 @@ bool extract_field(const std::string& path, const std::string& source,
         ParseDiagnostic diagnostic;
         diagnostic.message = "unsupported field declaration: static data "
                              "members are not supported";
+        diagnostic.location =
+            to_source_location(path, ts_node_start_point(field_node));
+        diagnostics.push_back(diagnostic);
+        return false;
+    }
+
+    const auto field_name_count =
+        count_direct_named_children_of_type(field_node, "field_identifier");
+    if (field_name_count > 1) {
+        ParseDiagnostic diagnostic;
+        diagnostic.message = "unsupported field declaration: multiple field "
+                             "declarators are not supported";
         diagnostic.location =
             to_source_location(path, ts_node_start_point(field_node));
         diagnostics.push_back(diagnostic);

@@ -18,12 +18,12 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CJM_BUILD_TESTS "Build CJM tests" ON)
-option(CJM_ENABLE_TREE_SITTER_SPIKE "Build the internal Tree-sitter frontend spile" OFF)
+option(CJM_ENABLE_TREE_SITTER_SPIKE "Build the internal Tree-sitter frontend spike" OFF)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
 
 if (CJM_ENABLE_TREE_SITTER_SPIKE)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTREESitterSpike.cmake)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitterSpike.cmake)
   cjm_add_tree_sitter_spike()
 
   add_library(cjm_tree_sitter_adapter

@@ -219,6 +219,21 @@ struct User {
                std::string::npos);
         assert(result.diagnostics[0].location.file == "static.hpp");
     }
+    {
+        const std::string source = R"cpp(
+struct User {
+    int x, y; // json:"x"
+};
+)cpp";
 
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "multiple.hpp", source);
+
+        assert(!result.success);
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find(
+                   "multiple field declarators") != std::string::npos);
+        assert(result.diagnostics[0].location.file == "multiple.hpp");
+    }
     return 0;
 }

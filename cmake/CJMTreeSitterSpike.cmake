@@ -6,7 +6,7 @@ enable_language(C)
 
 # Add private Tree-sitter spike targets for frontend research only.
 function(cjm_add_tree_sitter_spike)
-  # Pinned tag v0.26.0.
+  # Pinned tag v0.26.11.
   FetchContent_Declare(
     cjm_tree_sitter_runtime_source
     GIT_REPOSITORY https://github.com/tree-sitter/tree-sitter.git 
