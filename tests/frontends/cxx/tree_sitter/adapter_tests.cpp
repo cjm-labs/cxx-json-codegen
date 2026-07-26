@@ -305,5 +305,75 @@ struct User {
         assert(user.fields[3].name == "nickname");
         assert(user.fields[3].type_spelling == "std::optional<std::string>");
     }
+    {
+        const auto source =
+            read_text_file("tests/fixtures/v03_practical_models.hpp");
+
+        // Parse the v0.3 practical fixture through Tree-sitter.
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "tests/fixtures/v03_practical_models.hpp", source);
+
+        assert(result.success);
+        assert(result.diagnostics.empty());
+
+        // Verify top-level syntax facts for the v0.3 parser surface.
+        assert(result.file.enums.size() == 1);
+        assert(result.file.enums[0].name == "Status");
+        assert(result.file.enums[0].namespace_path.size() == 2);
+        assert(result.file.enums[0].namespace_path[0] == "company");
+        assert(result.file.enums[0].namespace_path[1] == "model");
+
+        assert(result.file.type_aliases.size() == 1);
+        assert(result.file.type_aliases[0].name == "Sequence");
+        assert(result.file.type_aliases[0].target_type_spelling ==
+               "std::uint64_t");
+        assert(result.file.type_aliases[0].namespace_path.size() == 2);
+        assert(result.file.type_aliases[0].namespace_path[0] == "company");
+        assert(result.file.type_aliases[0].namespace_path[1] == "model");
+
+        assert(result.file.declarations.size() == 2);
+
+        const auto& detail = result.file.declarations[0];
+        assert(detail.name == "Detail");
+        assert(detail.namespace_path.size() == 2);
+        assert(detail.namespace_path[0] == "company");
+        assert(detail.namespace_path[1] == "model");
+        assert(detail.fields.size() == 2);
+        assert(detail.fields[0].name == "source");
+        assert(detail.fields[0].type_spelling == "std::string");
+        assert(detail.fields[0].comments[0].text == "// json:\"source\"");
+        assert(detail.fields[1].name == "shard");
+        assert(detail.fields[1].type_spelling == "std::uint32_t");
+        assert(detail.fields[1].comments[0].text == "// json:\"shard\"");
+
+        const auto& event = result.file.declarations[1];
+        assert(event.name == "Event");
+        assert(event.namespace_path.size() == 2);
+        assert(event.namespace_path[0] == "company");
+        assert(event.namespace_path[1] == "model");
+        assert(event.fields.size() == 8);
+        assert(event.fields[0].name == "sequence");
+        assert(event.fields[0].type_spelling == "Sequence");
+        assert(event.fields[0].comments[0].text == "// json:\"sequence\"");
+        assert(event.fields[1].name == "timestamp_ns");
+        assert(event.fields[1].type_spelling == "std::int64_t");
+        assert(event.fields[2].name == "status");
+        assert(event.fields[2].type_spelling == "Status");
+        assert(event.fields[3].name == "detail");
+        assert(event.fields[3].type_spelling == "Detail");
+        assert(event.fields[4].name == "tags");
+        assert(event.fields[4].type_spelling == "std::vector<std::string>");
+        assert(event.fields[5].name == "buckets");
+        assert(event.fields[5].type_spelling ==
+               "std::map<std::string, std::vector<std::uint64_t>>");
+        assert(event.fields[6].name == "retry_after");
+        assert(event.fields[6].type_spelling == "std::optional<Sequence>");
+        assert(event.fields[6].comments[0].text ==
+               "// json:\"retry_after,omitempty\"");
+        assert(event.fields[7].name == "attributes");
+        assert(event.fields[7].type_spelling ==
+               "std::optional<std::unordered_map<std::string, std::string>>");
+    }
+
     return 0;
 }
