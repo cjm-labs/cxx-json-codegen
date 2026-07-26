@@ -374,6 +374,21 @@ struct User {
         assert(event.fields[7].type_spelling ==
                "std::optional<std::unordered_map<std::string, std::string>>");
     }
+    {
+        const std::string source = R"cpp(
+struct User {
+    void (*callback)(); // json:"callback"
+};
+)cpp";
 
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "function_pointer.hpp", source);
+
+        assert(!result.success);
+        assert(!result.diagnostics.empty());
+        assert(result.diagnostics[0].message.find("function declarators") !=
+               std::string::npos);
+        assert(result.diagnostics[0].location.file == "function_pointer.hpp");
+    }
     return 0;
 }

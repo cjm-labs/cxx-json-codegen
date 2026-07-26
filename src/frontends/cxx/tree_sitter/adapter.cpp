@@ -98,6 +98,16 @@ bool has_direct_named_child_of_type(const TSNode& node, const char* type) {
 }
 
 /**
+ * Return true for function or function-pointer field declaration shapes.
+ *
+ * CJM does not support these as JSON fields, so the parser rejects them before
+ * extracting a partial FieldSyntax.
+ */
+bool has_function_declarator(const TSNode& field_node) {
+    return has_direct_named_child_of_type(field_node, "function_declarator");
+}
+
+/**
  * Convert one supported Tree-sitter field_declaration into FieldSyntax.
  */
 bool extract_field(const std::string& path, const std::string& source,
@@ -107,6 +117,16 @@ bool extract_field(const std::string& path, const std::string& source,
         ParseDiagnostic diagnostic;
         diagnostic.message = "unsupported field declaration: static data "
                              "members are not supported";
+        diagnostic.location =
+            to_source_location(path, ts_node_start_point(field_node));
+        diagnostics.push_back(diagnostic);
+        return false;
+    }
+
+    if (has_function_declarator(field_node)) {
+        ParseDiagnostic diagnostic;
+        diagnostic.message = "unsupported field declaration: function "
+                             "declarators are not supported";
         diagnostic.location =
             to_source_location(path, ts_node_start_point(field_node));
         diagnostics.push_back(diagnostic);
