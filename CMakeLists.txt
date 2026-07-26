@@ -46,6 +46,10 @@ if (CJM_ENABLE_TREE_SITTER_FRONTEND)
   target_compile_features(cjm_tree_sitter_adapter_tests PRIVATE cxx_std_17)
   target_link_libraries(cjm_tree_sitter_adapter_tests PRIVATE cjm_tree_sitter_adapter)
   add_test(NAME cjm_tree_sitter_adapter_tests COMMAND cjm_tree_sitter_adapter_tests)
+  set_tests_properties(
+    cjm_tree_sitter_adapter_tests
+    PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
   add_executable(cjm_tree_sitter_dump
     tools/tree_sitter_dump/main.cpp

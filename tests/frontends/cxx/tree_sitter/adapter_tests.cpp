@@ -1,7 +1,23 @@
 #include <cassert>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #include "frontends/cxx/tree_sitter/adapter.hpp"
+
+namespace {
+
+// Read a fixture file so Tree-sitter can parse the same source used by parser
+// tests.
+std::string read_text_file(const std::string& path) {
+    std::ifstream input(path);
+    assert(input);
+
+    std::ostringstream buffer;
+    buffer << input.rdbuf();
+    return buffer.str();
+}
+} // namespace
 
 int main() {
     {
@@ -234,6 +250,60 @@ struct User {
         assert(result.diagnostics[0].message.find(
                    "multiple field declarators") != std::string::npos);
         assert(result.diagnostics[0].location.file == "multiple.hpp");
+    }
+
+    {
+        const auto source =
+            read_text_file("tests/fixtures/parser_practical_models.hpp");
+        // Parse the handwritten-parser practical fixture through Tree-sitter.
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "tests/fixtures/parser_practical_models.hpp", source);
+        assert(result.success);
+        assert(result.diagnostics.empty());
+
+        // Verify top-level syntax facts match the existing parser surface.
+        assert(result.file.enums.size() == 1);
+        assert(result.file.enums[0].name == "Status");
+        assert(result.file.enums[0].namespace_path.size() == 2);
+        assert(result.file.enums[0].namespace_path[0] == "company");
+        assert(result.file.enums[0].namespace_path[1] == "model");
+
+        assert(result.file.type_aliases.size() == 1);
+        assert(result.file.type_aliases[0].name == "UserId");
+        assert(result.file.type_aliases[0].target_type_spelling == "int");
+        assert(result.file.type_aliases[0].namespace_path.size() == 2);
+        assert(result.file.type_aliases[0].namespace_path[0] == "company");
+        assert(result.file.type_aliases[0].namespace_path[1] == "model");
+
+        assert(result.file.declarations.size() == 2);
+
+        // 3. Verify generated struct fields preserve supported parser facts.
+        const auto& address = result.file.declarations[0];
+        assert(address.name == "Address");
+        assert(address.namespace_path.size() == 2);
+        assert(address.namespace_path[0] == "company");
+        assert(address.namespace_path[1] == "model");
+        assert(address.fields.size() == 1);
+        assert(address.fields[0].name == "city");
+        assert(address.fields[0].type_spelling == "std::string");
+        assert(address.fields[0].comments.size() == 1);
+        assert(address.fields[0].comments[0].text == "// json:\"city\"");
+
+        const auto& user = result.file.declarations[1];
+        assert(user.name == "User");
+        assert(user.namespace_path.size() == 2);
+        assert(user.namespace_path[0] == "company");
+        assert(user.namespace_path[1] == "model");
+        assert(user.fields.size() == 4);
+        assert(user.fields[0].name == "id");
+        assert(user.fields[0].type_spelling == "UserId");
+        assert(user.fields[0].comments[0].text == "// json:\"id\"");
+        assert(user.fields[1].name == "address");
+        assert(user.fields[1].type_spelling == "Address");
+        assert(user.fields[2].name == "tags");
+        assert(user.fields[2].type_spelling == "std::vector<std::string>");
+        assert(user.fields[3].name == "nickname");
+        assert(user.fields[3].type_spelling == "std::optional<std::string>");
     }
     return 0;
 }
