@@ -52,6 +52,11 @@ if (CJM_BUILD_TESTS)
 endif()
 
 # metadata library 
+add_library(cjm_contract INTERFACE)
+target_include_directories(cjm_contract INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_contract INTERFACE cxx_std_17)
+
+# metadata library 
 add_library(cjm_metadata INTERFACE)
 target_include_directories(cjm_metadata INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_metadata INTERFACE cxx_std_17)
@@ -261,6 +266,6 @@ if (CJM_BUILD_TESTS)
   )
 
   add_executable(cjm_model_contract_tests tests/core/model_contract_tests.cpp)
-  target_link_libraries(cjm_model_contract_tests PRIVATE cjm_metadata)
+  target_link_libraries(cjm_model_contract_tests PRIVATE cjm_contract)
   add_test(NAME cjm_model_contract_tests COMMAND cjm_model_contract_tests)
 endif()

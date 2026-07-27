@@ -77,6 +77,11 @@ function(cjm_generate)
     PRIVATE
       "${generated_dir}"
   )
+  
+  target_link_libraries(
+    ${CJM_GENERATE_TARGET}
+    PRIVATE cjm_contract
+  )
 
   if (CJM_GENERATE_GENERATED_HEADERS_VAR)
     set(${CJM_GENERATE_GENERATED_HEADERS_VAR} ${generated_headers} PARENT_SCOPE)
