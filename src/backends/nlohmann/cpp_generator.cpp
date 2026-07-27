@@ -87,7 +87,7 @@ contract_field_type_descriptor_name(const metadata::FieldModel& field) {
 void generate_contract_type_descriptors(std::ostringstream& out,
                                         const metadata::TypeModel& type) {
     out << "namespace cjm::contract::generated_";
-    for (std::uint32_t i = 0; i < type.namespace_path.size(); ++i) {
+    for (std::size_t i = 0; i < type.namespace_path.size(); ++i) {
         out << type.namespace_path[i] << "_";
     }
 
@@ -105,7 +105,7 @@ void generate_contract_type_descriptors(std::ostringstream& out,
 
     out << "} // namespace cjm::contract::generated_";
 
-    for (std::uint32_t i = 0; i < type.namespace_path.size(); ++i) {
+    for (std::size_t i = 0; i < type.namespace_path.size(); ++i) {
         out << type.namespace_path[i] << "_";
     }
     out << type.name << "\n";
