@@ -259,4 +259,8 @@ if (CJM_BUILD_TESTS)
     PROPERTIES
       DEPENDS cjm_cli_generate_v03_practical
   )
+
+  add_executable(cjm_model_contract_tests tests/core/model_contract_tests.cpp)
+  target_link_libraries(cjm_model_contract_tests PRIVATE cjm_metadata)
+  add_test(NAME cjm_model_contract_tests COMMAND cjm_model_contract_tests)
 endif()
