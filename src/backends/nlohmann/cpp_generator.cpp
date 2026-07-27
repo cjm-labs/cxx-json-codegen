@@ -76,6 +76,41 @@ void generate_contract_type_descriptor(std::ostringstream& out,
         << "    0,\n"
         << "};\n";
 }
+
+// Return a stable generated identifier for one field's type descriptor.
+std::string
+contract_field_type_descriptor_name(const metadata::FieldModel& field) {
+    return field.name + "_type";
+}
+
+// Generate initial contract type descriptors for one model.
+void generate_contract_type_descriptors(std::ostringstream& out,
+                                        const metadata::TypeModel& type) {
+    out << "namespace cjm::contract::generated_";
+    for (std::uint32_t i = 0; i < type.namespace_path.size(); ++i) {
+        out << type.namespace_path[i] << "_";
+    }
+
+    out << type.name << " {\n\n";
+
+    for (const auto& field : type.fields) {
+        if (field.json.name.empty()) {
+            continue;
+        }
+
+        generate_contract_type_descriptor(
+            out, contract_field_type_descriptor_name(field), field.type);
+        out << "\n";
+    }
+
+    out << "} // namespace cjm::contract::generated_";
+
+    for (std::uint32_t i = 0; i < type.namespace_path.size(); ++i) {
+        out << type.namespace_path[i] << "_";
+    }
+    out << type.name << "\n";
+}
+
 void open_namespace(std::ostringstream& out,
                     const std::vector<std::string>& namespace_path) {
 
@@ -178,7 +213,8 @@ std::string generate_header(const metadata::ProjectModel& project) {
         << "\n"
         << "#pragma once\n"
         << "\n"
-        << "#include <nlohmann/json.hpp>\n";
+        << "#include <nlohmann/json.hpp>\n"
+        << "#include <cjm/model_contract.hpp>\n";
 
     out << "\n";
 
@@ -191,6 +227,8 @@ std::string generate_header(const metadata::ProjectModel& project) {
         generate_from_json(out, type);
         out << "\n";
         close_namespace(out, type.namespace_path);
+        out << "\n";
+        generate_contract_type_descriptors(out, type);
 
         if (i + 1 < project.types.size()) {
             out << "\n";
