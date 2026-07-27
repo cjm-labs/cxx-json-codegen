@@ -76,6 +76,9 @@ Out-of-boundary cases include:
 Those cases may require explicit future policies, custom converters, or
 separate tools. They should not shape CJM's default mapping surface.
 
+Dynamic data belongs at application boundaries. User code should validate and
+normalize it into concrete model types before handing it to CJM-generated code.
+
 ---
 
 # Build-Time, Not Runtime

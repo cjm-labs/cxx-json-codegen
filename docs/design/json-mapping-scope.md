@@ -24,6 +24,8 @@ can be known at build time:
 
 CJM should not treat arbitrary dynamic JSON, arbitrary C++ object graphs, or
 unbounded runtime type containers as part of the default mapping surface.
+Dynamic input should be handled by user-owned validation and conversion code
+before it enters CJM's generated strongly typed model path.
 
 Future support for dynamic payloads should be tracked as JSON value
 passthrough, not as `std::any`. Future support for `std::variant` should be
