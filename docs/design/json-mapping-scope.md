@@ -9,6 +9,31 @@ common Modern C++ model patterns that map cleanly to JSON.
 
 ---
 
+# Product Boundary
+
+CJM targets strongly typed, structured, modelable JSON.
+
+The supported mapping matrix should focus on C++ declarations whose JSON shape
+can be known at build time:
+
+- named object fields
+- explicit C++ field types
+- deterministic arrays and objects
+- documented optional, required, and default semantics
+- explicit converter policies for domain-specific types
+
+CJM should not treat arbitrary dynamic JSON, arbitrary C++ object graphs, or
+unbounded runtime type containers as part of the default mapping surface.
+Dynamic input should be handled by user-owned validation and conversion code
+before it enters CJM's generated strongly typed model path.
+
+Future support for dynamic payloads should be tracked as JSON value
+passthrough, not as `std::any`. Future support for `std::variant` should be
+tracked as explicit union/sum-type mapping with a documented discriminator
+policy.
+
+---
+
 # JSON Data Model
 
 JSON has a small data model:

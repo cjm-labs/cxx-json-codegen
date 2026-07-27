@@ -51,6 +51,36 @@ model generator.
 
 ---
 
+# Strongly Typed, Structured, Modelable JSON
+
+CJM targets strongly typed, structured, modelable JSON.
+
+This means CJM should work well for ordinary C++ model declarations that have:
+
+- explicit fields
+- explicit field types
+- explicit JSON names
+- deterministic generated code
+- metadata that can be represented in a stable contract
+
+CJM should not try to support every possible JSON or C++ shape by default.
+
+Out-of-boundary cases include:
+
+- arbitrary dynamic JSON documents
+- arbitrary C++ object graphs
+- `std::any` as an unbounded runtime type container
+- polymorphic object ownership
+- implicit conversion of arbitrary container or map-key types
+
+Those cases may require explicit future policies, custom converters, or
+separate tools. They should not shape CJM's default mapping surface.
+
+Dynamic data belongs at application boundaries. User code should validate and
+normalize it into concrete model types before handing it to CJM-generated code.
+
+---
+
 # Build-Time, Not Runtime
 
 Code generation happens during the build.
