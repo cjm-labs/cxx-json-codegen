@@ -214,6 +214,30 @@ if (CJM_BUILD_TESTS)
       DEPENDS cjm_cli_generate_multiple_inputs
   )
 
+  add_test(NAME cjm_cli_generate_grouped_inputs
+    COMMAND cjm generate
+    --input
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/address.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/user.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/cli_multi_grouped.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_grouped_inputs
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
+  add_test(NAME cjm_cli_generate_grouped_inputs_golden
+    COMMAND ${CMAKE_COMMAND} -E compare_files
+    ${CMAKE_CURRENT_BINARY_DIR}/cli_multi_grouped.cjm.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/cli_multi.expected.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_grouped_inputs_golden
+    PROPERTIES
+      DEPENDS cjm_cli_generate_grouped_inputs
+  )
+
   add_test(NAME cjm_cli_generate_v03_practical
     COMMAND cjm generate
     --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/v03_practical_models.hpp

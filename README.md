@@ -187,14 +187,15 @@ cmake --build build --target cjm
 The generated file contains ordinary C++ `to_json` and `from_json` functions
 for `nlohmann/json`.
 
-For multiple related headers, repeat `--input` in the same command:
+For multiple related headers, pass them after `--input` in the same command:
 
 ```sh
 ./build/cjm generate \
-  --input address.hpp \
-  --input user.hpp \
+  --input address.hpp user.hpp \
   --output model.cjm.hpp
 ```
+
+Repeating `--input` is still supported for compatibility.
 
 CJM does not automatically discover `#include` dependencies yet, so pass every
 related model header explicitly.
