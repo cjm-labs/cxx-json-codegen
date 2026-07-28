@@ -4,6 +4,7 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <cjm/model_contract.hpp>
 
 namespace company::model {
 
@@ -16,6 +17,18 @@ inline void from_json(const nlohmann::json& j, Address& value) {
 }
 
 } // namespace company::model
+
+namespace cjm::contract::generated_company_model_Address {
+
+inline constexpr cjm::contract::type_descriptor city_type{
+    cjm::contract::type_kind::string,
+    "std::string",
+    "std::string",
+    nullptr,
+    0,
+};
+
+} // namespace cjm::contract::generated_company_model_Address
 
 namespace company::model {
 
@@ -30,3 +43,23 @@ inline void from_json(const nlohmann::json& j, User& value) {
 }
 
 } // namespace company::model
+
+namespace cjm::contract::generated_company_model_User {
+
+inline constexpr cjm::contract::type_descriptor name_type{
+    cjm::contract::type_kind::string,
+    "std::string",
+    "std::string",
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::type_descriptor address_type{
+    cjm::contract::type_kind::object,
+    "company::model::Address",
+    "company::model::Address",
+    nullptr,
+    0,
+};
+
+} // namespace cjm::contract::generated_company_model_User

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <cjm/model_contract.hpp>
 
 inline void to_json(nlohmann::json& j, const User& value) {
     j["name"] = value.name;
@@ -15,3 +16,22 @@ inline void from_json(const nlohmann::json& j, User& value) {
     j.at("age").get_to(value.age);
 }
 
+namespace cjm::contract::generated_User {
+
+inline constexpr cjm::contract::type_descriptor name_type{
+    cjm::contract::type_kind::string,
+    "std::string",
+    "std::string",
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::type_descriptor age_type{
+    cjm::contract::type_kind::signed_integer,
+    "int",
+    "int",
+    nullptr,
+    0,
+};
+
+} // namespace cjm::contract::generated_User

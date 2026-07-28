@@ -227,7 +227,9 @@ std::string generate_header(const metadata::ProjectModel& project) {
         generate_from_json(out, type);
         out << "\n";
         close_namespace(out, type.namespace_path);
-        out << "\n";
+        if (!type.namespace_path.empty()) {
+            out << "\n";
+        }
         generate_contract_type_descriptors(out, type);
 
         if (i + 1 < project.types.size()) {
