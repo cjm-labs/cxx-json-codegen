@@ -359,6 +359,181 @@ These results do not currently exist.
 
 ---
 
+# Research Investment Gates
+
+Research investment should progress through explicit gates.
+
+## Gate 0 - Evidence Preservation
+
+Status:
+
+```text
+Active now
+```
+
+Work includes:
+
+- recording exact releases and commits;
+- recording frontend and backend evolution;
+- preserving fail-closed regression cases;
+- recording downstream dogfood evidence;
+- recording external bug reports;
+- preserving architecture decisions;
+- distinguishing observations from claims.
+
+Properties:
+
+```text
+low incremental cost
+high product value
+high option value
+no publication commitment
+```
+
+This work should continue as part of normal product development.
+
+## Gate 1 - Natural Product Maturity
+
+A research pilot should not begin until the product naturally provides enough
+evidence.
+
+Possible prerequisites:
+
+- stable production C++ frontend;
+- documented supported subset;
+- stable Metadata IR for the evaluated release;
+- reliable diagnostics;
+- deterministic generated output;
+- downstream use;
+- a second frontend developed for product reasons;
+- a second backend developed for product reasons.
+
+The second frontend and backend must not be implemented solely to unlock a
+paper.
+
+## Gate 2 - Bounded Research Pilot
+
+Before building a large corpus or multiple production-quality baselines, run a
+time-boxed pilot.
+
+Possible pilot questions:
+
+```text
+Does a naive Tree-sitter adapter exhibit meaningful false acceptance?
+
+Does the strict adapter materially reduce high-severity failures?
+
+Can frontend/backend extension cost be measured reproducibly?
+
+Does the Metadata IR reduce duplicated mapping logic in practice?
+
+Are the results large and consistent enough to justify deeper evaluation?
+```
+
+A bounded pilot budget should be proposed when this gate is reached. CJM should
+not pre-commit hundreds of hours before pilot evidence exists.
+
+The pilot must have explicit stop criteria.
+
+## Gate 3 - Research Signal Review
+
+After the pilot, classify the evidence:
+
+```text
+Weak:
+expected engineering observations only
+
+Moderate:
+credible tool-level contribution
+
+Strong:
+non-trivial, generalizable, empirically measurable result
+```
+
+The review must answer:
+
+- Is the result surprising or non-obvious?
+- Is it useful outside CJM?
+- Can it be measured reproducibly?
+- Does it survive meaningful baselines?
+- Is the effect large enough to justify a full study?
+- Can the corpus and ground truth be made credible?
+- Is there a coherent single paper thesis?
+- Does an independent researcher find the question publishable?
+
+No full research investment should begin before this review.
+
+## Gate 4 - External Sanity Review
+
+Before committing to a full study, obtain feedback from at least one person with
+relevant research experience in:
+
+```text
+compilers
+programming languages
+source-code tooling
+empirical software engineering
+software architecture
+```
+
+The purpose is not to request endorsement.
+
+The purpose is to test:
+
+- novelty;
+- related-work positioning;
+- experimental validity;
+- likely reviewer objections;
+- whether the contribution is a research result or mainly an engineering
+  artifact.
+
+External review does not prove that a paper will be accepted.
+
+## Gate 5 - Full Study Commitment
+
+Only after Gates 1 through 4 pass should the owner decide whether to invest in:
+
+- full corpus construction;
+- independent labeling;
+- Clang and other baselines;
+- repeated measurements;
+- statistical analysis;
+- research artifact repository;
+- manuscript preparation;
+- formal submission.
+
+At this gate, produce a fresh cost estimate and expected benefits.
+
+The decision may still be:
+
+```text
+do not proceed
+```
+
+That is an acceptable outcome.
+
+## Gate 6 - Venue Selection
+
+Select a publication category only after the contribution and evidence are
+known.
+
+Possible categories include:
+
+```text
+technical report
+workshop
+tool/demo track
+experience report
+research conference
+research journal
+```
+
+Do not optimize the product or evaluation for a named venue in advance.
+
+Do not describe a top journal as the default destination.
+
+---
+
 # Primary and Secondary Paper Scope
 
 Primary candidate direction:

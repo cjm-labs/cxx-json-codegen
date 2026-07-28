@@ -32,6 +32,28 @@ Describe what changed in the real product.
 - Related research question:
 - Relevant hypothesis:
 
+### Product Value
+
+What product decision, test, diagnostic, or user experience does this evidence
+improve independently of research?
+
+### Research Option Value
+
+Could this evidence support a future research question? If so, which one?
+
+### Additional Research Cost
+
+What extra work would be required to turn this observation into publishable
+evidence?
+
+### Current Investment Decision
+
+- Preserve only
+- Candidate for pilot
+- Pilot active
+- Full study approved
+- Stopped
+
 ### Observation
 
 Record the observable fact.

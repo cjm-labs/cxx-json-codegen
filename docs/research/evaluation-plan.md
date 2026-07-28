@@ -25,6 +25,44 @@ baselines and corpora should stay isolated from production code.
 
 ---
 
+# Go / Narrow / Stop Criteria
+
+Formal research work should use explicit investment decisions.
+
+## Continue to a Full Research Study Only When
+
+- the product capabilities already exist for independent product reasons;
+- the pilot reveals a non-trivial result;
+- the result appears generalizable beyond CJM;
+- a credible baseline comparison is possible;
+- a trustworthy corpus and ground truth can be built;
+- the paper has one coherent center;
+- the additional cost is explicitly approved;
+- external research feedback is favorable enough to justify the risk.
+
+## Narrow the Work When
+
+- the tool is valuable but novelty is moderate;
+- the strict-adapter result is useful but limited to CJM;
+- the multi-frontend or multi-backend evidence is primarily architectural;
+- available evidence supports a tool paper or experience report better than a
+  full research paper.
+
+## Stop Formal Paper Work When
+
+- the result is only that good layering improves maintainability;
+- the result is only that Tree-sitter is easier than a handwritten parser;
+- the baselines do not show a meaningful difference;
+- the corpus cannot be labeled credibly;
+- the study requires product features with no user justification;
+- experimental complexity starts distorting the product roadmap;
+- the expected career or technical value no longer justifies the time;
+- no coherent contribution survives related-work review.
+
+Stopping formal research must not stop CJM product development.
+
+---
+
 # Corpus Design
 
 Future parser and frontend studies should use a versioned corpus with explicit
