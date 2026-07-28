@@ -4,7 +4,6 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <cjm/model_contract.hpp>
 
 namespace company::model {
 
@@ -31,39 +30,3 @@ inline void from_json(const nlohmann::json& j, User& value) {
 }
 
 } // namespace company::model
-
-namespace cjm::contract::generated_company_model_User {
-
-inline constexpr cjm::contract::type_descriptor labels_type{
-    cjm::contract::type_kind::map,
-    "std::map<std::string, int>",
-    "std::map<std::string, int>",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor aliases_type{
-    cjm::contract::type_kind::map,
-    "std::unordered_map<std::string, std::string>",
-    "std::unordered_map<std::string, std::string>",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor optional_labels_type{
-    cjm::contract::type_kind::optional,
-    "std::optional<std::map<std::string, int>>",
-    "std::optional<std::map<std::string, int>>",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor optional_aliases_type{
-    cjm::contract::type_kind::optional,
-    "std::optional<std::unordered_map<std::string, std::string>>",
-    "std::optional<std::unordered_map<std::string, std::string>>",
-    nullptr,
-    0,
-};
-
-} // namespace cjm::contract::generated_company_model_User

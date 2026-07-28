@@ -4,7 +4,6 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <cjm/model_contract.hpp>
 
 namespace company::model {
 
@@ -19,26 +18,6 @@ inline void from_json(const nlohmann::json& j, Detail& value) {
 }
 
 } // namespace company::model
-
-namespace cjm::contract::generated_company_model_Detail {
-
-inline constexpr cjm::contract::type_descriptor source_type{
-    cjm::contract::type_kind::string,
-    "std::string",
-    "std::string",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor shard_type{
-    cjm::contract::type_kind::unsigned_integer,
-    "std::uint32_t",
-    "std::uint32_t",
-    nullptr,
-    0,
-};
-
-} // namespace cjm::contract::generated_company_model_Detail
 
 namespace company::model {
 
@@ -73,71 +52,3 @@ inline void from_json(const nlohmann::json& j, Event& value) {
 }
 
 } // namespace company::model
-
-namespace cjm::contract::generated_company_model_Event {
-
-inline constexpr cjm::contract::type_descriptor sequence_type{
-    cjm::contract::type_kind::unsigned_integer,
-    "std::uint64_t",
-    "std::uint64_t",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor timestamp_ns_type{
-    cjm::contract::type_kind::signed_integer,
-    "std::int64_t",
-    "std::int64_t",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor status_type{
-    cjm::contract::type_kind::enum_,
-    "company::model::Status",
-    "company::model::Status",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor detail_type{
-    cjm::contract::type_kind::object,
-    "company::model::Detail",
-    "company::model::Detail",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor tags_type{
-    cjm::contract::type_kind::vector,
-    "std::vector<std::string>",
-    "std::vector<std::string>",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor buckets_type{
-    cjm::contract::type_kind::map,
-    "std::map<std::string, std::vector<std::uint64_t>>",
-    "std::map<std::string, std::vector<std::uint64_t>>",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor retry_after_type{
-    cjm::contract::type_kind::optional,
-    "std::optional<std::uint64_t>",
-    "std::optional<std::uint64_t>",
-    nullptr,
-    0,
-};
-
-inline constexpr cjm::contract::type_descriptor attributes_type{
-    cjm::contract::type_kind::optional,
-    "std::optional<std::unordered_map<std::string, std::string>>",
-    "std::optional<std::unordered_map<std::string, std::string>>",
-    nullptr,
-    0,
-};
-
-} // namespace cjm::contract::generated_company_model_Event

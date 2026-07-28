@@ -56,6 +56,11 @@ add_library(cjm_contract INTERFACE)
 target_include_directories(cjm_contract INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_contract INTERFACE cxx_std_17)
 
+add_library(cjm_contract_generator src/backends/contract/contract_generator.cpp)
+target_link_libraries(cjm_contract_generator PUBLIC cjm_metadata cjm_contract)
+target_include_directories(cjm_contract_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_contract_generator PUBLIC cxx_std_17)
+
 # metadata library 
 add_library(cjm_metadata INTERFACE)
 target_include_directories(cjm_metadata INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -99,6 +104,13 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_generator_tests PRIVATE cjm_generator)
   add_test(NAME cjm_generator_tests COMMAND cjm_generator_tests)
   set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  
+  add_executable(cjm_contract_generator_tests
+    tests/backends/contract/contract_generator_tests.cpp
+  )
+  target_link_libraries(cjm_contract_generator_tests PRIVATE cjm_contract_generator)
+  add_test(NAME cjm_contract_generator_tests COMMAND cjm_contract_generator_tests)
+  set_tests_properties(cjm_contract_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   # PIPELINE GOLDEN tests below...
   add_executable(cjm_pipeline_golden_tests tests/backends/nlohmann/pipeline_golden_tests.cpp)
