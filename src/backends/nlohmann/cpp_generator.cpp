@@ -6,6 +6,22 @@
 
 namespace cjm::generator {
 
+// Return the generated C++ spelling for a bool literal.
+std::string cpp_bool_literal(bool value) { return value ? "true" : "false"; }
+
+// Generate one source_location initializer for public contract metadata.
+void generate_contract_source_location(
+    std::ostringstream& out, const metadata::SourceLocation& location) {
+    out << "{\"" << location.file << "\", " << location.line << ", "
+        << location.column << "}";
+}
+
+// Return a stable generated identifier for one field's type descriptor.
+std::string
+contract_field_type_descriptor_name(const metadata::FieldModel& field) {
+    return field.name + "_type";
+}
+
 // Return the generated C++ spelling for a validated Metadata IR type.
 std::string cpp_type_name(const metadata::FieldType& type) {
     switch (type.kind) {
@@ -77,10 +93,31 @@ void generate_contract_type_descriptor(std::ostringstream& out,
         << "};\n";
 }
 
-// Return a stable generated identifier for one field's type descriptor.
-std::string
-contract_field_type_descriptor_name(const metadata::FieldModel& field) {
-    return field.name + "_type";
+// Generate one public contract field descriptor.
+void generate_contract_field_descriptor(std::ostringstream& out,
+                                        const metadata::FieldModel& field) {
+    const bool ignored = field.json.name.empty();
+
+    out << "    {\n"
+        << "        \"" << field.name << "\",\n"
+        << "        \"" << field.json.name << "\",\n"
+        << "        " << cpp_bool_literal(ignored) << ",\n"
+        << "        " << cpp_bool_literal(field.json.omit_empty) << ",\n"
+        << "        ";
+    generate_contract_source_location(out, field.source_location);
+    out << ",\n"
+        << "        &" << contract_field_type_descriptor_name(field) << ",\n"
+        << "    },\n";
+}
+
+// Generate public contract field descriptors for one model.
+void generate_contract_field_descriptors(std::ostringstream& out,
+                                         const metadata::TypeModel& type) {
+    out << "inline constexpr cjm::contract::field_descriptor fields[] = {\n";
+    for (const auto& field : type.fields) {
+        generate_contract_field_descriptor(out, field);
+    }
+    out << "};\n";
 }
 
 // Generate initial contract type descriptors for one model.
@@ -94,15 +131,13 @@ void generate_contract_type_descriptors(std::ostringstream& out,
     out << type.name << " {\n\n";
 
     for (const auto& field : type.fields) {
-        if (field.json.name.empty()) {
-            continue;
-        }
-
         generate_contract_type_descriptor(
             out, contract_field_type_descriptor_name(field), field.type);
         out << "\n";
     }
 
+    generate_contract_field_descriptors(out, type);
+    out << "\n";
     out << "} // namespace cjm::contract::generated_";
 
     for (std::size_t i = 0; i < type.namespace_path.size(); ++i) {
