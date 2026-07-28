@@ -258,7 +258,8 @@ solutions. The goal is to identify the tradeoff boundary.
 
 # Required Product Maturity
 
-Formal experimentation or paper writing should wait for technical maturity
+Formal experimentation or paper writing should not be treated as the default
+future path. It should wait for technical maturity and explicit go/no-go review,
 rather than a version number alone.
 
 Potential gates:
@@ -277,6 +278,84 @@ Potential gates:
 Not every gate is required for every research question. For example, RQ1 may be
 studied before a second backend exists, while RQ2 requires meaningful
 multi-frontend or multi-backend evidence.
+
+---
+
+# Publication Is Conditional
+
+This prospectus defines a possible research direction, not a commitment to
+produce a paper.
+
+CJM may produce several valid outcomes.
+
+## Outcome A - Product Evidence Is Useful, but Research Novelty Is Weak
+
+Possible result:
+
+```text
+IR improves local architecture
+Tree-sitter reduces parser maintenance
+the product works well
+but no broadly generalizable research result emerges
+```
+
+Recommended response:
+
+```text
+continue product development
+publish engineering documentation or a technical article
+do not force a research paper
+```
+
+This is a successful product outcome.
+
+## Outcome B - Results Support a Tool or Experience Report
+
+Possible result:
+
+```text
+CJM is mature and reproducible
+the architecture is useful
+evaluation is credible
+but the contribution is primarily a tool or engineering experience
+```
+
+Possible outputs:
+
+```text
+tool paper
+demo paper
+experience report
+workshop paper
+technical report
+artifact publication
+```
+
+This is a valid research outcome and should not be treated as a failed
+top-venue attempt.
+
+## Outcome C - Strong Generalizable Research Findings Emerge
+
+Examples may include:
+
+```text
+systematic silent-acceptance failures in naive error-recovering-parser adapters
+
+a reusable fail-closed adapter method with significant empirical benefit
+
+strong and measurable reduction in duplicated semantic rules and cross-layer
+coupling through the shared Metadata IR
+
+new evidence about which C/C++ metadata semantics can and cannot be normalized
+across frontends
+
+a corpus or benchmark independently useful to other source-tool researchers
+```
+
+Only this kind of evidence justifies considering a high-cost full research
+study and a top-tier venue.
+
+These results do not currently exist.
 
 ---
 
