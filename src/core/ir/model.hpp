@@ -27,6 +27,7 @@ enum class FieldTypeKind {
     FloatingPoint,
     String,
     Enum,
+    Array,
     Vector,
     Map,
     Optional,
