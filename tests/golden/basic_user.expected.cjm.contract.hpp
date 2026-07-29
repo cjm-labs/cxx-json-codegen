@@ -141,6 +141,35 @@ inline constexpr cjm::contract::type_descriptor internal_id_type{
     0,
 };
 
+inline constexpr cjm::contract::type_descriptor attributes_type_arg0{
+    cjm::contract::type_kind::string,
+    "std::string",
+    "std::string",
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::type_descriptor attributes_type_arg1{
+    cjm::contract::type_kind::signed_integer,
+    "int",
+    "int",
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::type_descriptor attributes_type_arguments[] = {
+    attributes_type_arg0,
+    attributes_type_arg1,
+};
+
+inline constexpr cjm::contract::type_descriptor attributes_type{
+    cjm::contract::type_kind::map,
+    "std::map<std::string, int>",
+    "std::map<std::string, int>",
+    attributes_type_arguments,
+    2,
+};
+
 inline constexpr cjm::contract::field_descriptor fields[] = {
     {
         "name",
@@ -206,6 +235,14 @@ inline constexpr cjm::contract::field_descriptor fields[] = {
         {"include/user.hpp", 9, 9},
         &internal_id_type,
     },
+    {
+        "attributes",
+        "attributes",
+        false,
+        false,
+        {"include/user.hpp", 10, 42},
+        &attributes_type,
+    },
 };
 
 } // namespace cjm::contract::generated_company_model_User
@@ -217,6 +254,6 @@ struct cjm::contract::model_traits<company::model::User> {
         "company::model::User",
         {"include/user.hpp", 1, 8},
         cjm::contract::generated_company_model_User::fields,
-        8,
+        9,
     };
 };

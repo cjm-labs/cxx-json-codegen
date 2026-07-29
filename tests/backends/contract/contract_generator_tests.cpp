@@ -71,6 +71,12 @@ ProjectModel make_basic_user_project() {
         "std::optional",
     };
     optional_int_type.arguments = {int_type};
+    FieldType map_string_int_type{
+        FieldTypeKind::Map,
+        "std::map<std::string, int>",
+        "std::map",
+    };
+    map_string_int_type.arguments = {string_type, int_type};
 
     TypeModel address;
     address.name = "Address";
@@ -139,6 +145,12 @@ ProjectModel make_basic_user_project() {
             int_type,
             JsonFieldMetadata{"", false},
             SourceLocation{"include/user.hpp", 9, 9},
+        },
+        FieldModel{
+            "attributes",
+            map_string_int_type,
+            JsonFieldMetadata{"attributes", false},
+            SourceLocation{"include/user.hpp", 10, 42},
         },
     };
 
