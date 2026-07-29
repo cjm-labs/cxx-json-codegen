@@ -1,4 +1,5 @@
 #include <cassert>
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@ struct User {
     Status status = Status::Active;
     std::optional<std::string> nickname;
     std::optional<int> score;
+    std::array<int, 4> samples{};
 };
 
 } // namespace company::model
@@ -39,7 +41,7 @@ int main() {
     user.status = company::model::Status::Active;
     user.nickname = "fang";
     user.score = 100;
-
+    user.samples = {1, 2, 3, 4};
     nlohmann::json json = user;
 
     company::model::User decoded = json.get<company::model::User>();
@@ -50,6 +52,6 @@ int main() {
     assert(decoded.address.city == "Framingham");
     assert(decoded.nickname.has_value());
     assert(decoded.score == 100);
-
+    assert(decoded.samples == user.samples);
     return 0;
 }

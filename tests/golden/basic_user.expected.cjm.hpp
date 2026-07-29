@@ -31,6 +31,7 @@ inline void to_json(nlohmann::json& j, const User& value) {
     if (value.score.has_value()) {
         j["score"] = *value.score;
     }
+    j["samples"] = value.samples;
 }
 
 inline void from_json(const nlohmann::json& j, User& value) {
@@ -45,6 +46,7 @@ inline void from_json(const nlohmann::json& j, User& value) {
     if (j.contains("score")) {
         value.score = j.at("score").get<int>();
     }
+    j.at("samples").get_to(value.samples);
 }
 
 } // namespace company::model

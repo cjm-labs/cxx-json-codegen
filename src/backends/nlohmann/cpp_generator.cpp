@@ -18,6 +18,8 @@ std::string cpp_type_name(const metadata::FieldType& type) {
     case metadata::FieldTypeKind::UserDefined:
         return type.qualified_name.empty() ? type.spelling
                                            : type.qualified_name;
+    case metadata::FieldTypeKind::Array:
+        return type.spelling;
     case metadata::FieldTypeKind::Vector:
         return "std::vector<" + cpp_type_name(type.arguments[0]) + ">";
     case metadata::FieldTypeKind::Optional:

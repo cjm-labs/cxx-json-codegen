@@ -64,6 +64,13 @@ ProjectModel make_basic_user_project() {
     };
     vector_string_type.arguments = {string_type};
 
+    FieldType array_int_type{
+        FieldTypeKind::Array,
+        "std::array<int, 4>",
+        "std::array",
+    };
+    array_int_type.arguments = {int_type};
+
     FieldType address_type{
         FieldTypeKind::UserDefined,
         "Address",
@@ -126,6 +133,12 @@ ProjectModel make_basic_user_project() {
             optional_int_type,
             JsonFieldMetadata{"score", true},
             SourceLocation{"include/user.hpp", 5, 28},
+        },
+        FieldModel{
+            "samples",
+            array_int_type,
+            JsonFieldMetadata{"samples", false},
+            SourceLocation{"include/user.hpp", 10, 35},
         },
         FieldModel{
             "internal_id",
