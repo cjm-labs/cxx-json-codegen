@@ -21,6 +21,18 @@ std::string
 contract_field_type_descriptor_name(const metadata::FieldModel& field) {
     return field.name + "_type";
 }
+// Return the generated namespace that owns one model's contract descriptors.
+std::string contract_generated_namespace_name(const metadata::TypeModel& type) {
+    std::string name = "cjm::contract::generated_";
+
+    for (std::size_t i = 0; i < type.namespace_path.size(); ++i) {
+        name += type.namespace_path[i];
+        name += "_";
+    }
+
+    name += type.name;
+    return name;
+}
 
 // Return the C++ type spelling recorded in generated contract metadata.
 std::string cpp_type_name(const metadata::FieldType& type) {
@@ -123,13 +135,7 @@ void generate_contract_field_descriptors(std::ostringstream& out,
 // Generate all contract descriptors for one model namespace.
 void generate_contract_model_namespace(std::ostringstream& out,
                                        const metadata::TypeModel& type) {
-    out << "namespace cjm::contract::generated_";
-
-    for (std::size_t i = 0; i < type.namespace_path.size(); ++i) {
-        out << type.namespace_path[i] << "_";
-    }
-
-    out << type.name << " {\n\n";
+    out << "namespace " << contract_generated_namespace_name(type) << " {\n\n";
 
     for (const auto& field : type.fields) {
         generate_contract_type_descriptor(
@@ -140,11 +146,26 @@ void generate_contract_model_namespace(std::ostringstream& out,
     generate_contract_field_descriptors(out, type);
     out << "\n";
 
-    out << "} // namespace cjm::contract::generated_";
-    for (std::size_t i = 0; i < type.namespace_path.size(); ++i) {
-        out << type.namespace_path[i] << "_";
-    }
-    out << type.name << "\n";
+    out << "} // namespace " << contract_generated_namespace_name(type) << "\n";
+}
+
+// Generate the public model_traits<T> entry point for one model.
+void generate_contract_model_traits(std::ostringstream& out,
+                                    const metadata::TypeModel& type) {
+    out << "template <>\n"
+        << "struct cjm::contract::model_traits<" << type.qualified_name
+        << "> {\n"
+        << "    static constexpr cjm::contract::model_descriptor model{\n"
+        << "        \"" << type.name << "\",\n"
+        << "        \"" << type.qualified_name << "\",\n"
+        << "        ";
+    generate_contract_source_location(out, type.source_location);
+    out << ",\n"
+        << "        " << contract_generated_namespace_name(type)
+        << "::fields,\n"
+        << "        " << type.fields.size() << ",\n"
+        << "    };\n"
+        << "};\n";
 }
 
 std::string generate_header(const metadata::ProjectModel& project) {
@@ -160,7 +181,8 @@ std::string generate_header(const metadata::ProjectModel& project) {
 
     for (std::size_t i = 0; i < project.types.size(); ++i) {
         generate_contract_model_namespace(out, project.types[i]);
-
+        out << "\n";
+        generate_contract_model_traits(out, project.types[i]);
         if (i + 1 < project.types.size()) {
             out << "\n";
         }

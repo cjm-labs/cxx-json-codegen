@@ -28,6 +28,17 @@ inline constexpr cjm::contract::field_descriptor fields[] = {
 
 } // namespace cjm::contract::generated_company_model_Address
 
+template <>
+struct cjm::contract::model_traits<company::model::Address> {
+    static constexpr cjm::contract::model_descriptor model{
+        "Address",
+        "company::model::Address",
+        {"include/address.hpp", 1, 8},
+        cjm::contract::generated_company_model_Address::fields,
+        1,
+    };
+};
+
 namespace cjm::contract::generated_company_model_User {
 
 inline constexpr cjm::contract::type_descriptor name_type{
@@ -162,3 +173,14 @@ inline constexpr cjm::contract::field_descriptor fields[] = {
 };
 
 } // namespace cjm::contract::generated_company_model_User
+
+template <>
+struct cjm::contract::model_traits<company::model::User> {
+    static constexpr cjm::contract::model_descriptor model{
+        "User",
+        "company::model::User",
+        {"include/user.hpp", 1, 8},
+        cjm::contract::generated_company_model_User::fields,
+        8,
+    };
+};
