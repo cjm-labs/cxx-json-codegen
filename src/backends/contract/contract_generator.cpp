@@ -21,6 +21,19 @@ std::string
 contract_field_type_descriptor_name(const metadata::FieldModel& field) {
     return field.name + "_type";
 }
+
+// Return the generated array name that stores one descriptor's type arguments.
+std::string contract_type_arguments_name(const std::string& descriptor_name) {
+    return descriptor_name + "_arguments";
+}
+
+// Return the generated descriptor name for one nested type argument.
+std::string
+contract_type_argument_descriptor_name(const std::string& descriptor_name,
+                                       std::size_t index) {
+    return descriptor_name + "_arg" + std::to_string(index);
+}
+
 // Return the generated namespace that owns one model's contract descriptors.
 std::string contract_generated_namespace_name(const metadata::TypeModel& type) {
     std::string name = "cjm::contract::generated_";
@@ -32,6 +45,35 @@ std::string contract_generated_namespace_name(const metadata::TypeModel& type) {
 
     name += type.name;
     return name;
+}
+
+void generate_contract_type_descriptor(std::ostringstream& out,
+                                       const std::string& descriptor_name,
+                                       const metadata::FieldType& type);
+
+// Generate nested type descriptors used by vector/optional/map descriptors.
+void generate_contract_type_arguments(std::ostringstream& out,
+                                      const std::string& descriptor_name,
+                                      const metadata::FieldType& type) {
+    if (type.arguments.empty()) {
+        return;
+    }
+
+    for (std::size_t i = 0; i < type.arguments.size(); ++i) {
+        generate_contract_type_descriptor(
+            out, contract_type_argument_descriptor_name(descriptor_name, i),
+            type.arguments[i]);
+        out << "\n";
+    }
+
+    out << "inline constexpr cjm::contract::type_descriptor "
+        << contract_type_arguments_name(descriptor_name) << "[] = {\n";
+    for (std::size_t i = 0; i < type.arguments.size(); ++i) {
+        out << "    "
+            << contract_type_argument_descriptor_name(descriptor_name, i)
+            << ",\n";
+    }
+    out << "};\n\n";
 }
 
 // Return the C++ type spelling recorded in generated contract metadata.
@@ -88,6 +130,7 @@ std::string contract_type_kind_name(metadata::FieldTypeKind kind) {
 void generate_contract_type_descriptor(std::ostringstream& out,
                                        const std::string& descriptor_name,
                                        const metadata::FieldType& type) {
+    generate_contract_type_arguments(out, descriptor_name, type);
     // Write the descriptor declaration.
     out << "inline constexpr cjm::contract::type_descriptor " << descriptor_name
         << "{\n";
@@ -100,8 +143,12 @@ void generate_contract_type_descriptor(std::ostringstream& out,
         << "    \"" << cpp_type_name(type) << "\",\n";
 
     // Nested type arguments are added in a later step.
-    out << "    nullptr,\n"
-        << "    0,\n"
+    if (type.arguments.empty()) {
+        out << "    nullptr,\n";
+    } else {
+        out << "    " << contract_type_arguments_name(descriptor_name) << ",\n";
+    }
+    out << "    " << type.arguments.size() << ",\n"
         << "};\n";
 }
 

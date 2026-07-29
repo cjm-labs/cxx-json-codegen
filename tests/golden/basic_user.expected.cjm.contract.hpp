@@ -57,12 +57,24 @@ inline constexpr cjm::contract::type_descriptor age_type{
     0,
 };
 
+inline constexpr cjm::contract::type_descriptor tags_type_arg0{
+    cjm::contract::type_kind::string,
+    "std::string",
+    "std::string",
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::type_descriptor tags_type_arguments[] = {
+    tags_type_arg0,
+};
+
 inline constexpr cjm::contract::type_descriptor tags_type{
     cjm::contract::type_kind::vector,
     "std::vector<std::string>",
     "std::vector<std::string>",
-    nullptr,
-    0,
+    tags_type_arguments,
+    1,
 };
 
 inline constexpr cjm::contract::type_descriptor address_type{
@@ -81,20 +93,44 @@ inline constexpr cjm::contract::type_descriptor status_type{
     0,
 };
 
+inline constexpr cjm::contract::type_descriptor nickname_type_arg0{
+    cjm::contract::type_kind::string,
+    "std::string",
+    "std::string",
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::type_descriptor nickname_type_arguments[] = {
+    nickname_type_arg0,
+};
+
 inline constexpr cjm::contract::type_descriptor nickname_type{
     cjm::contract::type_kind::optional,
     "std::optional<std::string>",
     "std::optional<std::string>",
+    nickname_type_arguments,
+    1,
+};
+
+inline constexpr cjm::contract::type_descriptor score_type_arg0{
+    cjm::contract::type_kind::signed_integer,
+    "int",
+    "int",
     nullptr,
     0,
+};
+
+inline constexpr cjm::contract::type_descriptor score_type_arguments[] = {
+    score_type_arg0,
 };
 
 inline constexpr cjm::contract::type_descriptor score_type{
     cjm::contract::type_kind::optional,
     "std::optional<int>",
     "std::optional<int>",
-    nullptr,
-    0,
+    score_type_arguments,
+    1,
 };
 
 inline constexpr cjm::contract::type_descriptor internal_id_type{
