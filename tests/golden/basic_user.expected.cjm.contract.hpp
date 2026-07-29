@@ -170,6 +170,26 @@ inline constexpr cjm::contract::type_descriptor attributes_type{
     2,
 };
 
+inline constexpr cjm::contract::type_descriptor samples_type_arg0{
+    cjm::contract::type_kind::signed_integer,
+    "int",
+    "int",
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::type_descriptor samples_type_arguments[] = {
+    samples_type_arg0,
+};
+
+inline constexpr cjm::contract::type_descriptor samples_type{
+    cjm::contract::type_kind::array,
+    "std::array<int, 4>",
+    "std::array<int, 4>",
+    samples_type_arguments,
+    1,
+};
+
 inline constexpr cjm::contract::field_descriptor fields[] = {
     {
         "name",
@@ -243,6 +263,14 @@ inline constexpr cjm::contract::field_descriptor fields[] = {
         {"include/user.hpp", 10, 42},
         &attributes_type,
     },
+    {
+        "samples",
+        "samples",
+        false,
+        false,
+        {"include/user.hpp", 11, 35},
+        &samples_type,
+    },
 };
 
 } // namespace cjm::contract::generated_company_model_User
@@ -254,6 +282,6 @@ struct cjm::contract::model_traits<company::model::User> {
         "company::model::User",
         {"include/user.hpp", 1, 8},
         cjm::contract::generated_company_model_User::fields,
-        9,
+        10,
     };
 };

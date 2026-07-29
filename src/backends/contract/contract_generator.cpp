@@ -88,6 +88,9 @@ std::string cpp_type_name(const metadata::FieldType& type) {
     case metadata::FieldTypeKind::UserDefined:
         return type.qualified_name.empty() ? type.spelling
                                            : type.qualified_name;
+
+    case metadata::FieldTypeKind::Array:
+        return type.spelling;
     case metadata::FieldTypeKind::Vector:
         return "std::vector<" + cpp_type_name(type.arguments[0]) + ">";
     case metadata::FieldTypeKind::Optional:
@@ -114,6 +117,8 @@ std::string contract_type_kind_name(metadata::FieldTypeKind kind) {
         return "cjm::contract::type_kind::string";
     case metadata::FieldTypeKind::Enum:
         return "cjm::contract::type_kind::enum_";
+    case metadata::FieldTypeKind::Array:
+        return "cjm::contract::type_kind::array";
     case metadata::FieldTypeKind::Vector:
         return "cjm::contract::type_kind::vector";
     case metadata::FieldTypeKind::Map:

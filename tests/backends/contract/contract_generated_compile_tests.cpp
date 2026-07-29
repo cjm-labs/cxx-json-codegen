@@ -36,7 +36,7 @@ int main() {
         const auto& model =
             cjm::contract::model_traits<company::model::User>::model;
         static_assert(cjm::contract::model_traits<company::model::User>::model
-                          .field_count == 9);
+                          .field_count == 10);
         assert(model.fields[0].cpp_name == std::string_view("name"));
         assert(model.fields[0].json_name == std::string_view("name"));
         assert(model.fields[5].omit_empty);
@@ -59,6 +59,12 @@ int main() {
         assert(model.fields[8].type->arguments[0].kind ==
                cjm::contract::type_kind::string);
         assert(model.fields[8].type->arguments[1].kind ==
+               cjm::contract::type_kind::signed_integer);
+
+        assert(model.fields[9].cpp_name == std::string_view("samples"));
+        assert(model.fields[9].type->kind == cjm::contract::type_kind::array);
+        assert(model.fields[9].type->argument_count == 1);
+        assert(model.fields[9].type->arguments[0].kind ==
                cjm::contract::type_kind::signed_integer);
     }
     return 0;

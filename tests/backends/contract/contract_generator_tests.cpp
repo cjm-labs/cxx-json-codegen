@@ -78,6 +78,13 @@ ProjectModel make_basic_user_project() {
     };
     map_string_int_type.arguments = {string_type, int_type};
 
+    FieldType array_int_type{
+        FieldTypeKind::Array,
+        "std::array<int, 4>",
+        "std::array",
+    };
+    array_int_type.arguments = {int_type};
+
     TypeModel address;
     address.name = "Address";
     address.namespace_path = {"company", "model"};
@@ -152,12 +159,18 @@ ProjectModel make_basic_user_project() {
             JsonFieldMetadata{"attributes", false},
             SourceLocation{"include/user.hpp", 10, 42},
         },
+        FieldModel{
+            "samples",
+            array_int_type,
+            JsonFieldMetadata{"samples", false},
+            SourceLocation{"include/user.hpp", 11, 35},
+        },
     };
 
     ProjectModel project;
     project.types = {address, user};
     return project;
-}
+} // namespace
 
 // Compare contract backend output with a golden file.
 void assert_contract_matches(const ProjectModel& project,
