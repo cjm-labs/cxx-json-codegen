@@ -388,6 +388,18 @@ analyze_field_type(const TypeSymbols& symbols,
         return type;
     }
 
+    std::string element_arg, size_arg;
+    if (parse_two_template_arguments(spelling, "std::array", element_arg,
+                                     size_arg)) {
+        auto type = make_type(metadata::FieldTypeKind::Array, original_spelling,
+                              "std::array");
+        parser::FieldSyntax nested = field;
+        nested.type_spelling = element_arg;
+        type.arguments.push_back(analyze_field_type(
+            symbols, namespace_path, nested, diagnostics, success));
+        return type;
+    }
+
     std::string key_arg, value_arg;
     if (parse_two_template_arguments(spelling, "std::map", key_arg,
                                      value_arg)) {

@@ -818,4 +818,38 @@ int main() {
                    "unsupported field type for JSON mapping") !=
                std::string::npos);
     }
+    {
+        cjm::parser::FieldSyntax samples;
+        samples.name = "samples";
+        samples.type_spelling = "std::array<int, 4>";
+        samples.location = {"array_values.hpp", 4, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"samples")";
+        comment.location = {"array_values.hpp", 4, 40};
+        samples.comments = {comment};
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+        user.namespace_path = {"company", "model"};
+        user.fields = {samples};
+
+        cjm::parser::SourceFileSyntax file;
+        file.path = "array_values.hpp";
+        file.declarations = {user};
+
+        auto result = cjm::semantic::analyze_source_file(file);
+        assert(result.success);
+        assert(result.project.types.size() == 1);
+        assert(result.project.types[0].fields.size() == 1);
+
+        const auto& field = result.project.types[0].fields[0];
+        assert(field.type.kind == cjm::metadata::FieldTypeKind::Array);
+        assert(field.type.spelling == "std::array<int, 4>");
+        assert(field.type.qualified_name == "std::array");
+        assert(field.type.arguments.size() == 1);
+        assert(field.type.arguments[0].kind ==
+               cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(field.type.arguments[0].qualified_name == "int");
+    }
 }
