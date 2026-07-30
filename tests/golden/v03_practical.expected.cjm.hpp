@@ -4,6 +4,32 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <stdexcept>
+#include <string_view>
+
+namespace company::model {
+
+inline const char* cjm_to_json_string(Status value) {
+    switch (value) {
+    case Status::Ok:
+        return "Ok";
+    case Status::Failed:
+        return "Failed";
+    }
+    throw std::invalid_argument("unknown enum value for company::model::Status");
+}
+
+inline Status cjm_from_json_string_Status(std::string_view value) {
+    if (value == "Ok") {
+        return Status::Ok;
+    }
+    if (value == "Failed") {
+        return Status::Failed;
+    }
+    throw std::invalid_argument("unknown enum string for company::model::Status");
+}
+
+} // namespace company::model
 
 namespace company::model {
 

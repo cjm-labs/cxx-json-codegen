@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace cjm::generator {
@@ -62,6 +63,57 @@ void close_namespace(std::ostringstream& out,
         out << namespace_path[i];
     }
     out << "\n";
+}
+
+// Return the generated helper name used for JSON string -> enum conversion.
+std::string
+enum_from_string_function_name(const metadata::EnumModel& enum_model) {
+    return "cjm_from_json_string_" + enum_model.name;
+}
+
+// Generate enum -> JSON string conversion for one enum model.
+void generate_enum_to_json_string(std::ostringstream& out,
+                                  const metadata::EnumModel& enum_model) {
+    out << "inline const char* cjm_to_json_string(" << enum_model.name
+        << " value) {\n"
+        << "    switch (value) {\n";
+
+    for (const auto& enumerator : enum_model.enumerators) {
+        out << "    case " << enum_model.name << "::" << enumerator << ":\n"
+            << "        return \"" << enumerator << "\";\n";
+    }
+
+    out << "    }\n"
+        << "    throw std::invalid_argument(\"unknown enum value for "
+        << enum_model.qualified_name << "\");\n"
+        << "}\n";
+}
+
+// Generate JSON string -> enum conversion for one enum model.
+void generate_enum_from_json_string(std::ostringstream& out,
+                                    const metadata::EnumModel& enum_model) {
+    out << "inline " << enum_model.name << " "
+        << enum_from_string_function_name(enum_model)
+        << "(std::string_view value) {\n";
+
+    for (const auto& enumerator : enum_model.enumerators) {
+        out << "    if (value == \"" << enumerator << "\") {\n"
+            << "        return " << enum_model.name << "::" << enumerator
+            << ";\n"
+            << "    }\n";
+    }
+
+    out << "    throw std::invalid_argument(\"unknown enum string for "
+        << enum_model.qualified_name << "\");\n"
+        << "}\n";
+}
+
+// Emit both enum/string helpers for one enum before model serializers.
+void generate_enum_string_helpers(std::ostringstream& out,
+                                  const metadata::EnumModel& enum_model) {
+    generate_enum_to_json_string(out, enum_model);
+    out << "\n";
+    generate_enum_from_json_string(out, enum_model);
 }
 
 // Generate one to_json assignment from a validated Metadata IR field.
@@ -133,8 +185,22 @@ std::string generate_header(const metadata::ProjectModel& project) {
         << "\n"
         << "#pragma once\n"
         << "\n"
-        << "#include <nlohmann/json.hpp>\n"
-        << "\n";
+        << "#include <nlohmann/json.hpp>\n";
+
+    if (!project.enums.empty()) {
+        out << "#include <stdexcept>\n"
+            << "#include <string_view>\n";
+    }
+
+    out << "\n";
+
+    for (const auto& enum_model : project.enums) {
+        open_namespace(out, enum_model.namespace_path);
+        generate_enum_string_helpers(out, enum_model);
+        out << "\n";
+        close_namespace(out, enum_model.namespace_path);
+        out << "\n";
+    }
 
     for (std::size_t i = 0; i < project.types.size(); ++i) {
         const auto& type = project.types[i];

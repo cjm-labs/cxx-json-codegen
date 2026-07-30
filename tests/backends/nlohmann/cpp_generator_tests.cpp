@@ -166,8 +166,16 @@ ProjectModel make_basic_user_project() {
         },
     };
 
+    EnumModel status;
+    status.name = "Status";
+    status.namespace_path = {"company", "model"};
+    status.qualified_name = "company::model::Status";
+    status.enumerators = {"Active", "Disabled"};
+    status.source_location = SourceLocation{"include/user.hpp", 8, 1};
+
     ProjectModel project;
     project.types = {address, user};
+    project.enums = {status};
     return project;
 }
 
