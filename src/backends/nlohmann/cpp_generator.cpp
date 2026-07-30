@@ -71,6 +71,37 @@ enum_from_string_function_name(const metadata::EnumModel& enum_model) {
     return "cjm_from_json_string_" + enum_model.name;
 }
 
+// Return the unqualified type name from a possibly qualified C++ name.
+std::string unqualified_type_name(const std::string& cpp_name) {
+    const auto position = cpp_name.rfind("::");
+    if (position == std::string::npos) {
+        return cpp_name;
+    }
+    return cpp_name.substr(position + 2);
+}
+
+// Return the namespace prefix from a possibly qualified C++ name.
+std::string namespace_prefix(const std::string& cpp_name) {
+    const auto position = cpp_name.rfind("::");
+    if (position == std::string::npos) {
+        return "";
+    }
+    return cpp_name.substr(0, position + 2);
+}
+
+// Return the helper call name for enum -> JSON string conversion.
+std::string enum_to_string_call_name(const metadata::FieldType& type) {
+    const auto cpp_name = cpp_type_name(type);
+    return namespace_prefix(cpp_name) + "cjm_to_json_string";
+}
+
+// Return the helper call name for JSON string -> enum conversion.
+std::string enum_from_string_call_name(const metadata::FieldType& type) {
+    const auto cpp_name = cpp_type_name(type);
+    return namespace_prefix(cpp_name) + "cjm_from_json_string_" +
+           unqualified_type_name(cpp_name);
+}
+
 // Generate enum -> JSON string conversion for one enum model.
 void generate_enum_to_json_string(std::ostringstream& out,
                                   const metadata::EnumModel& enum_model) {
@@ -131,6 +162,12 @@ void generate_to_json_field(std::ostringstream& out,
 
         return;
     }
+    if (field.type.kind == metadata::FieldTypeKind::Enum) {
+        out << "    j[\"" << field.json.name
+            << "\"] = " << enum_to_string_call_name(field.type) << "(value."
+            << field.name << ");\n";
+        return;
+    }
     out << "    j[\"" << field.json.name << "\"] = value." << field.name
         << ";\n";
 }
@@ -147,6 +184,13 @@ void generate_from_json_field(std::ostringstream& out,
             << "        value." << field.name << " = j.at(\"" << field.json.name
             << "\").get<" << cpp_type_name(field.type.arguments[0]) << ">();\n"
             << "    }\n";
+        return;
+    }
+
+    if (field.type.kind == metadata::FieldTypeKind::Enum) {
+        out << "    value." << field.name << " = "
+            << enum_from_string_call_name(field.type) << "(j.at(\""
+            << field.json.name << "\").get<std::string>());\n";
         return;
     }
 
@@ -189,6 +233,7 @@ std::string generate_header(const metadata::ProjectModel& project) {
 
     if (!project.enums.empty()) {
         out << "#include <stdexcept>\n"
+            << "#include <string>\n"
             << "#include <string_view>\n";
     }
 

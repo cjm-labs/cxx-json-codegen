@@ -43,6 +43,7 @@ int main() {
     user.score = 100;
     user.samples = {1, 2, 3, 4};
     nlohmann::json json = user;
+    assert(json.at("status") == "Active");
 
     company::model::User decoded = json.get<company::model::User>();
 
@@ -50,6 +51,7 @@ int main() {
     assert(decoded.age == 25);
     assert(decoded.tags.size() == 2);
     assert(decoded.address.city == "Framingham");
+    assert(decoded.status == company::model::Status::Active);
     assert(decoded.nickname.has_value());
     assert(decoded.score == 100);
     assert(decoded.samples == user.samples);

@@ -5,6 +5,7 @@
 
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 
 namespace company::model {
@@ -50,7 +51,7 @@ inline void to_json(nlohmann::json& j, const User& value) {
     j["age"] = value.age;
     j["tags"] = value.tags;
     j["address"] = value.address;
-    j["status"] = value.status;
+    j["status"] = company::model::cjm_to_json_string(value.status);
     if (value.nickname.has_value()) {
         j["nickname"] = *value.nickname;
     }
@@ -65,7 +66,7 @@ inline void from_json(const nlohmann::json& j, User& value) {
     j.at("age").get_to(value.age);
     j.at("tags").get_to(value.tags);
     j.at("address").get_to(value.address);
-    j.at("status").get_to(value.status);
+    value.status = company::model::cjm_from_json_string_Status(j.at("status").get<std::string>());
     if (j.contains("nickname")) {
         value.nickname = j.at("nickname").get<std::string>();
     }

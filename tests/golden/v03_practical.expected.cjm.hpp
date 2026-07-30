@@ -5,6 +5,7 @@
 
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 
 namespace company::model {
@@ -50,7 +51,7 @@ namespace company::model {
 inline void to_json(nlohmann::json& j, const Event& value) {
     j["sequence"] = value.sequence;
     j["timestamp_ns"] = value.timestamp_ns;
-    j["status"] = value.status;
+    j["status"] = company::model::cjm_to_json_string(value.status);
     j["detail"] = value.detail;
     j["tags"] = value.tags;
     j["buckets"] = value.buckets;
@@ -65,7 +66,7 @@ inline void to_json(nlohmann::json& j, const Event& value) {
 inline void from_json(const nlohmann::json& j, Event& value) {
     j.at("sequence").get_to(value.sequence);
     j.at("timestamp_ns").get_to(value.timestamp_ns);
-    j.at("status").get_to(value.status);
+    value.status = company::model::cjm_from_json_string_Status(j.at("status").get<std::string>());
     j.at("detail").get_to(value.detail);
     j.at("tags").get_to(value.tags);
     j.at("buckets").get_to(value.buckets);
