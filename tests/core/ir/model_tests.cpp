@@ -144,5 +144,21 @@ int main() {
         assert(array_int_type.arguments[0].kind ==
                FieldTypeKind::SignedInteger);
     }
+    {
+        EnumModel status;
+        status.name = "Status";
+        status.namespace_path = {"company", "model"};
+        status.qualified_name = "company::model::Status";
+        status.enumerators = {"Active", "Disabled"};
+        status.source_location = {"include/user.hpp", 4, 1};
+
+        ProjectModel project;
+        project.enums = {status};
+
+        assert(project.enums.size() == 1);
+        assert(project.enums[0].qualified_name == "company::model::Status");
+        assert(project.enums[0].enumerators[0] == "Active");
+        assert(project.enums[0].enumerators[1] == "Disabled");
+    }
     return 0;
 }

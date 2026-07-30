@@ -677,6 +677,18 @@ make_type_model_shell(const parser::DeclarationSyntax& declaration) {
     return type;
 }
 
+// Convert parser enum syntax into parser-independent metadata IR.
+metadata::EnumModel make_enum_model(const parser::EnumSyntax& enum_syntax) {
+    metadata::EnumModel model;
+    model.name = enum_syntax.name;
+    model.namespace_path = enum_syntax.namespace_path;
+    model.qualified_name =
+        join_qualified_name(enum_syntax.namespace_path, enum_syntax.name);
+    model.enumerators = enum_syntax.enumerators;
+    model.source_location = to_metadata_location(enum_syntax.location);
+    return model;
+}
+
 // Record a JSON name within one generated type, reporting duplicates.
 bool record_json_name(const std::string& json_name,
                       const SourceLocation& location,
@@ -750,7 +762,13 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
     // 1. Collect symbols before analyzing fields so type lookup can resolve
     // forward references within the source file.
     const auto symbols = collect_type_symbols(file);
-    // 2. Convert parser declarations into Metadata IR types.
+
+    // 2. Preserve enum declarations as metadata IR for enum string mapping.
+    for (const auto& enum_syntax : file.enums) {
+        result.project.enums.push_back(make_enum_model(enum_syntax));
+    }
+
+    // 3. Convert parser declarations into Metadata IR types.
     for (const auto& declaration : file.declarations) {
         auto type = make_type_model_shell(declaration);
         std::set<std::string> json_names;
@@ -771,12 +789,13 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         }
     }
 
-    // 3. Do not expose partial Metadata IR when semantic analysis failed.
+    // Do not expose partial Metadata IR when semantic analysis failed.
     if (!result.success) {
         result.project.types.clear();
+        result.project.enums.clear();
         return result;
     }
-    // 4. Stabilize output order so dependencies appear before their users.
+    // 4. Stabilize output type order so dependencies appear before users.
     auto ordering_result = order_types_by_dependency(result.project.types);
     if (!ordering_result.success) {
         Diagnostic diagnostic;
@@ -784,6 +803,7 @@ AnalysisResult analyze_source_file(const parser::SourceFileSyntax& file) {
         result.diagnostics.push_back(diagnostic);
         result.success = false;
         result.project.types.clear();
+        result.project.enums.clear();
         return result;
     }
     result.project.types = ordering_result.types;

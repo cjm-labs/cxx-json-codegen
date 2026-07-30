@@ -243,6 +243,8 @@ int main() {
         cjm::parser::EnumSyntax status;
         status.name = "Status";
         status.namespace_path = {"company", "model"};
+        status.enumerators = {"Active", "Disabled"};
+        status.location = {"models.hpp", 4, 1};
         file.enums.push_back(status);
 
         cjm::parser::TypeAliasSyntax user_id;
@@ -359,6 +361,15 @@ int main() {
                "company::model::Address");
         assert(result.project.types[1].qualified_name ==
                "company::model::User");
+
+        assert(result.project.enums.size() == 1);
+        assert(result.project.enums[0].name == "Status");
+        assert(result.project.enums[0].qualified_name ==
+               "company::model::Status");
+
+        assert(result.project.enums[0].enumerators.size() == 2);
+        assert(result.project.enums[0].enumerators[0] == "Active");
+        assert(result.project.enums[0].enumerators[1] == "Disabled");
 
         const auto& fields = result.project.types[1].fields;
         assert(fields.size() == 7);
