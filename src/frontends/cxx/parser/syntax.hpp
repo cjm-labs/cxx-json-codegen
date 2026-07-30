@@ -34,6 +34,7 @@ struct DeclarationSyntax {
 struct EnumSyntax {
     std::string name;
     std::vector<std::string> namespace_path;
+    std::vector<std::string> enumerators;
     SourceLocation location;
 };
 

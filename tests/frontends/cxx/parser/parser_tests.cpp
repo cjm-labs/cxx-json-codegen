@@ -86,6 +86,10 @@ int main() {
         assert(ok.file.enums[0].namespace_path[0] == "company");
         assert(ok.file.enums[0].namespace_path[1] == "model");
 
+        assert(ok.file.enums[0].enumerators.size() == 2);
+        assert(ok.file.enums[0].enumerators[0] == "Active");
+        assert(ok.file.enums[0].enumerators[1] == "Suspended");
+
         if (ok.file.type_aliases.size() != 1) {
             std::cerr << "expected exactly one type alias\n";
             dump_source_file(ok.file);
