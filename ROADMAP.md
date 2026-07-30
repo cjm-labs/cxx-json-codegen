@@ -770,6 +770,20 @@ Investigate:
 - streaming writer
 - native backend research
 
+Clarification:
+
+- performance work may evaluate mature runtime libraries, generated direct
+  writers, typed readers, and native-codec experiments
+- RapidJSON, Glaze, yyjson, and a provisional `cjm-json` runtime are possible
+  experiments, not selected official backends
+- native scanner, parser, formatter, optimized runtime, fuzzing, and security
+  hardening work should not live in the CJM repository by default
+- CJM owns model knowledge and generated model-specific code; a JSON runtime
+  owns generic JSON primitives
+- native JSON engine research must not block CJM v1.0
+- no backend should be promoted based on performance alone without correctness,
+  security, benchmark, and downstream-use evidence
+
 Generated files should not be rewritten if contents do not change.
 
 ---
