@@ -28,7 +28,7 @@ C++ model types before CJM-generated integration is used.
 
 ## Early Adopters Welcome
 
-CJM v0.3.6 is ready for early adopters who want to try build-time JSON
+CJM v0.4.0 is ready for early adopters who want to try build-time JSON
 integration for ordinary Modern C++ models.
 
 The current release has been dogfooded through the public
@@ -36,6 +36,8 @@ The current release has been dogfooded through the public
 [ull-md-engine](https://github.com/lmingzhi618/ull-md-engine), covering
 optionals, vectors, ordered and unordered string-keyed maps, nested generated
 structs, enums, ignored fields, `omitempty`, and fixed-width integers.
+v0.4 adds fixed-size arrays, enum string output, and generated model-contract
+metadata for downstream tools.
 
 If CJM fails on a practical model you expected to work, or if the CMake,
 diagnostics, or documentation feel confusing, please open an issue with the
@@ -286,7 +288,7 @@ include(FetchContent)
 FetchContent_Declare(
   cxx_json_codegen
   GIT_REPOSITORY https://github.com/cjm-labs/cxx-json-codegen.git
-  GIT_TAG v0.3.6
+  GIT_TAG v0.4.0
 )
 
 FetchContent_MakeAvailable(cxx_json_codegen)
@@ -302,6 +304,33 @@ cjm_generate(
 
 This is the workflow used by the downstream `ull-md-engine` dogfood run.
 Packaged installation through `find_package(CJM REQUIRED)` is planned later.
+
+### Generated Model Contract
+
+Generated `*.cjm.hpp` headers also include experimental model-contract metadata
+through `cjm::contract::model_traits<T>`.
+
+Downstream tools can inspect supported model facts without depending on CJM
+parser internals:
+
+```cpp
+#include "user.hpp"
+#include "user.cjm.hpp"
+
+#include <cstdint>
+
+const auto& model = cjm::contract::model_traits<User>::model;
+
+for (std::uint32_t i = 0; i < model.field_count; ++i) {
+    const auto& field = model.fields[i];
+    // field.cpp_name, field.json_name, field.type, field.location
+}
+```
+
+The v0.4 contract exposes field names, JSON names, ignored fields,
+`omitempty`, source locations, type categories, container arguments, and enum
+string values. It is intended for downstream experiments and may still change
+before v1.0.
 
 ### Try the Full Test Suite
 
@@ -370,7 +399,7 @@ files.
 
 Current status:
 
-- v0.3.6 Tree-sitter Production Parser Migration is the current release line
+- v0.4 Extensibility and Downstream Workflow is the current release line
 - CJM has a parser -> semantic analysis -> Metadata IR -> nlohmann backend
   pipeline
 - First official backend: `nlohmann/json`
@@ -449,11 +478,13 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Roadmap](ROADMAP.md)
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
 - [Generated Model Contract](docs/design/generated-model-contract.md)
+- [Custom Converter Boundaries](docs/design/custom-converters.md)
 - [Backend Strategy](docs/design/backend-strategy.md)
 - [High-Performance JSON Strategy](docs/design/high-performance-json-strategy.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
+- [v0.4.0 Release Notes](docs/releases/v0.4.0.md)
 - [v0.3.6 Release Notes](docs/releases/v0.3.6.md)
 - [v0.3.0 Release Notes](docs/releases/v0.3.0.md)
 - [Competitive Landscape](docs/design/competitive-landscape.md)
