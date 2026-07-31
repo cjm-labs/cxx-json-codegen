@@ -13,6 +13,8 @@ inline constexpr cjm::contract::type_descriptor city_type{
     "std::string",
     nullptr,
     0,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::field_descriptor fields[] = {
@@ -47,6 +49,8 @@ inline constexpr cjm::contract::type_descriptor name_type{
     "std::string",
     nullptr,
     0,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::type_descriptor age_type{
@@ -55,12 +59,16 @@ inline constexpr cjm::contract::type_descriptor age_type{
     "int",
     nullptr,
     0,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::type_descriptor tags_type_arg0{
     cjm::contract::type_kind::string,
     "std::string",
     "std::string",
+    nullptr,
+    0,
     nullptr,
     0,
 };
@@ -75,6 +83,8 @@ inline constexpr cjm::contract::type_descriptor tags_type{
     "std::vector<std::string>",
     tags_type_arguments,
     1,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::type_descriptor address_type{
@@ -83,6 +93,13 @@ inline constexpr cjm::contract::type_descriptor address_type{
     "company::model::Address",
     nullptr,
     0,
+    nullptr,
+    0,
+};
+
+inline constexpr cjm::contract::enum_value_descriptor status_type_enum_values[] = {
+    {"Active", "Active"},
+    {"Disabled", "Disabled"},
 };
 
 inline constexpr cjm::contract::type_descriptor status_type{
@@ -91,12 +108,16 @@ inline constexpr cjm::contract::type_descriptor status_type{
     "company::model::Status",
     nullptr,
     0,
+    status_type_enum_values,
+    2,
 };
 
 inline constexpr cjm::contract::type_descriptor nickname_type_arg0{
     cjm::contract::type_kind::string,
     "std::string",
     "std::string",
+    nullptr,
+    0,
     nullptr,
     0,
 };
@@ -111,12 +132,16 @@ inline constexpr cjm::contract::type_descriptor nickname_type{
     "std::optional<std::string>",
     nickname_type_arguments,
     1,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::type_descriptor score_type_arg0{
     cjm::contract::type_kind::signed_integer,
     "int",
     "int",
+    nullptr,
+    0,
     nullptr,
     0,
 };
@@ -131,12 +156,16 @@ inline constexpr cjm::contract::type_descriptor score_type{
     "std::optional<int>",
     score_type_arguments,
     1,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::type_descriptor internal_id_type{
     cjm::contract::type_kind::signed_integer,
     "int",
     "int",
+    nullptr,
+    0,
     nullptr,
     0,
 };
@@ -147,12 +176,16 @@ inline constexpr cjm::contract::type_descriptor attributes_type_arg0{
     "std::string",
     nullptr,
     0,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::type_descriptor attributes_type_arg1{
     cjm::contract::type_kind::signed_integer,
     "int",
     "int",
+    nullptr,
+    0,
     nullptr,
     0,
 };
@@ -168,12 +201,16 @@ inline constexpr cjm::contract::type_descriptor attributes_type{
     "std::map<std::string, int>",
     attributes_type_arguments,
     2,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::type_descriptor samples_type_arg0{
     cjm::contract::type_kind::signed_integer,
     "int",
     "int",
+    nullptr,
+    0,
     nullptr,
     0,
 };
@@ -188,6 +225,8 @@ inline constexpr cjm::contract::type_descriptor samples_type{
     "std::array<int, 4>",
     samples_type_arguments,
     1,
+    nullptr,
+    0,
 };
 
 inline constexpr cjm::contract::field_descriptor fields[] = {

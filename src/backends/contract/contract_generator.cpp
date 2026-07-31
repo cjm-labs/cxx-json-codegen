@@ -47,14 +47,67 @@ std::string contract_generated_namespace_name(const metadata::TypeModel& type) {
     return name;
 }
 
-void generate_contract_type_descriptor(std::ostringstream& out,
-                                       const std::string& descriptor_name,
-                                       const metadata::FieldType& type);
+void generate_contract_type_descriptor(
+    std::ostringstream& out, const std::string& descriptor_name,
+    const metadata::FieldType& type,
+    const std::vector<metadata::EnumModel>& enums);
+
+// Return the generated array name that stores enum value descriptors.
+//
+// Example:
+//      descriptor_name: status_type
+//      Output:          status_type_enum_values
+std::string contract_enum_values_name(const std::string& descriptor_name) {
+    return descriptor_name + "_enum_values";
+}
+
+// Find the enum model that matches an enum field type.
+//
+// Example:
+//  Field type qualified_name: company::model::Status
+//  Project enum qualified_name: company::model::Status
+//  Result: pointer to that EnumModel
+const metadata::EnumModel*
+find_enum_model(const std::vector<metadata::EnumModel>& enums,
+                const metadata::FieldType& type) {
+    if (type.kind != metadata::FieldTypeKind::Enum) {
+        return nullptr;
+    }
+
+    for (const auto& enum_model : enums) {
+        if (enum_model.qualified_name == type.qualified_name) {
+            return &enum_model;
+        }
+    }
+    return nullptr;
+}
+
+// Generate public enum value descriptors for one enum field type.
+//
+// Example output:
+//  inline constexpr enum_value_descriptor status_type_enum_values[] = {
+//      {"Active", "Active"},
+//      {"Disabled", "Disabled"},
+//  };
+void generate_contract_enum_values(std::ostringstream& out,
+                                   const std::string& descriptor_name,
+                                   const metadata::EnumModel* enum_model) {
+    if (enum_model == nullptr || enum_model->enumerators.empty()) {
+        return;
+    }
+    out << "inline constexpr cjm::contract::enum_value_descriptor "
+        << contract_enum_values_name(descriptor_name) << "[] = {\n";
+    for (const auto& enumerator : enum_model->enumerators) {
+        out << "    {\"" << enumerator << "\", \"" << enumerator << "\"},\n";
+    }
+    out << "};\n\n";
+}
 
 // Generate nested type descriptors used by vector/optional/map descriptors.
-void generate_contract_type_arguments(std::ostringstream& out,
-                                      const std::string& descriptor_name,
-                                      const metadata::FieldType& type) {
+void generate_contract_type_arguments(
+    std::ostringstream& out, const std::string& descriptor_name,
+    const metadata::FieldType& type,
+    const std::vector<metadata::EnumModel>& enums) {
     if (type.arguments.empty()) {
         return;
     }
@@ -62,7 +115,7 @@ void generate_contract_type_arguments(std::ostringstream& out,
     for (std::size_t i = 0; i < type.arguments.size(); ++i) {
         generate_contract_type_descriptor(
             out, contract_type_argument_descriptor_name(descriptor_name, i),
-            type.arguments[i]);
+            type.arguments[i], enums);
         out << "\n";
     }
 
@@ -132,10 +185,13 @@ std::string contract_type_kind_name(metadata::FieldTypeKind kind) {
 }
 
 // Generate one public contract type descriptor for a validated field type.
-void generate_contract_type_descriptor(std::ostringstream& out,
-                                       const std::string& descriptor_name,
-                                       const metadata::FieldType& type) {
-    generate_contract_type_arguments(out, descriptor_name, type);
+void generate_contract_type_descriptor(
+    std::ostringstream& out, const std::string& descriptor_name,
+    const metadata::FieldType& type,
+    const std::vector<metadata::EnumModel>& enums) {
+    generate_contract_type_arguments(out, descriptor_name, type, enums);
+    const auto* enum_model = find_enum_model(enums, type);
+    generate_contract_enum_values(out, descriptor_name, enum_model);
     // Write the descriptor declaration.
     out << "inline constexpr cjm::contract::type_descriptor " << descriptor_name
         << "{\n";
@@ -154,6 +210,14 @@ void generate_contract_type_descriptor(std::ostringstream& out,
         out << "    " << contract_type_arguments_name(descriptor_name) << ",\n";
     }
     out << "    " << type.arguments.size() << ",\n"
+        << "    ";
+    if (enum_model == nullptr || enum_model->enumerators.empty()) {
+        out << "nullptr,\n";
+    } else {
+        out << contract_enum_values_name(descriptor_name) << ",\n";
+    }
+    out << "    "
+        << (enum_model == nullptr ? 0 : enum_model->enumerators.size()) << ",\n"
         << "};\n";
 }
 
@@ -185,13 +249,14 @@ void generate_contract_field_descriptors(std::ostringstream& out,
 }
 
 // Generate all contract descriptors for one model namespace.
-void generate_contract_model_namespace(std::ostringstream& out,
-                                       const metadata::TypeModel& type) {
+void generate_contract_model_namespace(
+    std::ostringstream& out, const metadata::TypeModel& type,
+    const std::vector<metadata::EnumModel>& enums) {
     out << "namespace " << contract_generated_namespace_name(type) << " {\n\n";
 
     for (const auto& field : type.fields) {
         generate_contract_type_descriptor(
-            out, contract_field_type_descriptor_name(field), field.type);
+            out, contract_field_type_descriptor_name(field), field.type, enums);
         out << "\n";
     }
 
@@ -232,7 +297,7 @@ std::string generate_header(const metadata::ProjectModel& project) {
         << "\n";
 
     for (std::size_t i = 0; i < project.types.size(); ++i) {
-        generate_contract_model_namespace(out, project.types[i]);
+        generate_contract_model_namespace(out, project.types[i], project.enums);
         out << "\n";
         generate_contract_model_traits(out, project.types[i]);
         if (i + 1 < project.types.size()) {

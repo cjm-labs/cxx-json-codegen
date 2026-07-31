@@ -26,6 +26,12 @@ struct source_location {
     std::uint32_t column = 0;
 };
 
+// Describes one supported enum value exposed through generated contracts.
+struct enum_value_descriptor {
+    const char* cpp_name = "";
+    const char* json_name = "";
+};
+
 // Describes one field type in generated contract metadata.
 struct type_descriptor {
     type_kind kind = type_kind::object;
@@ -33,6 +39,8 @@ struct type_descriptor {
     const char* qualified_name = "";
     const type_descriptor* arguments = nullptr;
     std::uint32_t argument_count = 0;
+    const enum_value_descriptor* enum_values = nullptr;
+    std::uint32_t enum_value_count = 0;
 };
 
 // Describes one CJM-managed field.

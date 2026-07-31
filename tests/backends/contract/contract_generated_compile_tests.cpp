@@ -7,6 +7,7 @@ struct Address {};
 
 enum class Status {
     Active,
+    Disabled,
 };
 
 struct User {};
@@ -66,6 +67,15 @@ int main() {
         assert(model.fields[9].type->argument_count == 1);
         assert(model.fields[9].type->arguments[0].kind ==
                cjm::contract::type_kind::signed_integer);
+
+        assert(model.fields[4].type->kind == cjm::contract::type_kind::enum_);
+        assert(model.fields[4].type->enum_value_count == 2);
+        assert(model.fields[4].type->enum_values[0].cpp_name ==
+               std::string_view("Active"));
+        assert(model.fields[4].type->enum_values[0].json_name ==
+               std::string_view("Active"));
+        assert(model.fields[4].type->enum_values[1].cpp_name ==
+               std::string_view("Disabled"));
     }
     return 0;
 }
