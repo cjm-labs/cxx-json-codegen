@@ -405,6 +405,8 @@ Supported:
 - `std::optional<T>`
 - `std::map<std::string, T>`
 - `std::unordered_map<std::string, T>`
+- `std::array<T, N>`
+- enum and enum class fields as JSON strings
 - `json:"-"` ignored fields
 - `omitempty` for supported optional fields
 
@@ -422,7 +424,7 @@ Not yet supported:
 - pointer fields
 - polymorphism
 - custom converters
-- enum string mapping policies
+- custom enum string mapping policies
 - time and datetime mappings
 - multiline managed field declarations are not yet documented as supported
 - private fields 

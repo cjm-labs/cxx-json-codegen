@@ -285,6 +285,28 @@ std::optional<User>
   arguments = [object]
 ```
 
+Enum types should expose the string values that CJM knows how to generate and
+parse.
+
+Example:
+
+```text
+enum class Status {
+  Active,
+  Disabled,
+};
+
+Status
+  kind = enum_
+  enum_values = [
+    {cpp_name = "Active", json_name = "Active"},
+    {cpp_name = "Disabled", json_name = "Disabled"},
+  ]
+```
+
+For v0.4, `cpp_name` and `json_name` are the same because custom enum rename
+metadata is not yet supported.
+
 ---
 
 # Ignored Fields
