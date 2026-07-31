@@ -78,9 +78,10 @@ The MVP should focus on the CJM pipeline first.
 
 # Long-Term Native Backend
 
-Long term, CJM should support a native backend.
+Long term, CJM may support a native backend.
 
-A CJM-native backend would reduce dependency risk and improve product independence.
+A CJM-native backend could reduce dependency risk and improve product
+independence.
 
 Potential benefits:
 
@@ -90,6 +91,21 @@ Potential benefits:
 - predictable performance characteristics
 - better control over diagnostics
 - better cross-platform packaging
+
+This does not mean that the main CJM repository should own a full native JSON
+engine.
+
+CJM owns model knowledge and generated model-specific code. A high-performance
+JSON runtime owns generic JSON primitives such as scanning, escaping, parsing,
+formatting, buffering, fuzzing, and low-level performance work.
+
+The provisional name for a possible independent runtime project is
+`cjm-json`. That project does not exist as part of this document, and it must
+not become a CJM v1.0 blocker.
+
+See [High-Performance JSON Strategy](high-performance-json-strategy.md) for the
+full backend taxonomy, repository boundary, benchmark dimensions, and promotion
+gates.
 
 ---
 
@@ -202,9 +218,9 @@ Out of scope:
 
 ---
 
-# Native Backend Direction
+# Native Generated-Code Direction
 
-A future native backend may provide:
+A future native generated-code backend may provide:
 
 - JSON writer
 - JSON reader
@@ -228,7 +244,12 @@ cjm::json_writer writer;
 cjm::write_json(writer, user);
 ```
 
-This should be designed only after the initial codegen pipeline is stable.
+These examples are conceptual only.
+
+This should be designed only after the core CJM pipeline is stable and after a
+separate performance and correctness review. A native high-performance JSON
+engine should remain optional and should not change the default backend or
+public workflow without explicit approval.
 
 ---
 
@@ -248,8 +269,11 @@ The long-term product should be valuable on its own.
 
 The initial backend should optimize for progress.
 
-The long-term backend strategy should optimize for independence.
+The long-term backend strategy should optimize for independence and explicit
+backend choice.
 
 CJM should first prove the build-time code generation model.
 
-Then it can evolve toward a native backend with stronger product control and fewer external dependencies.
+Then it can evaluate additional backends, including mature libraries and
+possible native generated-code integration, without turning CJM itself into an
+unbounded JSON parser project.

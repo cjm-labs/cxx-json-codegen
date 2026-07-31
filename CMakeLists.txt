@@ -52,6 +52,16 @@ if (CJM_BUILD_TESTS)
 endif()
 
 # metadata library 
+add_library(cjm_contract INTERFACE)
+target_include_directories(cjm_contract INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_contract INTERFACE cxx_std_17)
+
+add_library(cjm_contract_generator src/backends/contract/contract_generator.cpp)
+target_link_libraries(cjm_contract_generator PUBLIC cjm_metadata cjm_contract)
+target_include_directories(cjm_contract_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_contract_generator PUBLIC cxx_std_17)
+
+# metadata library 
 add_library(cjm_metadata INTERFACE)
 target_include_directories(cjm_metadata INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_metadata INTERFACE cxx_std_17)
@@ -94,6 +104,19 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_generator_tests PRIVATE cjm_generator)
   add_test(NAME cjm_generator_tests COMMAND cjm_generator_tests)
   set_tests_properties(cjm_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  
+  add_executable(cjm_contract_generator_tests
+    tests/backends/contract/contract_generator_tests.cpp
+  )
+  target_link_libraries(cjm_contract_generator_tests PRIVATE cjm_contract_generator)
+  add_test(NAME cjm_contract_generator_tests COMMAND cjm_contract_generator_tests)
+  set_tests_properties(cjm_contract_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  add_executable(cjm_contract_generated_compile_tests tests/backends/contract/contract_generated_compile_tests.cpp)
+  target_compile_features(cjm_contract_generated_compile_tests PRIVATE cxx_std_17)
+  target_include_directories(cjm_contract_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(cjm_contract_generated_compile_tests PRIVATE cjm_contract)
+  add_test(NAME cjm_contract_generated_compile_tests COMMAND cjm_contract_generated_compile_tests)
 
   # PIPELINE GOLDEN tests below...
   add_executable(cjm_pipeline_golden_tests tests/backends/nlohmann/pipeline_golden_tests.cpp)
@@ -177,13 +200,13 @@ if (CJM_BUILD_TESTS)
   add_executable(cjm_practical_generated_compile_tests tests/backends/nlohmann/practical_generated_compile_tests.cpp)
   target_compile_features(cjm_practical_generated_compile_tests PRIVATE cxx_std_17)
   target_include_directories(cjm_practical_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-  target_link_libraries(cjm_practical_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
+  target_link_libraries(cjm_practical_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json cjm_contract)
   add_test(NAME cjm_practical_generated_compile_tests COMMAND cjm_practical_generated_compile_tests)
 
   add_executable(cjm_map_generated_compile_tests tests/backends/nlohmann/map_generated_compile_tests.cpp)
   target_compile_features(cjm_map_generated_compile_tests PRIVATE cxx_std_17)
   target_include_directories(cjm_map_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-  target_link_libraries(cjm_map_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
+  target_link_libraries(cjm_map_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json cjm_contract)
   add_test(NAME cjm_map_generated_compile_tests COMMAND cjm_map_generated_compile_tests)
 
   add_executable(cjm_fixed_width_generated_compile_tests tests/backends/nlohmann/fixed_width_generated_compile_tests.cpp)
@@ -214,6 +237,30 @@ if (CJM_BUILD_TESTS)
       DEPENDS cjm_cli_generate_multiple_inputs
   )
 
+  add_test(NAME cjm_cli_generate_grouped_inputs
+    COMMAND cjm generate
+    --input
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/address.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/cli_multi/user.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/cli_multi_grouped.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_grouped_inputs
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
+  add_test(NAME cjm_cli_generate_grouped_inputs_golden
+    COMMAND ${CMAKE_COMMAND} -E compare_files
+    ${CMAKE_CURRENT_BINARY_DIR}/cli_multi_grouped.cjm.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/cli_multi.expected.cjm.hpp
+  )
+  set_tests_properties(
+    cjm_cli_generate_grouped_inputs_golden
+    PROPERTIES
+      DEPENDS cjm_cli_generate_grouped_inputs
+  )
+
   add_test(NAME cjm_cli_generate_v03_practical
     COMMAND cjm generate
     --input ${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/v03_practical_models.hpp
@@ -235,4 +282,8 @@ if (CJM_BUILD_TESTS)
     PROPERTIES
       DEPENDS cjm_cli_generate_v03_practical
   )
+
+  add_executable(cjm_model_contract_tests tests/core/model_contract_tests.cpp)
+  target_link_libraries(cjm_model_contract_tests PRIVATE cjm_contract)
+  add_test(NAME cjm_model_contract_tests COMMAND cjm_model_contract_tests)
 endif()

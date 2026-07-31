@@ -40,7 +40,9 @@ cjm_generate(
 )
 ```
 
-This should be enough for a simple project.
+This is the target installed-package workflow. Until packaged installation
+lands, early adopters should consume CJM through a pinned `FetchContent`
+checkout and then call the same `cjm_generate(...)` function.
 
 ---
 
@@ -94,11 +96,11 @@ cjm_generate(
 
 ---
 
-# Discovery Modes
+# Header Input Modes
 
-CJM supports two conceptual discovery modes.
+CJM currently supports explicit header input only.
 
-## Explicit Mode
+## Explicit Header Mode
 
 Users list headers manually.
 
@@ -113,7 +115,11 @@ cjm_generate(
 )
 ```
 
-## Discovery Mode
+Each listed header is treated as a CJM model input. The current CMake workflow
+does not scan directories, recursively glob headers, or infer model inputs from
+ordinary `#include` dependencies.
+
+## Future Discovery Mode
 
 Future versions may support automatic header discovery.
 
@@ -259,7 +265,7 @@ CMake integration should not require users to change their compiler.
 
 # CLI Invocation
 
-The CMake function should invoke the CLI internally.
+The CMake function invokes the CLI internally.
 
 Example conceptual command:
 

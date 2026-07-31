@@ -296,12 +296,17 @@ where `T` is itself a supported JSON-mappable type.
 JSON mapping:
 
 - C++ sequence containers map to JSON arrays.
+- `std::array<T, N>` preserves the fixed-size C++ container type in generated
+  code and generated model-contract metadata.
+- The current Metadata IR records the normalized array element type. The
+  original C++ spelling preserves the visible fixed-size type, including `N`.
 
 Out of scope for v1.0 by default:
 
 - arbitrary custom containers
 - heterogeneous tuple-like arrays
 - unordered sequence semantics
+- C-style arrays
 
 ## Object Maps
 
@@ -374,10 +379,22 @@ Supported:
 Required behavior:
 
 - enum string mappings must be deterministic
+- v0.4 maps supported enum fields to JSON strings by default
+- the JSON string is the C++ enumerator spelling, such as `Active`
+- generated `from_json` should reject unknown enum strings through the
+  generated backend conversion helper
 - unknown enum strings should produce clear diagnostics or documented parse
   failures
 - numeric enum representation may be supported as an option, but string mapping
   should be the primary v1.0 user-facing mode
+
+Out of scope for v1.0 by default:
+
+- custom enum rename metadata
+- enum aliases
+- case conversion policies
+- numeric enum representation as the default mode
+- backend-specific enum policies that bypass Metadata IR
 
 ## Time Values
 
@@ -440,7 +457,8 @@ Examples:
 - `std::vector<T>` and `std::array<T, N>` map to arrays.
 - structs map to objects with named properties.
 - string-keyed maps map to objects with additional property schemas.
-- enum string mappings map to JSON Schema `enum` values.
+- enum string mappings map to JSON Schema `enum` values using the enumerator
+  strings known to Metadata IR.
 - required metadata maps to JSON Schema `required`.
 - time mappings should use string schemas with documented `format` annotations
   where appropriate.

@@ -77,6 +77,9 @@ struct User {
         assert(status.location.line == 3);
         assert(status.location.column == 1);
 
+        assert(status.enumerators.size() == 1);
+        assert(status.enumerators[0] == "Ok");
+
         assert(result.file.type_aliases.size() == 1);
         auto sequence = result.file.type_aliases[0];
         assert(sequence.name == "Sequence");
@@ -300,6 +303,10 @@ struct User {
         assert(result.file.enums[0].namespace_path.size() == 2);
         assert(result.file.enums[0].namespace_path[0] == "company");
         assert(result.file.enums[0].namespace_path[1] == "model");
+
+        assert(result.file.enums[0].enumerators.size() == 2);
+        assert(result.file.enums[0].enumerators[0] == "Active");
+        assert(result.file.enums[0].enumerators[1] == "Suspended");
 
         assert(result.file.type_aliases.size() == 1);
         assert(result.file.type_aliases[0].name == "UserId");

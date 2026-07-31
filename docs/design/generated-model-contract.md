@@ -7,8 +7,8 @@ binders, documentation tools, and other downstream targets consume model facts
 without depending on CJM internal IR structures or parser implementation
 details.
 
-This is a design document for the v0.4 contract. Implementation belongs in the
-follow-up generated traits issue.
+This is a design document for the v0.4 contract. The v0.4 implementation
+started with generated `model_traits` data for supported mappings.
 
 ---
 
@@ -115,12 +115,19 @@ struct source_location {
     unsigned column;
 };
 
+struct enum_value_descriptor {
+    const char* cpp_name;
+    const char* json_name;
+};
+
 struct type_descriptor {
     type_kind kind;
     const char* spelling;
     const char* qualified_name;
     const type_descriptor* arguments;
     unsigned argument_count;
+    const enum_value_descriptor* enum_values;
+    unsigned enum_value_count;
 };
 
 struct field_descriptor {
@@ -171,12 +178,14 @@ CJM may generate contract data similar to:
 ```cpp
 namespace cjm::contract {
 
-namespace generated_company_model_user {
+namespace generated_company_model_User {
 
 inline constexpr type_descriptor string_type{
     type_kind::string,
     "std::string",
     "std::string",
+    nullptr,
+    0,
     nullptr,
     0,
 };
@@ -191,6 +200,8 @@ inline constexpr type_descriptor optional_string_type{
     "std::optional",
     optional_string_args,
     1,
+    nullptr,
+    0,
 };
 
 inline constexpr field_descriptor fields[] = {
@@ -220,12 +231,17 @@ inline constexpr model_descriptor model{
     2,
 };
 
-} // namespace generated_company_model_user
+} // namespace generated_company_model_User
 
 template <>
-struct model_traits<::company::model::User> {
-    static constexpr const model_descriptor& descriptor =
-        generated_company_model_user::model;
+struct model_traits<company::model::User> {
+    static constexpr model_descriptor model{
+        "User",
+        "company::model::User",
+        {"user.hpp", 3, 1},
+        generated_company_model_User::fields,
+        2,
+    };
 };
 
 } // namespace cjm::contract
@@ -284,6 +300,28 @@ std::optional<User>
   kind = optional
   arguments = [object]
 ```
+
+Enum types should expose the string values that CJM knows how to generate and
+parse.
+
+Example:
+
+```text
+enum class Status {
+  Active,
+  Disabled,
+};
+
+Status
+  kind = enum_
+  enum_values = [
+    {cpp_name = "Active", json_name = "Active"},
+    {cpp_name = "Disabled", json_name = "Disabled"},
+  ]
+```
+
+For v0.4, `cpp_name` and `json_name` are the same because custom enum rename
+metadata is not yet supported.
 
 ---
 

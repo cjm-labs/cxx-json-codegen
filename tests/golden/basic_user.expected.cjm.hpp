@@ -4,6 +4,33 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+
+namespace company::model {
+
+inline const char* cjm_to_json_string(Status value) {
+    switch (value) {
+    case Status::Active:
+        return "Active";
+    case Status::Disabled:
+        return "Disabled";
+    }
+    throw std::invalid_argument("unknown enum value for company::model::Status");
+}
+
+inline Status cjm_from_json_string_Status(std::string_view value) {
+    if (value == "Active") {
+        return Status::Active;
+    }
+    if (value == "Disabled") {
+        return Status::Disabled;
+    }
+    throw std::invalid_argument("unknown enum string for company::model::Status");
+}
+
+} // namespace company::model
 
 namespace company::model {
 
@@ -24,13 +51,14 @@ inline void to_json(nlohmann::json& j, const User& value) {
     j["age"] = value.age;
     j["tags"] = value.tags;
     j["address"] = value.address;
-    j["status"] = value.status;
+    j["status"] = company::model::cjm_to_json_string(value.status);
     if (value.nickname.has_value()) {
         j["nickname"] = *value.nickname;
     }
     if (value.score.has_value()) {
         j["score"] = *value.score;
     }
+    j["samples"] = value.samples;
 }
 
 inline void from_json(const nlohmann::json& j, User& value) {
@@ -38,13 +66,14 @@ inline void from_json(const nlohmann::json& j, User& value) {
     j.at("age").get_to(value.age);
     j.at("tags").get_to(value.tags);
     j.at("address").get_to(value.address);
-    j.at("status").get_to(value.status);
+    value.status = company::model::cjm_from_json_string_Status(j.at("status").get<std::string>());
     if (j.contains("nickname")) {
         value.nickname = j.at("nickname").get<std::string>();
     }
     if (j.contains("score")) {
         value.score = j.at("score").get<int>();
     }
+    j.at("samples").get_to(value.samples);
 }
 
 } // namespace company::model

@@ -125,5 +125,40 @@ int main() {
         assert(map_string_int_type.arguments[1].kind ==
                FieldTypeKind::SignedInteger);
     }
+    {
+        FieldType int_type{
+            FieldTypeKind::SignedInteger,
+            "int",
+            "int",
+        };
+
+        FieldType array_int_type{
+            FieldTypeKind::Array,
+            "std::array<int, 4>",
+            "std::array",
+            {int_type},
+        };
+
+        assert(array_int_type.kind == FieldTypeKind::Array);
+        assert(array_int_type.arguments.size() == 1);
+        assert(array_int_type.arguments[0].kind ==
+               FieldTypeKind::SignedInteger);
+    }
+    {
+        EnumModel status;
+        status.name = "Status";
+        status.namespace_path = {"company", "model"};
+        status.qualified_name = "company::model::Status";
+        status.enumerators = {"Active", "Disabled"};
+        status.source_location = {"include/user.hpp", 4, 1};
+
+        ProjectModel project;
+        project.enums = {status};
+
+        assert(project.enums.size() == 1);
+        assert(project.enums[0].qualified_name == "company::model::Status");
+        assert(project.enums[0].enumerators[0] == "Active");
+        assert(project.enums[0].enumerators[1] == "Disabled");
+    }
     return 0;
 }

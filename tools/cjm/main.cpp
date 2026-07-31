@@ -20,13 +20,16 @@ void print_help(std::ostream& out) {
         << "Usage:\n"
         << "    cjm --help\n"
         << "    cjm help\n"
-        << "    cjm generate --input <header> --output <file>\n";
+        << "    cjm generate --input <header> [<header>...] --output <file>\n";
 }
 
 struct GenerateOptions {
     std::vector<std::string> inputs;
     std::string output;
 };
+
+// Return true when an argument starts a CLI option such as --input or --output.
+bool is_option_arg(const std::string& arg) { return arg.rfind("--", 0) == 0; }
 
 bool parse_generate_options(int argc, char** argv, GenerateOptions& options) {
     for (int i = 2; i < argc; ++i) {
@@ -38,7 +41,17 @@ bool parse_generate_options(int argc, char** argv, GenerateOptions& options) {
                 return false;
             }
 
-            options.inputs.push_back(argv[++i]);
+            // Consume all explicit header paths until the next CLI option.
+            ++i;
+            if (is_option_arg(argv[i])) {
+                std::cerr << "cjm: --input requires at least one value\n";
+                return false;
+            }
+            while (i < argc && !is_option_arg(argv[i])) {
+                options.inputs.push_back(argv[i]);
+                ++i;
+            }
+            --i;
             continue;
         }
         if (arg == "--output") {

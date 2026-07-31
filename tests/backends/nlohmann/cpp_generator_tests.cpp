@@ -64,6 +64,13 @@ ProjectModel make_basic_user_project() {
     };
     vector_string_type.arguments = {string_type};
 
+    FieldType array_int_type{
+        FieldTypeKind::Array,
+        "std::array<int, 4>",
+        "std::array",
+    };
+    array_int_type.arguments = {int_type};
+
     FieldType address_type{
         FieldTypeKind::UserDefined,
         "Address",
@@ -128,6 +135,12 @@ ProjectModel make_basic_user_project() {
             SourceLocation{"include/user.hpp", 5, 28},
         },
         FieldModel{
+            "samples",
+            array_int_type,
+            JsonFieldMetadata{"samples", false},
+            SourceLocation{"include/user.hpp", 10, 35},
+        },
+        FieldModel{
             "internal_id",
             FieldType{
                 FieldTypeKind::SignedInteger,
@@ -153,8 +166,16 @@ ProjectModel make_basic_user_project() {
         },
     };
 
+    EnumModel status;
+    status.name = "Status";
+    status.namespace_path = {"company", "model"};
+    status.qualified_name = "company::model::Status";
+    status.enumerators = {"Active", "Disabled"};
+    status.source_location = SourceLocation{"include/user.hpp", 8, 1};
+
     ProjectModel project;
     project.types = {address, user};
+    project.enums = {status};
     return project;
 }
 

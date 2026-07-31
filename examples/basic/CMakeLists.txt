@@ -56,4 +56,5 @@ target_link_libraries(
   cjm_basic_downstream_consumer
   PRIVATE
     nlohmann_json::nlohmann_json
+    cjm_contract
 )

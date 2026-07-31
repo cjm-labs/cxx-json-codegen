@@ -172,7 +172,8 @@ bool subtree_contains_json_comment(const TSNode& node,
 
 /**
  * Convert one supported Tree-sitter field_declaration into FieldSyntax.
- * Unsupported field shapes only report diagnostics when they carry CJM metadata.
+ * Unsupported field shapes only report diagnostics when they carry CJM
+ * metadata.
  */
 bool extract_field(const std::string& path, const std::string& source,
                    const TSNode& field_node, bool is_managed_field,
@@ -373,10 +374,35 @@ void collect_namespace_parts(const TSNode& node, const std::string& source,
 }
 
 /**
+ * Collect enumerator names from one enum_specifier node.
+ */
+void collect_enum_enumerators(const TSNode& enum_node,
+                              const std::string& source,
+                              std::vector<std::string>& enumerators) {
+    const auto list_node =
+        find_first_named_child_of_type(enum_node, "enumerator_list");
+    if (ts_node_is_null(list_node)) {
+        return;
+    }
+
+    const auto count = ts_node_named_child_count(list_node);
+    for (uint32_t i = 0; i < count; ++i) {
+        const auto child = ts_node_named_child(list_node, i);
+        if (!node_type_is(child, "enumerator")) {
+            continue;
+        }
+        const auto name_node =
+            find_first_named_child_of_type(child, "identifier");
+        if (!ts_node_is_null(name_node)) {
+            enumerators.push_back(node_text(source, name_node));
+        }
+    }
+}
+
+/**
  * Convert one supported Tree-sitter enum_specifier into EnumSyntax.
  *
- * This records only the enum name, namespace, and source location.
- * Enumerator values are not part of the current parser syntax contract.
+ * This records enum identity plus declared enumerator names.
  */
 bool extract_enum(const std::string& path, const std::string& source,
                   const TSNode& enum_node,
@@ -390,6 +416,7 @@ bool extract_enum(const std::string& path, const std::string& source,
     out.name = node_text(source, name_node);
     out.namespace_path = namespace_path;
     out.location = to_source_location(path, ts_node_start_point(enum_node));
+    collect_enum_enumerators(enum_node, source, out.enumerators);
     return true;
 }
 
