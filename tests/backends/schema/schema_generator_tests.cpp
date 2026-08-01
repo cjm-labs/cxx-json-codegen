@@ -9,7 +9,6 @@
 using namespace cjm::metadata;
 
 namespace {
-
 std::string read_file(const std::string& path) {
     std::fstream file(path);
     assert(file.is_open());
@@ -44,18 +43,83 @@ ProjectModel make_simple_schema_project() {
     return project;
 }
 
-} // namespace
+ProjectModel make_array_schema_project() {
+    TypeModel array_values;
+    array_values.name = "ArrayValues";
+    array_values.qualified_name = "company::model::ArrayValues";
 
-int main() {
+    cjm::metadata::FieldType int_type = {
+        cjm::metadata::FieldTypeKind::SignedInteger,
+        "int",
+        "int",
+    };
+    cjm::metadata::FieldType string_type = {
+        cjm::metadata::FieldTypeKind::String,
+        "std::string",
+        "std::string",
+    };
+    array_values.fields = {
+        FieldModel{
+            "tags",
+            FieldType{FieldTypeKind::Vector,
+                      "std::vector",
+                      "std::vector",
+                      {string_type}},
+            JsonFieldMetadata{"tags", false},
+            SourceLocation{"include/array_values.hpp", 2, 17},
+        },
+        FieldModel{
+            "scores",
+            FieldType{
+                FieldTypeKind::Vector,
+                "std::vector<int>",
+                "std::vector",
+                {int_type},
+            },
+            JsonFieldMetadata{"scores", false},
+            SourceLocation{"include/array_values.hpp", 3, 18},
+        },
+        FieldModel{
+            "samples",
+            FieldType{FieldTypeKind::Array,
+                      "std::array<int, 4>",
+                      "std::array",
+                      {int_type},
+                      4},
+            JsonFieldMetadata{"samples", false},
+            SourceLocation{"include/array_values.hpp", 4, 20},
+        },
+    };
+    ProjectModel project;
+    project.types = {array_values};
+    return project;
+}
+/**
+ * Compare schema backend output with one golden schema file.
+ *
+ * The test prints generated schema text on mismatch so the failure is easy
+ * to inspect without debugging the generator.
+ */
+void assert_schema_matches(const ProjectModel& project,
+                           const std::string& expected_path) {
     const std::string generated =
-        cjm::generator::schema::generate_schema(make_simple_schema_project());
-    const std::string expected =
-        read_file("tests/golden/basic_user.expected.schema.json");
+        cjm::generator::schema::generate_schema(project);
+    const std::string expected = read_file(expected_path);
 
     if (generated != expected) {
         std::cerr << generated;
     }
 
     assert(generated == expected);
+}
+
+} // namespace
+
+int main() {
+
+    assert_schema_matches(make_simple_schema_project(),
+                          "tests/golden/basic_user.expected.schema.json");
+    assert_schema_matches(make_array_schema_project(),
+                          "tests/golden/array_values.expected.schema.json");
     return 0;
 }
