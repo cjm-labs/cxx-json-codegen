@@ -137,12 +137,14 @@ int main() {
             "std::array<int, 4>",
             "std::array",
             {int_type},
+            4,
         };
 
         assert(array_int_type.kind == FieldTypeKind::Array);
         assert(array_int_type.arguments.size() == 1);
         assert(array_int_type.arguments[0].kind ==
                FieldTypeKind::SignedInteger);
+        assert(array_int_type.array_extent == 4);
     }
     {
         EnumModel status;
