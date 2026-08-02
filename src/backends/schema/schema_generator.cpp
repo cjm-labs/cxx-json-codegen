@@ -64,6 +64,11 @@ bool is_supported_schema_type(const metadata::FieldType& type) {
         return type.arguments.size() == 1 &&
                is_supported_simple_schema_type(type.arguments[0]);
     }
+    if (type.kind == metadata::FieldTypeKind::Map) {
+        return type.arguments.size() == 2 &&
+               type.arguments[0].kind == metadata::FieldTypeKind::String &&
+               is_supported_simple_schema_type(type.arguments[1]);
+    }
     return false;
 }
 
@@ -110,6 +115,24 @@ void generate_optional_schema_fragment(std::ostringstream& out,
     }
 }
 
+void generate_schema_fragment(std::ostringstream& out,
+                              const metadata::FieldType& type);
+// Generate the JSON Schema fragment for a string-keyed map field.
+void generate_map_schema_fragment(std::ostringstream& out,
+                                  const metadata::FieldType& type) {
+    if (type.arguments.size() != 2) {
+        return;
+    }
+    if (!is_supported_simple_schema_type(type.arguments[0]) ||
+        (!is_supported_simple_schema_type(type.arguments[1]))) {
+        return;
+    }
+    const auto& val_kind = type.arguments[1].kind;
+    out << "{ \"type\": \"object\", \"additionalProperties\": ";
+    generate_schema_fragment(out, type.arguments[1]);
+    out << " }";
+}
+
 /**
  * Generate the JSON Schema fragment for one validated field type.
  *
@@ -153,6 +176,10 @@ void generate_schema_fragment(std::ostringstream& out,
 
     if (type.kind == metadata::FieldTypeKind::Optional) {
         generate_optional_schema_fragment(out, type);
+        return;
+    }
+    if (type.kind == metadata::FieldTypeKind::Map) {
+        generate_map_schema_fragment(out, type);
         return;
     }
 }

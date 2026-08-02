@@ -9,6 +9,22 @@
 using namespace cjm::metadata;
 
 namespace {
+const cjm::metadata::FieldType string_type = {
+    cjm::metadata::FieldTypeKind::String,
+    "std::string",
+    "std::string",
+};
+const cjm::metadata::FieldType int_type = {
+    cjm::metadata::FieldTypeKind::SignedInteger,
+    "int",
+    "int",
+};
+const cjm::metadata::FieldType bool_type = {
+    cjm::metadata::FieldTypeKind::Bool,
+    "bool",
+    "bool",
+};
+
 std::string read_file(const std::string& path) {
     std::fstream file(path);
     assert(file.is_open());
@@ -97,21 +113,6 @@ ProjectModel make_array_schema_project() {
 
 // Build a small project that exercises optional simple schema mappings.
 ProjectModel make_optional_schema_project() {
-    cjm::metadata::FieldType string_type = {
-        cjm::metadata::FieldTypeKind::String,
-        "std::string",
-        "std::string",
-    };
-    cjm::metadata::FieldType int_type = {
-        cjm::metadata::FieldTypeKind::SignedInteger,
-        "int",
-        "int",
-    };
-    cjm::metadata::FieldType bool_type = {
-        cjm::metadata::FieldTypeKind::Bool,
-        "bool",
-        "bool",
-    };
     TypeModel optional_values;
     optional_values.name = "OptionalValues";
     optional_values.qualified_name = "company::model::OptionalValues";
@@ -139,6 +140,34 @@ ProjectModel make_optional_schema_project() {
 
     ProjectModel project;
     project.types = {optional_values};
+    return project;
+}
+
+// Build a small project that exercises string-keyed map schema mappings.
+ProjectModel make_map_schema_project() {
+    TypeModel map_values;
+    map_values.name = "MapValues";
+    map_values.fields = {
+        FieldModel{
+            "labels",
+            FieldType{FieldTypeKind::Map,
+                      "std::map<std::string, int>",
+                      "std::map",
+                      {string_type, int_type}},
+            JsonFieldMetadata{"labels", false},
+        },
+        FieldModel{
+            "aliases",
+            FieldType{FieldTypeKind::Map,
+                      "std::unordered_map<std::string, std::string>",
+                      "std::unordered_map",
+                      {string_type, string_type}},
+            JsonFieldMetadata{"aliases", false},
+        },
+    };
+
+    ProjectModel project;
+    project.types = {map_values};
     return project;
 }
 
@@ -171,6 +200,8 @@ int main() {
                           "tests/golden/array_values.expected.schema.json");
     assert_schema_matches(make_optional_schema_project(),
                           "tests/golden/optional_values.expected.schema.json");
+    assert_schema_matches(make_map_schema_project(),
+                          "tests/golden/map_values.expected.schema.json");
 
     return 0;
 }
