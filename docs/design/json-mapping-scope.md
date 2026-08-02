@@ -452,9 +452,10 @@ Notes:
 The schema backend should reflect the supported mapping matrix without becoming
 a schema-first workflow.
 
-Schema generation consumes validated Metadata IR or stable generated
-model-contract facts. It must not inspect parser syntax, Tree-sitter nodes, or
-nlohmann/json backend implementation details.
+The v0.5 schema backend consumes validated Metadata IR. Future downstream schema
+tools may also consume stable generated model-contract facts, but the in-tree
+backend must not inspect parser syntax, Tree-sitter nodes, or nlohmann/json
+backend implementation details.
 
 ## Schema Dialect
 
@@ -504,6 +505,37 @@ Metadata IR explicitly does so first.
 | enum string mapping | `{ "type": "string", "enum": [...] }` |
 | ignored field | omitted from schema properties |
 | `omitempty` | does not by itself make a field required or optional |
+
+## v0.5 Implementation Boundary
+
+The v0.5 implementation intentionally covers the practical subset already
+represented in Metadata IR and golden tests.
+
+Implemented schema mappings:
+
+- scalar and string fields
+- unsigned integer fields with `minimum: 0`
+- `std::vector<T>` and `std::array<T, N>` when `T` is a scalar or string mapping
+- `std::optional<T>` when `T` is a scalar or string mapping
+- `std::map<std::string, T>` and `std::unordered_map<std::string, T>` when `T`
+  is a scalar or string mapping
+- enum and enum class fields as JSON string enums
+- direct generated-struct fields through `$ref` and `$defs`
+- ignored fields omitted from `properties`
+- non-optional supported fields listed in `required`
+
+Not yet implemented:
+
+- schema output for nested containers
+- schema output for containers whose element or value type is an enum or
+  generated struct
+- schema output for `std::optional<T>` when `T` is an enum, generated struct, or
+  container
+- custom enum string policies
+- default-value metadata
+- time or datetime schema formats
+- runtime JSON Schema validation
+- OpenAPI route or HTTP endpoint generation
 
 ## Optional, Required, And Null
 

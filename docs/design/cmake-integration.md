@@ -54,7 +54,7 @@ The primary CMake function is:
 cjm_generate(...)
 ```
 
-Initial signature:
+Current signature:
 
 ```cmake
 cjm_generate(
@@ -63,6 +63,8 @@ cjm_generate(
     [GENERATED_TARGET <target>]
     [GENERATED_HEADERS_VAR <var>]
     [GENERATED_INCLUDE_DIR_VAR <var>]
+    [GENERATE_SCHEMAS]
+    [GENERATED_SCHEMAS_VAR <var>]
 )
 ```
 
@@ -93,6 +95,12 @@ cjm_generate(
 - `GENERATED_HEADERS_VAR` stores the generated header list in the caller scope.
 - `GENERATED_INCLUDE_DIR_VAR` stores the generated include directory in the
   caller scope.
+- `GENERATE_SCHEMAS` requests JSON Schema artifacts for the listed headers.
+- `GENERATED_SCHEMAS_VAR` stores the generated schema file list in the caller
+  scope.
+
+Schema output is opt-in. Existing calls that omit `GENERATE_SCHEMAS` continue to
+generate only C++ headers.
 
 ---
 
@@ -154,6 +162,17 @@ The generated include directory is automatically added to the target.
 
 Users should not need to manually include generated paths.
 
+When `GENERATE_SCHEMAS` is requested, JSON Schema artifacts are placed in a
+separate build output directory:
+
+```text
+<build-dir>/generated/schemas/user.schema.json
+<build-dir>/generated/schemas/order.schema.json
+```
+
+Schema files are build artifacts. They are not C++ sources and are not added to
+the generated include directory.
+
 When requested, `cjm_generate()` also exposes the generated include directory to
 the caller through `GENERATED_INCLUDE_DIR_VAR` so another target can consume the
 same generated artifacts explicitly.
@@ -177,7 +196,7 @@ The build should avoid unnecessary regeneration.
 
 # Generated File Naming
 
-Generated files use the convention:
+Generated C++ headers use the convention:
 
 ```text
 *.cjm.hpp
@@ -188,6 +207,19 @@ Example:
 ```text
 user.hpp
     -> user.cjm.hpp
+```
+
+Generated JSON Schema artifacts use the convention:
+
+```text
+*.schema.json
+```
+
+Example:
+
+```text
+user.hpp
+    -> user.schema.json
 ```
 
 If multiple source files share the same base name, CJM should avoid collisions by preserving relative paths or using a deterministic output layout.
@@ -202,14 +234,14 @@ Conceptually:
 
 ```cmake
 target_include_directories(app PRIVATE <generated-dir>)
-target_sources(app PRIVATE <generated-files>)
+target_sources(app PRIVATE <generated-headers>)
 ```
 
 When `GENERATED_TARGET` is provided, `cjm_generate()` should also create a
 custom target that depends on the generated files:
 
 ```cmake
-add_custom_target(app_cjm_generated DEPENDS <generated-files>)
+add_custom_target(app_cjm_generated DEPENDS <generated-artifacts>)
 ```
 
 Another target can then depend on that target and include the generated
@@ -220,6 +252,11 @@ add_dependencies(tool app_cjm_generated)
 target_sources(tool PRIVATE ${app_cjm_headers})
 target_include_directories(tool PRIVATE ${app_cjm_include_dir})
 ```
+
+When schema generation is enabled, the generated target should also depend on
+the schema files. Consumers can inspect those file paths through
+`GENERATED_SCHEMAS_VAR`, but schema files should not be added through
+`target_sources()` for normal C++ compilation.
 
 ---
 
@@ -249,6 +286,10 @@ compile target
 link target
 ```
 
+When `GENERATE_SCHEMAS` is enabled, the generated target also runs
+`cjm generate-schema` and produces `*.schema.json` artifacts before downstream
+targets that depend on the generated target are considered up to date.
+
 ---
 
 # Compiler Independence
@@ -272,8 +313,15 @@ Example conceptual command:
 ```bash
 cjm generate \
     --input include/user.hpp \
-    --output <build-dir>/generated/cjm/user.cjm.hpp \
-    --target app
+    --output <build-dir>/generated/cjm/user.cjm.hpp
+```
+
+Schema generation uses the sibling schema command:
+
+```bash
+cjm generate-schema \
+    --input include/user.hpp \
+    --output <build-dir>/generated/schemas/user.schema.json
 ```
 
 Users normally should not run this manually.
