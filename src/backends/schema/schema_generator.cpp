@@ -60,7 +60,54 @@ bool is_supported_schema_type(const metadata::FieldType& type) {
             return true;
         }
     }
+    if (type.kind == metadata::FieldTypeKind::Optional) {
+        return type.arguments.size() == 1 &&
+               is_supported_simple_schema_type(type.arguments[0]);
+    }
     return false;
+}
+
+// Return whether a field should be listed in the schema required array.
+bool is_required_schema_field(const metadata::FieldModel& field) {
+    if (field.json.name.empty()) {
+        return false;
+    }
+    if (!is_supported_schema_type(field.type)) {
+        return false;
+    }
+    if (field.type.kind == metadata::FieldTypeKind::Optional) {
+        return false;
+    }
+    return true;
+}
+
+// Generate the JSON Schema type array for an optional simple field type.
+void generate_optional_schema_fragment(std::ostringstream& out,
+                                       const metadata::FieldType& type) {
+    if (type.arguments.size() == 0) {
+        return;
+    }
+    const auto& kind = type.arguments[0].kind;
+    if (kind == metadata::FieldTypeKind::Bool) {
+        out << "{ \"type\": [\"boolean\", \"null\"] }";
+        return;
+    }
+    if (kind == metadata::FieldTypeKind::SignedInteger) {
+        out << "{ \"type\": [\"integer\", \"null\"] }";
+        return;
+    }
+    if (kind == metadata::FieldTypeKind::UnsignedInteger) {
+        out << "{ \"type\": [\"integer\", \"null\"], \"minimum\": 0 }";
+        return;
+    }
+    if (kind == metadata::FieldTypeKind::FloatingPoint) {
+        out << "{ \"type\": [\"number\", \"null\"] }";
+        return;
+    }
+    if (kind == metadata::FieldTypeKind::String) {
+        out << "{ \"type\": [\"string\", \"null\"] }";
+        return;
+    }
 }
 
 /**
@@ -103,6 +150,11 @@ void generate_schema_fragment(std::ostringstream& out,
             << ", \"maxItems\": " << type.array_extent << " }";
         return;
     }
+
+    if (type.kind == metadata::FieldTypeKind::Optional) {
+        generate_optional_schema_fragment(out, type);
+        return;
+    }
 }
 
 void generate_field_schema(std::ostringstream& out,
@@ -115,7 +167,8 @@ void generate_field_schema(std::ostringstream& out,
 void generate_type_schema(std::ostringstream& out,
                           const metadata::TypeModel& type) {
     out << "{\n"
-        << "  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n"
+        << "  \"$schema\": "
+           "\"https://json-schema.org/draft/2020-12/schema\",\n"
         << "  \"title\": \"" << type.name << "\",\n"
         << "  \"type\": \"object\",\n"
         << "  \"properties\": {\n";
@@ -141,7 +194,7 @@ void generate_type_schema(std::ostringstream& out,
 
     bool wrote_required = false;
     for (const auto& field : type.fields) {
-        if (field.json.name.empty() || !is_supported_schema_type(field.type)) {
+        if (!is_required_schema_field(field)) {
             continue;
         }
         if (wrote_required) {

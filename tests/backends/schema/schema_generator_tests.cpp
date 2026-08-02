@@ -94,6 +94,54 @@ ProjectModel make_array_schema_project() {
     project.types = {array_values};
     return project;
 }
+
+// Build a small project that exercises optional simple schema mappings.
+ProjectModel make_optional_schema_project() {
+    cjm::metadata::FieldType string_type = {
+        cjm::metadata::FieldTypeKind::String,
+        "std::string",
+        "std::string",
+    };
+    cjm::metadata::FieldType int_type = {
+        cjm::metadata::FieldTypeKind::SignedInteger,
+        "int",
+        "int",
+    };
+    cjm::metadata::FieldType bool_type = {
+        cjm::metadata::FieldTypeKind::Bool,
+        "bool",
+        "bool",
+    };
+    TypeModel optional_values;
+    optional_values.name = "OptionalValues";
+    optional_values.qualified_name = "company::model::OptionalValues";
+    optional_values.fields = {
+        FieldModel{
+            "nickname",
+            FieldType{FieldTypeKind::Optional,
+                      "std::optional<std::string>",
+                      "std::optional",
+                      {string_type}},
+            JsonFieldMetadata{"nickname", true},
+        },
+        FieldModel{
+            "score",
+            FieldType{FieldTypeKind::Optional,
+                      "std::optional<int>",
+                      "std::optional",
+                      {int_type}},
+            JsonFieldMetadata{"score", false},
+        },
+        FieldModel{"enabled",
+                   FieldType{FieldTypeKind::Bool, "bool", "bool", {bool_type}},
+                   JsonFieldMetadata{"enabled", false}},
+    };
+
+    ProjectModel project;
+    project.types = {optional_values};
+    return project;
+}
+
 /**
  * Compare schema backend output with one golden schema file.
  *
@@ -121,5 +169,8 @@ int main() {
                           "tests/golden/basic_user.expected.schema.json");
     assert_schema_matches(make_array_schema_project(),
                           "tests/golden/array_values.expected.schema.json");
+    assert_schema_matches(make_optional_schema_project(),
+                          "tests/golden/optional_values.expected.schema.json");
+
     return 0;
 }
