@@ -477,6 +477,21 @@ Supported:
 - `json:"-"` ignored fields
 - `omitempty` for supported optional fields
 
+JSON Schema output currently covers:
+
+- JSON Schema Draft 2020-12 object schemas for supported generated structs
+- scalar and string fields
+- unsigned integers with `minimum: 0`
+- `std::vector<T>` and `std::array<T, N>` when `T` is a supported scalar or
+  string mapping
+- `std::optional<T>` when `T` is a supported scalar or string mapping
+- `std::map<std::string, T>` and `std::unordered_map<std::string, T>` when `T`
+  is a supported scalar or string mapping
+- enum and enum class fields as JSON string enums
+- nested generated structs as `$ref` entries with `$defs`
+- `json:"-"` fields omitted from schema properties
+- non-optional supported fields listed in `required`
+
 ## Current Limitations
 
 CJM intentionally remains a practical subset.
@@ -493,6 +508,10 @@ Not yet supported:
 - custom converters
 - custom enum string mapping policies
 - time and datetime mappings
+- schema output for nested containers whose element or value type is another
+  container, optional, enum, or generated struct
+- OpenAPI route generation
+- runtime JSON Schema validation
 - multiline managed field declarations are not yet documented as supported
 - private fields 
 - native JSON backend 
