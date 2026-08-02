@@ -184,7 +184,7 @@ if (CJM_BUILD_TESTS)
     NAME cjm_basic_example_generated_header
     COMMAND ${CMAKE_COMMAND} -E compare_files
             ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp
-            ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/basic_pipeline.expected.cjm.hpp
   )
   # parser tests below...
   add_executable(cjm_parser_tests tests/frontends/cxx/parser/syntax_tests.cpp)
@@ -309,5 +309,12 @@ if (CJM_BUILD_TESTS)
     cjm_cli_generate_schema
     PROPERTIES
       PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
+  add_test(
+    NAME cjm_basic_example_generated_schemas
+    COMMAND ${CMAKE_COMMAND} -E compare_files
+            ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/schemas/user.schema.json
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/basic_user.expected.schema.json
   )
 endif()
