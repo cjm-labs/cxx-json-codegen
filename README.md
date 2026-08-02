@@ -277,6 +277,44 @@ target_include_directories(tool PRIVATE ${app_cjm_include_dir})
 This keeps generated files in the build directory while giving downstream
 targets a stable dependency and include path.
 
+### Generate JSON Schema
+
+CJM can also generate JSON Schema Draft 2020-12 artifacts from the same
+validated Metadata IR used by the C++ backend:
+
+```sh
+cjm generate-schema --input user.hpp --output user.schema.json
+```
+
+Schema generation is opt-in for CMake builds. Add `GENERATE_SCHEMAS` when
+calling `cjm_generate`:
+
+```cmake
+cjm_generate(
+  TARGET app
+  HEADERS user.hpp
+  GENERATED_TARGET app_cjm_generated
+  GENERATE_SCHEMAS
+  GENERATED_SCHEMAS_VAR app_cjm_schemas
+)
+```
+
+During the build, CJM keeps generated C++ headers and schema artifacts in
+separate output directories:
+
+```text
+generated/cjm/user.cjm.hpp
+generated/schemas/user.schema.json
+```
+
+The generated schema files are build artifacts. They are tracked by the
+generated target, but they are not C++ sources and are not added to the target
+include path.
+
+CJM schema generation describes supported DTO mappings. It does not generate
+OpenAPI routes, HTTP endpoint policy, cross-language model code, or a runtime
+JSON Schema validation engine.
+
 ### Use CJM From A Downstream Project
 
 Early adopters can consume CJM by pinning a release tag with CMake
