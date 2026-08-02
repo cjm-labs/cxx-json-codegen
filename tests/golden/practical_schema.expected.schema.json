@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "samples": { "type": "array", "items": { "type": "integer" }, "minItems": 4, "maxItems": 4 },
+    "nickname": { "type": ["string", "null"] },
+    "labels": { "type": "object", "additionalProperties": { "type": "integer" } },
+    "status": { "type": "string", "enum": ["Active", "Disabled"] },
+    "address": { "$ref": "#/$defs/Address" }
+  },
+  "required": ["name", "tags", "samples", "labels", "status", "address"],
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "city": { "type": "string" }
+      },
+      "required": ["city"]
+    }
+  }
+}

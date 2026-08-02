@@ -232,6 +232,88 @@ ProjectModel make_nested_object_schema_project() {
     return project;
 }
 
+// Build a practical project that combines supported schema mappings.
+ProjectModel make_practical_schema_project() {
+    TypeModel address;
+    address.name = "Address";
+    address.qualified_name = "company::model::Address";
+    address.fields = {FieldModel{
+        "city",
+        string_type,
+        JsonFieldMetadata{"city", false},
+    }};
+
+    TypeModel user;
+    user.name = "User";
+    user.fields = {
+        FieldModel{
+            "name",
+            string_type,
+            JsonFieldMetadata{"name", false},
+        },
+        FieldModel{
+            "tags",
+            FieldType{FieldTypeKind::Vector,
+                      "std::vector<std::string>",
+                      "std::vector",
+                      {string_type}},
+            JsonFieldMetadata{"tags", false},
+        },
+        FieldModel{
+            "samples",
+            FieldType{FieldTypeKind::Array,
+                      "std::array<int, 4>",
+                      "std::array",
+                      {int_type},
+                      4},
+            JsonFieldMetadata{"samples", false},
+        },
+        FieldModel{
+            "nickname",
+            FieldType{FieldTypeKind::Optional,
+                      "std::optional<std::string>",
+                      "std::optional",
+                      {string_type}},
+            JsonFieldMetadata{"nickname", true},
+        },
+        FieldModel{"labels",
+                   FieldType{FieldTypeKind::Map,
+                             "std::map<std::string, int>",
+                             "std::map",
+                             {string_type, int_type}},
+                   JsonFieldMetadata{"labels", false}},
+        FieldModel{
+            "status",
+            FieldType{
+                FieldTypeKind::Enum,
+                "Status",
+                "company::model::Status",
+            },
+            JsonFieldMetadata{"status", false},
+        },
+        FieldModel{
+            "address",
+            FieldType{
+                FieldTypeKind::UserDefined,
+                "Address",
+                "company::model::Address",
+            },
+            JsonFieldMetadata{"address", false},
+        },
+        FieldModel{"internal_id", int_type, JsonFieldMetadata{"", false}},
+    };
+
+    EnumModel enum_status;
+    enum_status.name = "Status";
+    enum_status.qualified_name = "company::model::Status";
+    enum_status.enumerators = {"Active", "Disabled"};
+
+    ProjectModel project;
+    project.enums = {enum_status};
+    project.types = {user, address};
+    return project;
+}
+
 /**
  * Compare schema backend output with one golden schema file.
  *
@@ -267,5 +349,8 @@ int main() {
                           "tests/golden/enum_values.expected.schema.json");
     assert_schema_matches(make_nested_object_schema_project(),
                           "tests/golden/nested_object.expected.schema.json");
+    assert_schema_matches(make_practical_schema_project(),
+                          "tests/golden/practical_schema.expected.schema.json");
+
     return 0;
 }
