@@ -171,6 +171,33 @@ ProjectModel make_map_schema_project() {
     return project;
 }
 
+// Build a small project that exercises enum string schema mappings.
+ProjectModel make_enum_schema_project() {
+    TypeModel enum_values;
+    enum_values.name = "EnumValues";
+    enum_values.fields = {
+        FieldModel{
+            "status",
+            FieldType{
+                FieldTypeKind::Enum,
+                "Status",
+                "company::model::Status",
+            },
+            JsonFieldMetadata{"status", false},
+        },
+
+    };
+
+    EnumModel enum_status;
+    enum_status.name = "Status",
+    enum_status.qualified_name = "company::model::Status";
+    enum_status.enumerators = {"Active", "Disabled"};
+    ProjectModel project;
+    project.types = {enum_values};
+    project.enums = {enum_status};
+    return project;
+}
+
 /**
  * Compare schema backend output with one golden schema file.
  *
@@ -202,6 +229,7 @@ int main() {
                           "tests/golden/optional_values.expected.schema.json");
     assert_schema_matches(make_map_schema_project(),
                           "tests/golden/map_values.expected.schema.json");
-
+    assert_schema_matches(make_enum_schema_project(),
+                          "tests/golden/enum_values.expected.schema.json");
     return 0;
 }
