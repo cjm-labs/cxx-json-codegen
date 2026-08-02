@@ -103,8 +103,9 @@ The provisional name for a possible independent runtime project is
 `cjm-json`. That project does not exist as part of this document, and it must
 not become a CJM v1.0 blocker.
 
-See [High-Performance JSON Strategy](high-performance-json-strategy.md) for the
-full backend taxonomy, repository boundary, benchmark dimensions, and promotion
+See [High-Performance JSON Strategy](high-performance-json-strategy.md) and
+[Runtime Backend Program](runtime-backend-program.md) for the backend taxonomy,
+repository boundary, benchmark dimensions, runtime work order, and promotion
 gates.
 
 ---
@@ -142,9 +143,12 @@ or:
 cjm_generate(
     TARGET app
     HEADERS user.hpp
-    BACKEND native
+    BACKEND simdjson
 )
 ```
+
+The exact backend option names are not frozen yet. v0.6 should define the
+selection shape before promoting additional runtime backends.
 
 ---
 
@@ -218,18 +222,18 @@ Out of scope:
 
 ---
 
-# Native Generated-Code Direction
+# Runtime Backend Direction
 
-A future native generated-code backend may provide:
+Future runtime backends may provide different integration strategies:
 
-- JSON writer
-- JSON reader
-- generated serialization helpers
-- minimal runtime support
-- zero unnecessary dynamic reflection
-- optional DOM-free mode
+- compatibility DOM integration through `nlohmann/json`
+- generated-codec integration through simdjson On-Demand and builder
+- direct-typed adapter integration through libraries such as Glaze or DAW JSON
+  Link
+- compact document / DOM integration through yyjson
+- later SAX or state-machine experiments through libraries such as RapidJSON SAX
 
-Possible future usage:
+Possible future generated-codec usage:
 
 ```cpp
 std::string json = cjm::to_json(user);
@@ -246,10 +250,13 @@ cjm::write_json(writer, user);
 
 These examples are conceptual only.
 
-This should be designed only after the core CJM pipeline is stable and after a
-separate performance and correctness review. A native high-performance JSON
-engine should remain optional and should not change the default backend or
-public workflow without explicit approval.
+This should be designed only after field semantics, runtime semantics, and
+backend conformance have been defined. A high-performance backend should remain
+optional and should not change the default backend or public workflow without
+explicit approval.
+
+CJM should not introduce a universal runtime facade before real backend
+implementations prove a small shared abstraction is necessary.
 
 ---
 
@@ -263,17 +270,25 @@ CJM should avoid becoming a thin wrapper around any single JSON library.
 
 The long-term product should be valuable on its own.
 
+Optional runtime dependencies must stay isolated:
+
+- users who do not select a backend should not download it
+- users who do not select a backend should not include its headers
+- users who do not select a backend should not inherit its C++ standard
+  requirement
+- backend-specific generated targets may require stricter language standards
+  when the selected runtime requires them
+
 ---
 
 # Summary
 
-The initial backend should optimize for progress.
+The initial backend optimized for progress.
 
-The long-term backend strategy should optimize for independence and explicit
-backend choice.
+The post-v0.5 strategy optimizes for shared semantics, explicit backend choice,
+and evidence-driven promotion.
 
-CJM should first prove the build-time code generation model.
+CJM should first freeze default field mapping and canonical runtime semantics.
 
-Then it can evaluate additional backends, including mature libraries and
-possible native generated-code integration, without turning CJM itself into an
-unbounded JSON parser project.
+Then it can evaluate runtime backends, beginning with simdjson generated-codec
+work, without turning CJM itself into an unbounded JSON parser project.

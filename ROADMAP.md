@@ -65,13 +65,17 @@ All backends consume it.
 Future backends may include:
 
 - nlohmann/json backend
-- RapidJSON backend
-- native CJM backend
 - schema backend
 - documentation backend
-- OpenAPI backend
+- direct-typed adapter backends such as Glaze or DAW JSON Link
+- generated codec backends such as simdjson On-Demand
+- compact document / DOM backends such as yyjson
+- SAX or state-machine experiments such as RapidJSON SAX
+- optional native runtime research outside the core CJM repository
 
-These are architectural directions, not v0.1 requirements.
+These are architectural directions, not immediate commitments. Every runtime
+backend must consume normalized Metadata IR semantics rather than parser syntax
+or backend-specific comments.
 
 ---
 
@@ -655,10 +659,12 @@ Initial backend:
 
 Potential later backends:
 
-- native CJM backend
-- RapidJSON backend
-- schema backend
-- documentation backend
+- artifact backends such as JSON Schema and documentation output
+- direct-typed adapter backends such as Glaze or DAW JSON Link
+- generated codec backends such as simdjson On-Demand
+- compact document / DOM backends such as yyjson
+- later SAX or state-machine experiments such as RapidJSON SAX
+- optional native runtime research outside the core CJM repository
 
 Success criteria:
 
@@ -684,6 +690,10 @@ Out of scope:
 ---
 
 # v0.5 - Schema
+
+Status:
+
+> Completed for v0.5.0.
 
 Goal:
 
@@ -740,51 +750,138 @@ Schema export gives CJM a clean integration point with existing ecosystems.
 
 ---
 
-# v0.6 - Performance
+# v0.5.x - Default Field Mapping and Canonical Field Semantics
 
 Goal:
 
-> Make CJM fast enough for real projects.
+> Remove redundant same-name JSON tags while preserving explicit metadata for
+> exceptions.
 
-Improve:
+Semantic changes:
 
-- incremental generation
-- file hashing
-- metadata cache
-- dependency tracking
-- unnecessary rewrite avoidance
-- parallel generation
-- benchmarks
+- fields in managed models default to their exact C++ field names
+- explicit rename metadata overrides the default field name
+- `json:",omitempty"` uses the default field name and records `omit_empty`
+- `json:"-"` records explicit ignored-field intent
+- duplicate effective JSON field names are diagnosed
+- unsupported included fields fail closed during Semantic Analysis
+- all backends consume the same normalized Metadata IR field facts
 
-Mapping scope:
+Managed model rule:
 
-- no major new mapping requirements
-- performance work should cover realistic model sets using mappings introduced
-  through v0.5
-- generated output for supported mappings should remain deterministic and avoid
-  unnecessary rewrites
+- near-term CJM-managed models are supported public `struct` declarations in
+  explicitly supplied input headers
+- helper or implementation structs in those input headers are also considered
+  managed unless a future type-level opt-in policy is adopted
+- unsupported included fields must produce diagnostics rather than being silently
+  dropped
+- users may explicitly exclude a field with `json:"-"`
 
-Investigate:
+Metadata IR direction:
 
-- RapidJSON backend
-- streaming writer
-- native backend research
+- ignored fields remain visible in Metadata IR through explicit ignored
+  semantics
+- an empty JSON name must not be used as the ignored-field marker
+- backends that produce runtime JSON or schema surfaces skip ignored fields
+- generated model-contract metadata may expose ignored fields for downstream
+  inspection
 
-Clarification:
+Out of scope:
 
-- performance work may evaluate mature runtime libraries, generated direct
-  writers, typed readers, and native-codec experiments
-- RapidJSON, Glaze, yyjson, and a provisional `cjm-json` runtime are possible
-  experiments, not selected official backends
-- native scanner, parser, formatter, optimized runtime, fuzzing, and security
-  hardening work should not live in the CJM repository by default
-- CJM owns model knowledge and generated model-specific code; a JSON runtime
-  owns generic JSON primitives
-- native JSON engine research must not block CJM v1.0
-- no backend should be promoted based on performance alone without correctness,
-  security, benchmark, and downstream-use evidence
+- automatic snake_case, camelCase, PascalCase, or acronym conversion
+- type-level opt-in metadata syntax
+- new container mappings
+- custom converters
+- runtime JSON backend implementation
+- native JSON parser or formatter work
+
+Success criteria:
+
+- examples can omit redundant same-name tags
+- explicit tags still work as overrides
+- `json:",omitempty"` is accepted and deterministic
+- `json:"-"` is represented consistently across IR, contract, schema, and
+  runtime code generation
+- generated nlohmann, contract, schema, CLI, and CMake outputs agree on effective
+  JSON names
+
+---
+
+# v0.6 - Canonical Runtime Semantics and Backend Program
+
+Goal:
+
+> Define backend-neutral runtime semantics and prove that CJM Metadata IR can
+> drive an optional high-performance JSON runtime path.
+
+This milestone is a program, not a mechanical sequence of release tags. Internal
+work packages such as decode spikes, encode spikes, and backend comparisons
+should become public releases only when they produce user-consumable capability.
+
+Foundation scope:
+
+- canonical runtime JSON semantic profile
+- backend taxonomy
+- backend capability matrix as documentation and conformance expectations
+- conformance fixture skeleton shared by runtime backends
+- backend selection shape for CLI and CMake
+- optional dependency policy
+- C++ standard isolation per backend target
+- generation-time diagnostics for unsupported backend capabilities
+
+Minimum runtime semantic profile:
+
+- missing required field behavior
+- missing optional field behavior
+- explicit `null` for optional fields
+- explicit `null` for non-optional fields
+- unknown-field policy
+- duplicate-key policy
+- numeric range overflow behavior
+- invalid enum string behavior
+- fixed-array extent mismatch behavior
+- trailing-content behavior
+- nested error path shape
+- partial-output policy after decode failure
+
+Runtime backend work packages:
+
+- simdjson On-Demand decode spike
+- simdjson decode MVP over a limited conformance subset
+- simdjson builder / encode spike
+- simdjson experimental backend with decode, encode, conformance, and docs
+- Glaze direct-typed adapter spike after simdjson context is preserved
+- yyjson compact document / DOM evaluation
+- backend comparison and promotion report
+
+Backend classification:
+
+- `nlohmann/json` is the official compatibility backend
+- simdjson On-Demand is the preferred first generated-codec experiment
+- Glaze is a later optional direct-typed C++ backend candidate
+- yyjson is a compact document / DOM candidate, not a no-DOM backend
+- DAW JSON Link is a possible time-boxed direct-typed C++17 spike
+- RapidJSON SAX is a possible low-level state-machine experiment
+- a native `cjm-json` runtime remains separate optional research
+
+Non-goals:
+
+- universal `JsonRuntime` facade
+- making optional runtime dependencies mandatory
+- raising CJM core or nlohmann users to C++23
+- implementing all runtime candidates in one PR
+- declaring the fastest backend before fair benchmarks
+- native scanner, parser, formatter, or generic DOM implementation inside CJM
 
 Generated files should not be rewritten if contents do not change.
+
+Success criteria:
+
+- runtime backends share Metadata IR semantics, not parser syntax
+- simdjson decode and encode work proceeds contiguously
+- unsupported backend/type combinations fail clearly at generation time
+- conformance fixtures describe shared behavior before backend-specific claims
+- no backend is promoted based on performance alone
 
 ---
 
@@ -798,7 +895,7 @@ Improve:
 
 - source-location aware diagnostics
 - unsupported-type diagnostics
-- structured JSON decode errors for supported generated readers
+- richer structured JSON decode errors for supported generated readers
 - duplicate tag detection
 - invalid tag syntax diagnostics
 - dependency cycle detection
@@ -807,7 +904,7 @@ Improve:
 - clearer CMake failure messages
 - regression tests for failure cases
 
-Complete semantic mapping features:
+Harden semantic mapping features:
 
 - required metadata
 - optional metadata
@@ -819,6 +916,7 @@ Complete semantic mapping features:
 - invalid enum string diagnostics
 - null-where-not-allowed diagnostics when supported by generated decode policy
 - custom conversion failure diagnostics when custom converters exist
+- failure regression corpus for the v0.6 runtime semantic profile
 
 Success criteria:
 
@@ -889,6 +987,7 @@ Harden:
 - generated model contract / traits compatibility expectations
 - Metadata IR compatibility expectations
 - backend option behavior
+- backend promotion classification
 - versioning policy
 - release artifact process
 - cross-platform CI
@@ -901,6 +1000,7 @@ Mapping scope:
 - freeze the v1.0 mapping matrix
 - complete golden tests for supported mappings
 - complete schema backend tests for supported mappings
+- classify runtime backends as official, experimental, research-only, or deferred
 - move unfinished mapping work to Future Ideas or mark it experimental
 
 Success criteria:
@@ -955,12 +1055,11 @@ Required JSON mapping surface:
 - `std::map<std::string, T>`
 - `std::unordered_map<std::string, T>`
 - `enum` and `enum class` string mappings
+- untagged managed fields using exact C++ field names as JSON field names
 - field rename metadata
 - ignore metadata
 - `omitempty` metadata
-- required and optional metadata
-- default value metadata
-- documented time string mappings for the accepted v1.0 time policy
+- required/default metadata only if accepted and implemented before v1.0
 - schema output for supported mappings
 - clear diagnostics for unsupported types and invalid metadata
 
@@ -968,7 +1067,8 @@ Common types supported through built-ins or documented converter policy:
 
 - fixed-size arrays through `std::array<T, N>`
 - string enum representation for supported enums
-- time/datetime values through the accepted v1.0 time policy
+- time/datetime values through accepted converter policy if implemented before
+  v1.0
 - dynamic JSON value passthrough only if a backend-neutral policy is accepted
 - domain scalar types such as UUID, decimal, filesystem path, duration, and
   project-specific identifiers through custom converters where appropriate
@@ -1008,6 +1108,10 @@ Possible future work:
 - selected extra containers through documented policies or converters
 - custom map key converters
 - RapidJSON backend
+- simdjson backend promotion
+- Glaze backend promotion
+- yyjson backend promotion
+- DAW JSON Link evaluation
 - YAML backend
 - OpenAPI integration
 - reflection backend

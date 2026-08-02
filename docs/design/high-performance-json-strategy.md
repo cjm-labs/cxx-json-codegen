@@ -170,31 +170,57 @@ A future DOM may be explored only if independently justified.
 
 # Backend Taxonomy
 
-This taxonomy is directional. It is not a commitment to implement every
-backend.
-
+This taxonomy is directional. It is not a commitment to implement every backend.
 Each backend requires independent product justification.
 
-## nlohmann/json Backend
+## Artifact Backends
 
-Role:
+Examples:
 
-- compatibility
-- adoption
-- C++17-friendly workflow
-- readable generated integration
-- mature ecosystem integration
+- generated model contract
+- JSON Schema
 
-Trade-off:
+CJM generates metadata or schema artifacts. No runtime JSON parsing or writing
+library is involved.
 
-- generic DOM cost
-- allocation cost
-- not intended to be CJM's peak typed JSON throughput path
+Artifact backends consume Metadata IR field facts such as C++ name, effective
+JSON name, ignored status, type category, source location, and enum values.
 
-`nlohmann/json` remains CJM's first official backend. It should not be removed
-merely because faster libraries exist.
+## DOM Adapter Backends
 
-## Glaze Backend
+Examples:
+
+- `nlohmann/json`
+- yyjson
+
+Conceptual flow:
+
+```text
+JSON text
+    |
+    v
+generic JSON document / value layer
+    |
+    v
+CJM-generated model binding
+    |
+    v
+C++ object
+```
+
+`nlohmann/json` is CJM's official compatibility backend. It remains valuable for
+adoption, readable generated code, and C++17-friendly workflows.
+
+yyjson is a compact document / DOM candidate. It is valuable as a high-
+performance DOM control group and possible C-compatible runtime, but it should
+not be described as a no-DOM or direct-typed backend.
+
+## Direct-Typed Adapter Backends
+
+Examples:
+
+- Glaze
+- DAW JSON Link
 
 Conceptual flow:
 
@@ -202,127 +228,124 @@ Conceptual flow:
 Metadata IR
     |
     v
-generated Glaze metadata or adapter
+generated runtime-specific metadata or contract
     |
     v
-Glaze read/write runtime
+mature typed runtime
+    |
+    v
+JSON bytes <-> C++ object
 ```
 
-Potential value:
+These backends let CJM remove duplicate user metadata while preserving the
+runtime library's typed read/write path.
 
-- high-performance typed JSON for Modern C++ projects
-- reuse of a mature optimized implementation
-- one CJM metadata source across multiple backends
-- backend-independent rename, ignore, enum, optional, schema, and contract
-  policies
+Glaze is a strong optional candidate but currently raises C++ standard concerns
+for selected backend targets. That requirement must not raise CJM core or
+nlohmann users to C++23.
 
-CJM must not claim that it enables basic aggregate serialization in Glaze.
-Glaze already provides that.
+DAW JSON Link is a possible C++17 direct-typed candidate. It should enter only a
+time-boxed spike until contract semantics, maintenance risk, and error behavior
+are understood.
 
-Before implementation, CJM would need a semantic mapping review for:
+## Generated Codec Backends
 
-- rename
-- ignore
-- omitempty
-- missing fields
-- null
-- required
-- default
-- unknown fields
-- enum strings
-- custom converters
-- partial update behavior
+Example:
 
-Unsupported or mismatched semantics must fail closed.
+- simdjson On-Demand plus builder
 
-## yyjson Backend
+Conceptual decode flow:
+
+```text
+JSON text
+    |
+    v
+simdjson On-Demand iterator
+    |
+    v
+CJM-generated field dispatch and recursive decode
+    |
+    v
+C++ object
+```
+
+This is CJM's preferred first high-performance runtime experiment because it
+tests CJM's own generated-codec value directly.
+
+The first implementation should prove decode over a limited conformance subset.
+Encode should follow contiguously through a builder/write spike so the simdjson
+mental model does not get interrupted by unrelated backend work.
+
+simdjson-specific constraints must be documented before promotion:
+
+- input buffer and padding lifetime
+- parser and document lifetime
+- forward-only value consumption
+- nested object and array consumption order
+- copy versus borrow policy for strings
+- unknown-field validation behavior
+- partial-output policy after errors
+
+## SAX / State-Machine Backends
+
+Example:
+
+- RapidJSON SAX
 
 Conceptual flow:
 
 ```text
-C++ model --\
-             +--> generated integration --> yyjson runtime
-C model  ---/
-```
-
-Potential value:
-
-- mature high-performance C library
-- possible shared runtime for future C and C++ frontends
-- custom allocator support
-- strong performance baseline
-
-The exact C and C++ generated APIs may differ while sharing the same runtime
-dependency.
-
-yyjson is a future experiment, not a selected official backend.
-
-## cjm-json Native Backend
-
-Conceptual flow:
-
-```text
-Metadata IR
+JSON parser events
     |
     v
-generated specialized codec
+CJM-generated state machine
     |
     v
-cjm-json runtime
+C++ object
 ```
 
-Position:
+This path can avoid a DOM, but nested objects, arrays, unknown-field skipping,
+partial cleanup, and error paths make it a poor first runtime backend. It is a
+possible later portability or low-level baseline.
 
-- experimental
-- model-aware
-- typed
-- generated
-- performance-research oriented
+## cjm-json Native Runtime Research
 
-It must not be described as production-ready, faster, safer, or superior to
-Glaze or yyjson without evidence.
-
-## JSON Schema Backend
-
-The JSON Schema backend is language-neutral and independent of runtime JSON
-library choice.
-
-The in-tree backend should consume:
-
-- Metadata IR
-
-Downstream schema tooling may consume:
-
-- stable generated model-contract data
-
-It should not consume Glaze-specific, nlohmann-specific, yyjson-specific, or
-cjm-json-specific implementation metadata.
+A possible `cjm-json` runtime remains separate optional research. The CJM
+repository should not implement a scanner, parser, formatter, generic DOM,
+number parser, or SIMD structural scanner merely to support runtime backend
+work.
 
 ---
 
-# Mature Libraries and Native Research Can Coexist
+# No Universal Runtime Facade
 
-A mature backend is a product choice.
+CJM should not introduce a generic runtime interface such as:
 
-A native backend is a performance research choice until proven otherwise.
+```cpp
+class IJsonRuntime;
+class IJsonReader;
+class IJsonWriter;
+class IJsonValue;
+```
 
-CJM may support both.
+The candidate libraries have different optimal integration models:
 
-Possible future matrix:
+- Glaze and DAW use direct typed metadata or contracts
+- simdjson On-Demand uses forward-only generated binding
+- yyjson uses document/value ownership
+- RapidJSON SAX uses push-event state machines
 
-| Backend | Product Role |
-| --- | --- |
-| nlohmann/json | Compatibility and adoption |
-| Glaze | High-performance Modern C++ |
-| yyjson | High-performance C/C++ shared runtime |
-| cjm-json | Native generated typed codec experiment |
-| JSON Schema | Language-neutral schema artifact |
-| Model contract | Downstream tooling artifact |
+CJM should share:
 
-This matrix is not a checklist.
+- Metadata IR semantics
+- backend-neutral runtime semantic profile
+- capability matrix
+- conformance fixtures
+- generated diagnostics
+- benchmark methodology
 
-Performance is a first-class backend choice, but no candidate backend is
-selected by this document.
+Code-level runtime abstractions should be extracted only after at least two real
+runtime backends prove a small shared helper is necessary.
 
 ---
 
@@ -575,13 +598,29 @@ Creating a repository does not automatically trigger promotion.
 
 # Version Relationship
 
-Before CJM v1.0, CJM should continue its existing product roadmap.
+Before broad runtime backend work, CJM should complete the v0.5.x semantic
+foundation:
 
-Allowed:
+- default field mapping
+- effective JSON field-name normalization
+- explicit ignored-field semantics
+- fail-closed unsupported included fields
 
-- performance benchmark design
-- backend architecture documentation
-- small isolated backend experiments when explicitly approved
+v0.6 may then begin the runtime backend program:
+
+- canonical runtime semantic profile
+- backend taxonomy and capability matrix
+- shared conformance fixture skeleton
+- simdjson On-Demand decode spike
+- simdjson builder / encode spike
+- simdjson experimental backend if evidence supports promotion
+
+Later v0.6 work may evaluate:
+
+- Glaze as an optional direct-typed adapter backend
+- yyjson as a compact document / DOM candidate
+- DAW JSON Link as a time-boxed direct-typed C++17 spike
+- RapidJSON SAX as a lower-priority state-machine experiment
 
 Not allowed by default:
 
@@ -590,12 +629,14 @@ Not allowed by default:
 - making cjm-json a v1.0 blocker
 - changing default runtime behavior
 - expanding the v1.0 mapping matrix solely for cjm-json
+- promoting any runtime backend based on speed alone
 
 CJM v1.x may explore:
 
-- Glaze backend experiments
-- yyjson backend experiments
-- cjm-json generated-code boundary experiments
+- promoting experimental runtime backends
+- additional backend-specific capability expansion
+- cjm-json generated-code boundary experiments if independent evidence supports
+  the work
 - performance and build-time comparisons
 
 These are evidence-driven options.
