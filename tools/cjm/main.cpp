@@ -5,6 +5,7 @@
 #include <cstddef>
 
 #include "backends/nlohmann/cpp_generator.hpp"
+#include "backends/schema/schema_generator.hpp"
 #include "frontends/cxx/parser/parser.hpp"
 #include "frontends/cxx/semantic/analysis.hpp"
 
@@ -86,6 +87,79 @@ std::string join_inputs(const std::vector<std::string>& inputs) {
         result += inputs[i];
     }
     return result;
+}
+
+// Write generated text to an output file.
+bool write_output_file(const std::string& path, const std::string& contents) {
+    std::ofstream output(path);
+    if (!output.is_open()) {
+        std::cerr << "cjm: failed to open output file: " << path << "\n";
+        return false;
+    }
+    output << contents;
+    return true;
+}
+
+// Parse inputs and build the validated Metadata IR project.
+bool analyze_inputs(const std::vector<std::string>& inputs,
+                    cjm::metadata::ProjectModel& project) {
+    std::vector<cjm::parser::SourceFileSyntax> files;
+    for (const auto& input : inputs) {
+        const auto parse_result = cjm::parser::parse_source_file(input);
+        if (!parse_result.success) {
+            std::cerr << "cjm: " << parse_result.error.message << ": "
+                      << parse_result.error.location.file << "\n";
+            return false;
+        }
+        files.push_back(parse_result.file);
+    }
+    const auto analysis_result = cjm::semantic::analyze_source_files(files);
+
+    if (!analysis_result.success) {
+        for (const auto& diagnostic : analysis_result.diagnostics) {
+            std::cerr << diagnostic.location.file << ":"
+                      << diagnostic.location.line << ":"
+                      << diagnostic.location.column << ": "
+                      << diagnostic.message << "\n";
+        }
+        return false;
+    }
+    project = analysis_result.project;
+    return true;
+}
+
+// Run the nlohmann header generation command.
+int run_generate_command(const GenerateOptions& options) {
+    cjm::metadata::ProjectModel project;
+    if (!analyze_inputs(options.inputs, project)) {
+        return kExitFailure;
+    }
+
+    const auto generated = cjm::generator::generate_header(project);
+
+    if (!write_output_file(options.output, generated)) {
+        return kExitFailure;
+    }
+    std::cout << "cjm: generated " << options.output << " from "
+              << join_inputs(options.inputs) << "\n";
+    return kExitSuccess;
+}
+
+// Run the JSON Schema generation command.
+int run_generate_schema_command(const GenerateOptions& options) {
+    cjm::metadata::ProjectModel project;
+    if (!analyze_inputs(options.inputs, project)) {
+        return kExitFailure;
+    }
+
+    const auto generated = cjm::generator::schema::generate_schema(project);
+    if (!write_output_file(options.output, generated)) {
+        return kExitFailure;
+    }
+
+    std::cout << "cjm: generated " << options.output << " from "
+              << join_inputs(options.inputs) << "\n";
+    return kExitSuccess;
 }
 
 } // namespace
