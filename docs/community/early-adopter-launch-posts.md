@@ -1,6 +1,6 @@
 # Early-Adopter Launch Posts
 
-These drafts are for CJM's first early-adopter outreach round.
+These drafts are for CJM's v0.5 early-adopter outreach round.
 
 The goal is to recruit practical feedback, not to run a broad marketing launch.
 Keep the tone technical, honest, and specific.
@@ -11,8 +11,14 @@ Use this core positioning everywhere:
 
 ```text
 CJM is a build-time metadata compiler for Modern C++.
-JSON is the first official backend.
+It keeps C++ models as the source of truth and generates backend artifacts from
+validated Metadata IR.
 ```
+
+Current v0.5 artifact outputs:
+
+- ordinary `nlohmann/json` C++ integration;
+- opt-in JSON Schema Draft 2020-12 artifacts.
 
 Avoid:
 
@@ -21,6 +27,8 @@ Avoid:
 - "full C++ support";
 - "best/fastest";
 - benchmark claims;
+- OpenAPI framework claims;
+- runtime validation claims;
 - broad backend promises.
 
 Ask for:
@@ -29,13 +37,16 @@ Ask for:
 - CMake integration feedback;
 - parser failure cases;
 - confusing diagnostics;
-- generated-code readability feedback.
+- generated-code readability feedback;
+- generated JSON Schema shape feedback.
 
 ## Links
 
 - Repo: https://github.com/cjm-labs/cxx-json-codegen
-- Release: https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.3.0
+- Release: https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.5.0
+- v0.5 release notes: https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/releases/v0.5.0.md
 - Dogfood report: https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/dogfood/ull-md-engine-v0.3.0.md
+- v0.5 feedback thread: https://github.com/cjm-labs/cxx-json-codegen/discussions/163
 - Discussions: https://github.com/cjm-labs/cxx-json-codegen/discussions
 - Issues: https://github.com/cjm-labs/cxx-json-codegen/issues
 - Website: https://cjm-labs.org
@@ -45,7 +56,7 @@ Ask for:
 Title:
 
 ```text
-CJM v0.3.0: a compiler-style C++ JSON code generator looking for early adopters
+CJM v0.5.0: C++ metadata compiler with nlohmann/json and JSON Schema output
 ```
 
 Post:
@@ -55,9 +66,13 @@ Hi r/cpp,
 
 I have been building CJM, a build-time metadata compiler for Modern C++.
 
-The goal is not to create another JSON library. CJM reads ordinary C++ model
+The idea is not to create another JSON library. CJM reads ordinary C++ model
 headers with Go-style JSON field metadata, builds a Metadata IR, and generates
-ordinary `nlohmann/json` integration code during the build.
+backend artifacts during the build.
+
+The first C++ backend generates ordinary `nlohmann/json` `to_json` / `from_json`
+integration. v0.5.0 adds an opt-in JSON Schema Draft 2020-12 backend that
+consumes the same validated Metadata IR.
 
 Example:
 
@@ -68,39 +83,46 @@ struct User {
 };
 ```
 
-CJM generates normal C++ `to_json` / `from_json` functions. There are no macros,
-compiler plugins, or runtime reflection systems involved in user code.
+CJM can generate normal C++ integration code and, when requested, a schema
+artifact for the supported DTO mapping surface. There are no macros, compiler
+plugins, or runtime reflection systems involved in user code.
 
-v0.3.0 supports a practical subset:
+The current release supports a practical subset:
 
-- scalar fields
+- scalar fields and strings
 - fixed-width integers
-- enums
+- enums as JSON strings
 - nested generated structs
 - `std::vector<T>`
+- `std::array<T, N>`
 - `std::optional<T>`
 - `std::map<std::string, T>`
 - `std::unordered_map<std::string, T>`
 - `json:"-"` ignored fields
 - `omitempty`
+- opt-in JSON Schema artifacts for supported mappings
 
-It has also been dogfooded in a real downstream CMake project through the public
+It has been dogfooded in a real downstream CMake project through the public
 `FetchContent + cjm_generate` workflow.
 
-I am looking for early adopters with practical model headers. The most useful
-feedback right now would be:
+This is still an early-adopter project, not a production-stability claim. The
+most useful feedback right now would be:
 
 - parser limitations on ordinary headers
 - CMake integration friction
 - confusing diagnostics
 - generated-code readability issues
+- generated schema shapes that do not match practical downstream needs
 - type mappings needed before v1.0
 
 Repo:
 https://github.com/cjm-labs/cxx-json-codegen
 
-Dogfood report:
-https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/dogfood/ull-md-engine-v0.3.0.md
+Release:
+https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.5.0
+
+Discussions:
+https://github.com/cjm-labs/cxx-json-codegen/discussions/163
 
 If you maintain C++ code with model structs and JSON integration, I would love
 to hear where this approach works or fails for you.
@@ -111,19 +133,22 @@ to hear where this approach works or fails for you.
 Title:
 
 ```text
-Looking for feedback on CJM, a build-time C++ JSON code generator
+Looking for feedback on CJM, a build-time C++ metadata compiler
 ```
 
 Post:
 
 ````md
-I am looking for early feedback on CJM:
+I am looking for early feedback on CJM v0.5.0:
 
 https://github.com/cjm-labs/cxx-json-codegen
 
 CJM is a build-time metadata compiler for Modern C++. It reads ordinary C++
-model headers with Go-style JSON field metadata and generates ordinary
-`nlohmann/json` `to_json` / `from_json` code.
+model headers with Go-style JSON field metadata, builds a Metadata IR, and
+generates ordinary `nlohmann/json` `to_json` / `from_json` code.
+
+v0.5.0 also adds opt-in JSON Schema Draft 2020-12 artifacts from the same
+validated Metadata IR.
 
 Example:
 
@@ -135,28 +160,26 @@ struct Event {
 };
 ```
 
-The current v0.3.0 release supports optionals, vectors, string-keyed maps,
-nested generated structs, enums, ignored fields, `omitempty`, and fixed-width
-integers.
+The current release supports optionals, vectors, arrays, string-keyed maps,
+nested generated structs, enums, ignored fields, `omitempty`, fixed-width
+integers, and schema artifacts for the supported mapping surface.
 
-It has been dogfooded in a real downstream CMake project using
-`FetchContent + cjm_generate`.
-
-This is still an early-adopter project, not a production-stability claim. I am
-especially interested in practical model headers that break the current parser,
-confusing diagnostics, and CMake integration friction.
+This is still an early-adopter project. I am especially interested in practical
+model headers that break the parser, confusing diagnostics, CMake integration
+friction, and schema output that does not match downstream needs.
 ````
 
 ## LinkedIn Post
 
 ```md
-I have started the early-adopter phase for CJM v0.3.0.
+I have started the v0.5 early-adopter round for CJM.
 
 CJM is a build-time metadata compiler for Modern C++. It reads ordinary C++
 model declarations with Go-style JSON field metadata, builds a Metadata IR, and
-generates ordinary C++ integration code during the build.
+generates backend artifacts during the build.
 
-The first official backend targets nlohmann/json.
+The first C++ backend targets nlohmann/json. v0.5 adds opt-in JSON Schema Draft
+2020-12 artifacts from the same validated Metadata IR.
 
 The design goal is simple:
 
@@ -166,21 +189,9 @@ No macros in user models.
 No runtime reflection.
 No schema-first model duplication.
 
-v0.3.0 supports a practical mapping surface:
-
-- scalar fields
-- fixed-width integers
-- enums
-- nested generated structs
-- std::vector<T>
-- std::optional<T>
-- std::map<std::string, T>
-- std::unordered_map<std::string, T>
-- ignored fields
-- omitempty
-
-It has also been dogfooded in a real downstream CMake project using the public
-FetchContent + cjm_generate workflow.
+The current practical mapping surface includes scalar fields, strings,
+fixed-width integers, enums, nested generated structs, vectors, arrays,
+optionals, string-keyed maps, ignored fields, and omitempty.
 
 I am looking for a small number of Modern C++ developers to try CJM on practical
 model headers and tell me what breaks:
@@ -189,36 +200,37 @@ model headers and tell me what breaks:
 - CMake integration friction
 - confusing diagnostics
 - generated-code readability
+- generated schema shape
 - missing type mappings before v1.0
 
 Repo:
 https://github.com/cjm-labs/cxx-json-codegen
 
-Dogfood report:
-https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/dogfood/ull-md-engine-v0.3.0.md
+Release:
+https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.5.0
 
-If you work with C++ model structs and JSON integration, I would appreciate your
-feedback.
+Discussions:
+https://github.com/cjm-labs/cxx-json-codegen/discussions/163
 ```
 
 ## LinkedIn Short Variant
 
 ```md
-CJM v0.3.0 is entering its early-adopter phase.
+CJM v0.5.0 is ready for early-adopter feedback.
 
-CJM is a build-time metadata compiler for Modern C++. It generates ordinary
-nlohmann/json integration from ordinary C++ model declarations with Go-style
-JSON field metadata.
+CJM is a build-time metadata compiler for Modern C++. It keeps ordinary C++
+models as the source of truth, builds a Metadata IR, and generates backend
+artifacts during the build.
 
-The goal is not to build another JSON library. The goal is a compiler-style
-pipeline:
+Current outputs:
 
-C++ source -> Metadata IR -> generated C++
+- ordinary nlohmann/json integration code
+- opt-in JSON Schema Draft 2020-12 artifacts
 
-v0.3.0 has been dogfooded in a real downstream CMake project and supports
-practical type composition such as optionals, vectors, string-keyed maps,
-nested generated structs, enums, ignored fields, omitempty, and fixed-width
-integers.
+The goal is not to build another JSON library or schema-first model generator.
+The goal is a compiler-style pipeline:
+
+C++ source -> Metadata IR -> generated C++ / generated schema
 
 I am looking for a few C++ developers to try it on practical model headers and
 share feedback before v1.0.
@@ -230,21 +242,24 @@ https://github.com/cjm-labs/cxx-json-codegen
 ## Chinese Short Post
 
 ```md
-CJM v0.3.0 现在进入 early-adopter 阶段。
+CJM v0.5.0 现在进入新一轮 early-adopter feedback。
 
 CJM 是一个面向 Modern C++ 的 build-time metadata compiler。它从普通 C++ model
 声明中读取 Go-style JSON metadata，构建 Metadata IR，然后在构建期生成普通
 C++ 的 nlohmann/json 集成代码。
 
-它不是新的 JSON library，也不是 runtime reflection。
+v0.5.0 新增了 opt-in JSON Schema Draft 2020-12 输出，同样来自已经验证过的
+Metadata IR。
+
+它不是新的 JSON library，也不是 runtime reflection，也不是 OpenAPI framework。
 
 目标是：
 
 Standard C++ in. Standard C++ out.
 
-v0.3.0 已经在真实下游 CMake 项目中通过 FetchContent + cjm_generate 的公开流程
-完成 dogfood，覆盖 optional、vector、string-keyed map、nested struct、enum、
-ignore、omitempty、fixed-width integer 等 practical mapping surface。
+当前 practical mapping surface 覆盖 scalar/string、fixed-width integer、enum、
+nested struct、vector、array、optional、string-keyed map、ignore、omitempty，以及
+这些受支持映射的 schema artifact。
 
 现在想找少量真正写 Modern C++ / CMake 的开发者试用，重点不是 Star，而是真实反馈：
 
@@ -252,45 +267,59 @@ ignore、omitempty、fixed-width integer 等 practical mapping surface。
 - CMake 接入哪里别扭；
 - diagnostics 哪里看不懂；
 - generated code 是否可读；
+- generated schema shape 是否符合下游工具需要；
 - v1.0 前还缺哪些 practical mapping。
 
 Repo:
 https://github.com/cjm-labs/cxx-json-codegen
 
-Dogfood report:
-https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/dogfood/ull-md-engine-v0.3.0.md
+Release:
+https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.5.0
+
+Discussions:
+https://github.com/cjm-labs/cxx-json-codegen/discussions/163
 ```
 
-## GitHub Discussions First Post
+## GitHub Discussions Feedback Thread
 
-Title:
+Published thread:
 
-```text
-CJM v0.3.0 early-adopter feedback thread
-```
+https://github.com/cjm-labs/cxx-json-codegen/discussions/163
 
-Body:
+Original title:
+
+`CJM v0.5.0 early-adopter feedback thread`
+
+Original body:
 
 ```md
-CJM v0.3.0 is ready for early-adopter feedback.
+CJM v0.5.0 is ready for early-adopter feedback.
 
 CJM is a build-time metadata compiler for Modern C++. It reads ordinary C++
-model declarations with Go-style JSON field metadata and generates ordinary
-`nlohmann/json` integration code during the build.
+model declarations with Go-style JSON field metadata, builds a Metadata IR, and
+generates backend artifacts during the build.
+
+Current outputs:
+
+- ordinary `nlohmann/json` C++ integration
+- opt-in JSON Schema Draft 2020-12 artifacts
 
 This thread is for open-ended usage and adoption feedback:
 
 - Would CJM fit any model-heavy C++ code you maintain?
 - Does the `FetchContent + cjm_generate` workflow feel reasonable?
+- Would generated JSON Schema artifacts help your downstream tooling?
 - What parser limitations would block your real headers?
 - Are the current diagnostics understandable?
 - What type mappings are missing before v1.0?
 - Does the generated code look readable enough to trust?
+- Does the generated schema shape match what you would expect?
 
 Useful links:
 
 - Repo: https://github.com/cjm-labs/cxx-json-codegen
-- v0.3.0 release: https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.3.0
+- v0.5.0 release: https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.5.0
+- v0.5.0 release notes: https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/releases/v0.5.0.md
 - Dogfood report: https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/dogfood/ull-md-engine-v0.3.0.md
 
 If you try CJM, please share the smallest practical model that worked or failed.
@@ -299,17 +328,16 @@ If you try CJM, please share the smallest practical model that worked or failed.
 ## Short Direct Message
 
 ```md
-Hi, I am looking for early feedback on CJM, a build-time metadata compiler for
-Modern C++ JSON code generation.
+Hi, I am looking for early feedback on CJM v0.5.0, a build-time metadata
+compiler for Modern C++ JSON code generation.
 
-It reads ordinary C++ model headers with Go-style JSON metadata and generates
-ordinary nlohmann/json integration during the build.
-
-v0.3.0 has been dogfooded in a real downstream CMake project, and I am looking
-for a few C++ developers to try it on practical model headers.
+It reads ordinary C++ model headers with Go-style JSON metadata, builds a
+Metadata IR, and generates ordinary nlohmann/json integration during the build.
+v0.5 also adds opt-in JSON Schema artifacts from that same IR.
 
 Repo: https://github.com/cjm-labs/cxx-json-codegen
-Dogfood report: https://github.com/cjm-labs/cxx-json-codegen/blob/main/docs/dogfood/ull-md-engine-v0.3.0.md
+Release: https://github.com/cjm-labs/cxx-json-codegen/releases/tag/v0.5.0
+Feedback thread: https://github.com/cjm-labs/cxx-json-codegen/discussions/163
 
 If you have a small model header that would be a good test case, feedback would
 be very helpful.
@@ -319,9 +347,9 @@ be very helpful.
 
 Suggested order:
 
-1. Post the GitHub Discussions thread first.
+1. Share the GitHub Discussions thread.
 2. Share the LinkedIn post.
-3. Post to Reddit only after the repo homepage and Discussions are ready.
+3. Post to Reddit only after the repo homepage and feedback thread are ready.
 4. Do not post to Hacker News yet.
 
 ## Follow-Up Rule
@@ -330,6 +358,7 @@ When someone responds, optimize for learning:
 
 1. Ask for the smallest model header.
 2. Ask how they tried to integrate CJM.
-3. Move concrete failures into GitHub Issues.
-4. Keep broad design discussion in GitHub Discussions.
-5. Do not promise features outside the roadmap.
+3. Ask whether generated schema output was involved.
+4. Move concrete failures into GitHub Issues.
+5. Keep broad design discussion in GitHub Discussions.
+6. Do not promise features outside the roadmap.

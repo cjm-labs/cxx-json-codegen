@@ -15,6 +15,8 @@ Good topics include:
 - diagnostics that were hard to understand;
 - practical type mappings needed before v1.0;
 - how generated code should look and feel;
+- whether generated JSON Schema artifacts match your downstream tooling needs;
+- where schema output should stop before becoming OpenAPI or runtime validation;
 - downstream adoption stories.
 
 ## What To Share
@@ -23,6 +25,7 @@ The most helpful discussion includes:
 
 - a small C++ model snippet;
 - the JSON shape you want;
+- the JSON Schema shape you expected, if schema generation is involved;
 - whether you tried CLI or CMake integration;
 - what worked;
 - what felt awkward;
@@ -32,6 +35,10 @@ The most helpful discussion includes:
 
 Use [GitHub Discussions](https://github.com/cjm-labs/cxx-json-codegen/discussions)
 for open-ended design, adoption, and usage feedback.
+
+The current v0.5 early-adopter feedback thread is:
+
+https://github.com/cjm-labs/cxx-json-codegen/discussions/163
 
 Use GitHub Issues for concrete bugs, reproducible failures, and scoped feature
 requests.
@@ -43,8 +50,9 @@ move or split the topic later.
 
 CJM is not a JSON library.
 
-CJM is a build-time metadata compiler for Modern C++. JSON is the first
-official backend.
+CJM is a build-time metadata compiler for Modern C++. The first C++ backend
+targets `nlohmann/json`, and v0.5 adds a JSON Schema artifact backend for the
+supported Metadata IR surface.
 
 The current release is intended for early adopters who want to try build-time
-JSON integration and help shape the v1.0 path.
+JSON integration, generated schema artifacts, and help shape the v1.0 path.

@@ -14,6 +14,7 @@ Please open an issue if you have:
 
 - a supported-looking C++ model that CJM cannot parse or analyze;
 - generated code that does not compile;
+- generated schema output that does not match the documented mapping surface;
 - confusing diagnostics;
 - CMake integration friction;
 - a practical type mapping that seems important for v1.0;
@@ -29,7 +30,8 @@ A good bug report includes:
 - operating system and compiler;
 - CMake version;
 - the smallest header that reproduces the problem;
-- the `cjm generate` command or `cjm_generate(...)` snippet;
+- the `cjm generate` or `cjm generate-schema` command, or the
+  `cjm_generate(...)` snippet;
 - the full error message or diagnostic;
 - whether the issue happens in CJM itself or only from a downstream project.
 
@@ -82,7 +84,7 @@ Please keep pull requests focused:
 
 ## Current Early-Adopter Scope
 
-CJM v0.3.0 is ready for early adopters, not production-stability claims.
+CJM v0.5.0 is ready for early adopters, not production-stability claims.
 
 Good trial projects:
 
@@ -90,9 +92,10 @@ Good trial projects:
 - JSON logging records;
 - configuration snapshots;
 - telemetry or benchmark-result structs;
+- generated schema artifacts for DTO review or downstream tooling experiments;
 - internal tools where generated code can be inspected.
 
-Avoid expecting CJM v0.3.0 to handle:
+Avoid expecting CJM v0.5.0 to handle:
 
 - full C++ grammar;
 - arbitrary templates;
@@ -101,7 +104,11 @@ Avoid expecting CJM v0.3.0 to handle:
 - pointer fields;
 - polymorphic serialization;
 - enum string mapping policies;
-- automatic header discovery.
+- automatic header discovery;
+- OpenAPI route generation;
+- runtime JSON Schema validation;
+- schema output for nested container types.
 
-See the [current mapping scope](docs/design/json-mapping-scope.md) and the
+See the [current mapping scope](docs/design/json-mapping-scope.md),
+[v0.5.0 release notes](docs/releases/v0.5.0.md), and the
 [ull-md-engine dogfood report](docs/dogfood/ull-md-engine-v0.3.0.md).
