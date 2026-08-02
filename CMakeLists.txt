@@ -91,7 +91,7 @@ target_compile_features(cjm_semantic PUBLIC cxx_std_17)
 
 # cjm main app
 add_executable(cjm tools/cjm/main.cpp)
-target_link_libraries(cjm PRIVATE cjm_generator cjm_semantic)
+target_link_libraries(cjm PRIVATE cjm_generator cjm_schema_generator cjm_semantic)
 
 if (CJM_BUILD_TESTS)
   enable_testing()
@@ -299,4 +299,15 @@ if (CJM_BUILD_TESTS)
   add_executable(cjm_model_contract_tests tests/core/model_contract_tests.cpp)
   target_link_libraries(cjm_model_contract_tests PRIVATE cjm_contract)
   add_test(NAME cjm_model_contract_tests COMMAND cjm_model_contract_tests)
+
+  add_test(NAME cjm_cli_generate_schema
+    COMMAND cjm generate-schema
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/examples/basic/user.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/user.schema.json
+  )
+  set_tests_properties(
+    cjm_cli_generate_schema
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
 endif()

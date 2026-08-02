@@ -21,7 +21,9 @@ void print_help(std::ostream& out) {
         << "Usage:\n"
         << "    cjm --help\n"
         << "    cjm help\n"
-        << "    cjm generate --input <header> [<header>...] --output <file>\n";
+        << "    cjm generate --input <header> [<header>...] --output <file>\n"
+        << "    cjm generate-schema --input <header> [<header>...] --output "
+           "<file>\n";
 }
 
 struct GenerateOptions {
@@ -177,51 +179,18 @@ int main(int argc, char** argv) {
         return kExitSuccess;
     }
 
-    if (command == "generate") {
-        GenerateOptions options;
-        if (!parse_generate_options(argc, argv, options)) {
-            std::cerr << "Run 'cjm --help' for usage.\n";
-            return kExitUsageError;
-        }
-
-        std::vector<cjm::parser::SourceFileSyntax> files;
-        for (const auto& input : options.inputs) {
-            const auto parse_result = cjm::parser::parse_source_file(input);
-            if (!parse_result.success) {
-                std::cerr << "cjm: " << parse_result.error.message << ": "
-                          << parse_result.error.location.file << "\n";
-                return kExitFailure;
-            }
-            files.push_back(parse_result.file);
-        }
-        const auto analysis_result = cjm::semantic::analyze_source_files(files);
-
-        if (!analysis_result.success) {
-            for (const auto& diagnostic : analysis_result.diagnostics) {
-                std::cerr << diagnostic.location.file << ":"
-                          << diagnostic.location.line << ":"
-                          << diagnostic.location.column << ": "
-                          << diagnostic.message << "\n";
-            }
-            return kExitFailure;
-        }
-
-        const auto generated =
-            cjm::generator::generate_header(analysis_result.project);
-
-        std::ofstream output(options.output);
-        if (!output.is_open()) {
-            std::cerr << "cjm: failed to open output file: " << options.output
-                      << "\n";
-            return kExitFailure;
-        }
-        output << generated;
-
-        std::cout << "cjm: generated " << options.output << " from "
-                  << join_inputs(options.inputs) << "\n";
-        return kExitSuccess;
+    GenerateOptions options;
+    if (!parse_generate_options(argc, argv, options)) {
+        std::cerr << "Run 'cjm --help' for usage.\n";
+        return kExitUsageError;
     }
 
+    if (command == "generate") {
+        return run_generate_command(options);
+    }
+    if (command == "generate-schema") {
+        return run_generate_schema_command(options);
+    }
     std::cerr << "cjm: unknown command: " << command << "\n";
     std::cerr << "run 'cjm --help' for usage.\n";
 
