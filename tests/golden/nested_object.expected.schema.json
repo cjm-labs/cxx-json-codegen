@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "address": { "$ref": "#/$defs/Address" }
+  },
+  "required": ["name", "address"],
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "city": { "type": "string" }
+      },
+      "required": ["city"]
+    }
+  }
+}

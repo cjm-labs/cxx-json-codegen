@@ -318,23 +318,17 @@ configure
 
 cjm_generate()
 
-        │
-
-        ▼
-
-Generate *.cjm.hpp
-
-        │
-
-        ▼
-
-Normal C++ compilation
-
-        │
-
-        ▼
-
-Executable
+       ├──> Generate *.cjm.hpp
+       │
+       │        ↓
+       │
+       │    Normal C++ compilation
+       │
+       │        ↓
+       │
+       │    Executable
+       │
+       └──> Optionally generate *.schema.json
 ```
 
 Users continue using their existing compiler and build system.
@@ -395,13 +389,14 @@ C++ frontend
         │
         ▼
 Metadata IR
-        │
-        ▼
-nlohmann/json Backend
+   │             │
+   ▼             ▼
+nlohmann/json    JSON Schema
+Backend          Backend
 ```
 
-The current implementation does not provide multiple frontends or multiple
-backends.
+The current implementation has one C++ frontend and two Metadata IR consumers:
+the `nlohmann/json` C++ backend and the JSON Schema artifact backend.
 
 ## Dependency Direction
 
@@ -437,7 +432,6 @@ Possible future backends:
 - yyjson
 - json-c
 - allocation-free C JSON writer
-- JSON Schema
 - Documentation
 - Reflection metadata
 

@@ -287,9 +287,12 @@ Glaze or yyjson without evidence.
 The JSON Schema backend is language-neutral and independent of runtime JSON
 library choice.
 
-It should consume:
+The in-tree backend should consume:
 
-- Metadata IR, or
+- Metadata IR
+
+Downstream schema tooling may consume:
+
 - stable generated model-contract data
 
 It should not consume Glaze-specific, nlohmann-specific, yyjson-specific, or

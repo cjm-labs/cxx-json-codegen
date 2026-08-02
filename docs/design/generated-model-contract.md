@@ -431,9 +431,9 @@ Compatibility expectations:
 
 # Out Of Scope
 
-This design does not implement:
+This design does not itself implement:
 
-- schema generation
+- the JSON Schema backend
 - OpenAPI route generation
 - HTTP endpoint binding
 - runtime reflection registry

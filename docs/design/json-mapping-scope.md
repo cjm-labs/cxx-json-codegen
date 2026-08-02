@@ -449,22 +449,155 @@ Notes:
 
 # Schema Backend Alignment
 
-The schema backend should reflect the supported mapping matrix.
+The schema backend should reflect the supported mapping matrix without becoming
+a schema-first workflow.
 
-Examples:
+The v0.5 schema backend consumes validated Metadata IR. Future downstream schema
+tools may also consume stable generated model-contract facts, but the in-tree
+backend must not inspect parser syntax, Tree-sitter nodes, or nlohmann/json
+backend implementation details.
 
-- C++ scalars map to JSON Schema primitive types.
-- `std::vector<T>` and `std::array<T, N>` map to arrays.
-- structs map to objects with named properties.
-- string-keyed maps map to objects with additional property schemas.
-- enum string mappings map to JSON Schema `enum` values using the enumerator
-  strings known to Metadata IR.
-- required metadata maps to JSON Schema `required`.
-- time mappings should use string schemas with documented `format` annotations
-  where appropriate.
+## Schema Dialect
 
-The schema backend should not imply support for runtime validation features that
-CJM does not generate or document.
+The initial schema backend should emit JSON Schema Draft 2020-12.
+
+Generated schemas should include:
+
+- `$schema`
+- `title`
+- `type`
+- `properties` for object fields
+- `required` only for fields CJM can currently prove are required
+- `$defs` only when shared object definitions are needed
+
+The selected dialect is a backend output detail. It must not change parser,
+Semantic Analysis, or Metadata IR ownership.
+
+## Deterministic Output
+
+Schema output must be deterministic.
+
+Ordering rules:
+
+- top-level generated model schemas follow Metadata IR model order
+- object properties follow `TypeModel.fields` order
+- enum values follow Metadata IR enum value order
+- `$defs` entries follow the dependency order already known to CJM
+
+The schema backend should not sort user fields alphabetically unless the
+Metadata IR explicitly does so first.
+
+## Mapping Table
+
+| CJM mapping | JSON Schema shape |
+| --- | --- |
+| `bool` | `{ "type": "boolean" }` |
+| signed integer | `{ "type": "integer" }` |
+| unsigned integer | `{ "type": "integer", "minimum": 0 }` |
+| floating point | `{ "type": "number" }` |
+| `std::string` | `{ "type": "string" }` |
+| supported struct | `{ "type": "object", "properties": ... }` |
+| `std::vector<T>` | `{ "type": "array", "items": schema(T) }` |
+| `std::array<T, N>` | `{ "type": "array", "items": schema(T), "minItems": N, "maxItems": N }` |
+| `std::optional<T>` | field may be missing; present value accepts `schema(T)` or `null` |
+| `std::map<std::string, T>` | `{ "type": "object", "additionalProperties": schema(T) }` |
+| `std::unordered_map<std::string, T>` | `{ "type": "object", "additionalProperties": schema(T) }` |
+| enum string mapping | `{ "type": "string", "enum": [...] }` |
+| ignored field | omitted from schema properties |
+| `omitempty` | does not by itself make a field required or optional |
+
+## v0.5 Implementation Boundary
+
+The v0.5 implementation intentionally covers the practical subset already
+represented in Metadata IR and golden tests.
+
+Implemented schema mappings:
+
+- scalar and string fields
+- unsigned integer fields with `minimum: 0`
+- `std::vector<T>` and `std::array<T, N>` when `T` is a scalar or string mapping
+- `std::optional<T>` when `T` is a scalar or string mapping
+- `std::map<std::string, T>` and `std::unordered_map<std::string, T>` when `T`
+  is a scalar or string mapping
+- enum and enum class fields as JSON string enums
+- direct generated-struct fields through `$ref` and `$defs`
+- ignored fields omitted from `properties`
+- non-optional supported fields listed in `required`
+
+Not yet implemented:
+
+- schema output for nested containers
+- schema output for containers whose element or value type is an enum or
+  generated struct
+- schema output for `std::optional<T>` when `T` is an enum, generated struct, or
+  container
+- custom enum string policies
+- default-value metadata
+- time or datetime schema formats
+- runtime JSON Schema validation
+- OpenAPI route or HTTP endpoint generation
+
+## Optional, Required, And Null
+
+For v0.5, `std::optional<T>` should mean:
+
+- the object property may be absent
+- if present, the property may be `null`
+- if present and non-null, the property must match `schema(T)`
+
+Fields that are not `std::optional<T>` should appear in `required` only when
+CJM's current metadata and decode behavior make that guarantee clear.
+
+`omitempty` affects serialization output. It should not be treated as validation
+metadata unless a later milestone defines that behavior explicitly.
+
+## Enum Strings
+
+Enum schemas should use the JSON strings known to Metadata IR or the generated
+model contract.
+
+For v0.5, custom enum rename metadata is not supported, so enum schema values
+match CJM's generated enum string mapping.
+
+## Examples
+
+For:
+
+```cpp
+struct User {
+    std::string name; // json:"name"
+    std::optional<int> age; // json:"age,omitempty"
+};
+```
+
+CJM may generate a schema shaped like:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "age": { "type": ["integer", "null"] }
+  },
+  "required": ["name"]
+}
+```
+
+The exact formatting is a backend implementation detail, but the semantic shape
+and ordering should be covered by golden tests.
+
+## Non-Goals
+
+The schema backend must not imply support for:
+
+- OpenAPI route generation
+- HTTP endpoint policy
+- runtime JSON Schema validation
+- custom converter implementation
+- new required/default/time metadata before those features land
+- arbitrary dynamic JSON, `std::variant`, `std::any`, pointers, or inheritance
 
 ---
 

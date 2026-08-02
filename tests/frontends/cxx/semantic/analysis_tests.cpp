@@ -862,5 +862,36 @@ int main() {
         assert(field.type.arguments[0].kind ==
                cjm::metadata::FieldTypeKind::SignedInteger);
         assert(field.type.arguments[0].qualified_name == "int");
+        assert(field.type.array_extent == 4);
+    }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "array_values.hpp";
+
+        cjm::parser::DeclarationSyntax model;
+        model.name = "ArrayValues";
+        model.location = {"array_values.hpp", 1, 8};
+        model.namespace_path = {"company", "model"};
+
+        cjm::parser::FieldSyntax samples;
+        samples.name = "samples";
+        samples.type_spelling = "std::array<int, N>";
+        samples.location = {"array_values.hpp", 4, 5};
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"samples")";
+        comment.location = {"array_values.hpp", 4, 40};
+        samples.comments.push_back(comment);
+
+        model.fields.push_back(samples);
+        file.declarations.push_back(model);
+
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(!result.success);
+        assert(result.diagnostics.size() == 1);
+        assert(result.diagnostics[0].message ==
+               "unsupported std::array extent for JSON mapping: N");
+        assert(result.diagnostics[0].location.file == "array_values.hpp");
     }
 }

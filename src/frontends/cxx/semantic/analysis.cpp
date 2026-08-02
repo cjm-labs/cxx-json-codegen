@@ -1,4 +1,5 @@
 #include <cctype>
+#include <limits>
 #include <map>
 #include <set>
 #include "frontends/cxx/semantic/analysis.hpp"
@@ -159,6 +160,37 @@ bool parse_two_template_arguments(const std::string& spelling,
     first = trim(body.substr(0, comma));
     second = trim(body.substr(comma + 1));
     return !first.empty() && !second.empty();
+}
+
+/**
+ * Parse the fixed extent from a supported std::array type.
+ *
+ * Inputs:
+ *   size_arg - the second template argument spelling from std::array<T, N>.
+ *
+ * Output:
+ *   Returns true and writes extent when size_arg is a plain decimal integer.
+ *
+ * Failure:
+ *   Returns false when size_arg is empty, non-numeric, overflows size_t, or use
+ *   a suffix/expression form such as N, 4u, or 2 + 2.
+ *
+ * This function performs Semantic Analysis for the supported v0.5 subset. It
+ * does not evaluate C++ constant expressions.
+ */
+bool parse_array_extent(const std::string& size_arg, std::size_t& extent) {
+    try {
+        std::size_t parsed_chars = 0;
+        const auto parsed = std::stoull(size_arg, &parsed_chars, 10);
+        if (parsed_chars != size_arg.size()) {
+            return false;
+        }
+
+        extent = static_cast<std::size_t>(parsed);
+        return true;
+    } catch (const std::exception&) {
+        return false;
+    }
 }
 
 metadata::SourceLocation
@@ -393,6 +425,15 @@ analyze_field_type(const TypeSymbols& symbols,
                                      size_arg)) {
         auto type = make_type(metadata::FieldTypeKind::Array, original_spelling,
                               "std::array");
+
+        if (!parse_array_extent(size_arg, type.array_extent)) {
+            diagnostics.push_back(make_diagnostic(
+                field.location,
+                "unsupported std::array extent for JSON mapping: " + size_arg));
+            success = false;
+            return type;
+        }
+
         parser::FieldSyntax nested = field;
         nested.type_spelling = element_arg;
         type.arguments.push_back(analyze_field_type(

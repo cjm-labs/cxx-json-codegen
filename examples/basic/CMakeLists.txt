@@ -20,6 +20,9 @@ cjm_generate(
   GENERATED_TARGET cjm_basic_example_generated
   GENERATED_HEADERS_VAR cjm_basic_generated_headers
   GENERATED_INCLUDE_DIR_VAR cjm_basic_generated_include_dir
+
+  GENERATE_SCHEMAS
+  GENERATED_SCHEMAS_VAR cjm_basic_generated_schemas
 )
 
 if (NOT cjm_basic_generated_headers)
@@ -28,6 +31,10 @@ endif()
 
 if (NOT cjm_basic_generated_include_dir)
   message(FATAL_ERROR "cjm_generate did not expose generated include directory")
+endif()
+
+if (NOT cjm_basic_generated_schemas)
+  message(FATAL_ERROR "cjm_generate did not expose generated schemas")
 endif()
 
 add_executable(cjm_basic_downstream_consumer

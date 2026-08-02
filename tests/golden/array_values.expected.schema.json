@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ArrayValues",
+  "type": "object",
+  "properties": {
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "scores": { "type": "array", "items": { "type": "integer" } },
+    "samples": { "type": "array", "items": { "type": "integer" }, "minItems": 4, "maxItems": 4 }
+  },
+  "required": ["tags", "scores", "samples"]
+}

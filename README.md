@@ -5,10 +5,11 @@
 **CJM** is a build-time metadata compiler for Modern C++.
 
 It extracts source-level metadata from ordinary C++ declarations, builds a
-stable Metadata IR, and generates backend-specific C++ code during the build.
+stable Metadata IR, and generates backend-specific build artifacts.
 
-The first official backend generates `nlohmann/json` integration from Go-style
-field metadata.
+The first official C++ backend generates `nlohmann/json` integration from
+Go-style field metadata. CJM can also emit JSON Schema artifacts for the
+supported Metadata IR surface.
 
 Instead of writing repetitive integration code or relying on macros and runtime
 reflection, CJM generates ordinary C++ code while keeping your source files
@@ -28,16 +29,18 @@ C++ model types before CJM-generated integration is used.
 
 ## Early Adopters Welcome
 
-CJM v0.4.0 is ready for early adopters who want to try build-time JSON
-integration for ordinary Modern C++ models.
+CJM v0.5.0 is the current development line for early adopters who want to try
+build-time JSON integration and generated JSON Schema artifacts for ordinary
+Modern C++ models.
 
-The current release has been dogfooded through the public
-`FetchContent` + `cjm_generate` workflow in
+The v0.4.0 workflow has been dogfooded through the public `FetchContent` +
+`cjm_generate` workflow in
 [ull-md-engine](https://github.com/lmingzhi618/ull-md-engine), covering
 optionals, vectors, ordered and unordered string-keyed maps, nested generated
-structs, enums, ignored fields, `omitempty`, and fixed-width integers.
-v0.4 adds fixed-size arrays, enum string output, and generated model-contract
-metadata for downstream tools.
+structs, enums, ignored fields, `omitempty`, fixed-width integers, fixed-size
+arrays, enum string output, and generated model-contract metadata for downstream
+tools. v0.5 adds an opt-in JSON Schema backend through the CLI and CMake
+workflow.
 
 If CJM fails on a practical model you expected to work, or if the CMake,
 diagnostics, or documentation feel confusing, please open an issue with the
@@ -277,6 +280,44 @@ target_include_directories(tool PRIVATE ${app_cjm_include_dir})
 This keeps generated files in the build directory while giving downstream
 targets a stable dependency and include path.
 
+### Generate JSON Schema
+
+CJM can also generate JSON Schema Draft 2020-12 artifacts from the same
+validated Metadata IR used by the C++ backend:
+
+```sh
+cjm generate-schema --input user.hpp --output user.schema.json
+```
+
+Schema generation is opt-in for CMake builds. Add `GENERATE_SCHEMAS` when
+calling `cjm_generate`:
+
+```cmake
+cjm_generate(
+  TARGET app
+  HEADERS user.hpp
+  GENERATED_TARGET app_cjm_generated
+  GENERATE_SCHEMAS
+  GENERATED_SCHEMAS_VAR app_cjm_schemas
+)
+```
+
+During the build, CJM keeps generated C++ headers and schema artifacts in
+separate output directories:
+
+```text
+generated/cjm/user.cjm.hpp
+generated/schemas/user.schema.json
+```
+
+The generated schema files are build artifacts. They are tracked by the
+generated target, but they are not C++ sources and are not added to the target
+include path.
+
+CJM schema generation describes supported DTO mappings. It does not generate
+OpenAPI routes, HTTP endpoint policy, cross-language model code, or a runtime
+JSON Schema validation engine.
+
 ### Use CJM From A Downstream Project
 
 Early adopters can consume CJM by pinning a release tag with CMake
@@ -288,7 +329,7 @@ include(FetchContent)
 FetchContent_Declare(
   cxx_json_codegen
   GIT_REPOSITORY https://github.com/cjm-labs/cxx-json-codegen.git
-  GIT_TAG v0.4.0
+  GIT_TAG v0.5.0
 )
 
 FetchContent_MakeAvailable(cxx_json_codegen)
@@ -327,10 +368,10 @@ for (std::uint32_t i = 0; i < model.field_count; ++i) {
 }
 ```
 
-The v0.4 contract exposes field names, JSON names, ignored fields,
-`omitempty`, source locations, type categories, container arguments, and enum
-string values. It is intended for downstream experiments and may still change
-before v1.0.
+The current experimental contract exposes field names, JSON names, ignored
+fields, `omitempty`, source locations, type categories, container arguments, and
+enum string values. It is intended for downstream experiments and may still
+change before v1.0.
 
 ### Try the Full Test Suite
 
@@ -367,31 +408,33 @@ CJM follows a few core principles:
 
 ```
 User C++ Source
-        │
-        ▼
+        |
+        v
  C++ Frontend
-        │
-        ▼
+        |
+        v
  Metadata IR
-        │
-        ▼
- nlohmann/json Backend
-        │
-        ▼
- Generated C++
-        │
-        ▼
+    |          |
+    v          v
+ nlohmann     JSON Schema
+ Backend      Backend
+    |          |
+    v          v
+ Generated    Generated
+ C++          Schema
+    |
+    v
  Normal Compiler
-        │
-        ▼
-     Executable
+    |
+    v
+ Executable
 ```
 
 The Metadata IR is the stable boundary between source-language understanding
 and backend-specific code generation.
 
-Users only interact with standard C++ source code, CMake, and generated C++
-files.
+Users only interact with standard C++ source code, CMake, generated C++ files,
+and optional generated schema artifacts.
 
 ---
 
@@ -399,10 +442,11 @@ files.
 
 Current status:
 
-- v0.4 Extensibility and Downstream Workflow is the current release line
-- CJM has a parser -> semantic analysis -> Metadata IR -> nlohmann backend
-  pipeline
-- First official backend: `nlohmann/json`
+- v0.5 Schema Backend is the current development line
+- CJM has a parser -> semantic analysis -> Metadata IR pipeline with
+  `nlohmann/json` and JSON Schema backends
+- First official C++ backend: `nlohmann/json`
+- First schema artifact backend: JSON Schema Draft 2020-12
 - CJM v0.3.0 has been dogfooded in a real downstream CMake project:
   [ull-md-engine](https://github.com/lmingzhi618/ull-md-engine)
 - The supported model surface is still a documented practical subset, not full
@@ -439,6 +483,21 @@ Supported:
 - `json:"-"` ignored fields
 - `omitempty` for supported optional fields
 
+JSON Schema output currently covers:
+
+- JSON Schema Draft 2020-12 object schemas for supported generated structs
+- scalar and string fields
+- unsigned integers with `minimum: 0`
+- `std::vector<T>` and `std::array<T, N>` when `T` is a supported scalar or
+  string mapping
+- `std::optional<T>` when `T` is a supported scalar or string mapping
+- `std::map<std::string, T>` and `std::unordered_map<std::string, T>` when `T`
+  is a supported scalar or string mapping
+- enum and enum class fields as JSON string enums
+- nested generated structs as `$ref` entries with `$defs`
+- `json:"-"` fields omitted from schema properties
+- non-optional supported fields listed in `required`
+
 ## Current Limitations
 
 CJM intentionally remains a practical subset.
@@ -455,6 +514,10 @@ Not yet supported:
 - custom converters
 - custom enum string mapping policies
 - time and datetime mappings
+- schema output for nested containers whose element or value type is another
+  container, optional, enum, or generated struct
+- OpenAPI route generation
+- runtime JSON Schema validation
 - multiline managed field declarations are not yet documented as supported
 - private fields 
 - native JSON backend 
@@ -484,6 +547,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
+- [v0.5.0 Release Notes](docs/releases/v0.5.0.md)
 - [v0.4.0 Release Notes](docs/releases/v0.4.0.md)
 - [v0.3.6 Release Notes](docs/releases/v0.3.6.md)
 - [v0.3.0 Release Notes](docs/releases/v0.3.0.md)

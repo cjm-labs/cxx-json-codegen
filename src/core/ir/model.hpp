@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -40,6 +41,7 @@ struct FieldType {
     std::string spelling;
     std::string qualified_name;
     std::vector<FieldType> arguments;
+    std::size_t array_extent = 0;
 };
 
 // One C++ data member selected for generation.

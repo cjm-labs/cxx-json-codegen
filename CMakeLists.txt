@@ -61,6 +61,11 @@ target_link_libraries(cjm_contract_generator PUBLIC cjm_metadata cjm_contract)
 target_include_directories(cjm_contract_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_contract_generator PUBLIC cxx_std_17)
 
+add_library(cjm_schema_generator src/backends/schema/schema_generator.cpp)
+target_link_libraries(cjm_schema_generator PUBLIC cjm_metadata)
+target_include_directories(cjm_schema_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_features(cjm_schema_generator PUBLIC cxx_std_17)
+
 # metadata library 
 add_library(cjm_metadata INTERFACE)
 target_include_directories(cjm_metadata INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -86,7 +91,7 @@ target_compile_features(cjm_semantic PUBLIC cxx_std_17)
 
 # cjm main app
 add_executable(cjm tools/cjm/main.cpp)
-target_link_libraries(cjm PRIVATE cjm_generator cjm_semantic)
+target_link_libraries(cjm PRIVATE cjm_generator cjm_schema_generator cjm_semantic)
 
 if (CJM_BUILD_TESTS)
   enable_testing()
@@ -117,6 +122,14 @@ if (CJM_BUILD_TESTS)
   target_include_directories(cjm_contract_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_link_libraries(cjm_contract_generated_compile_tests PRIVATE cjm_contract)
   add_test(NAME cjm_contract_generated_compile_tests COMMAND cjm_contract_generated_compile_tests)
+
+  add_executable(cjm_schema_generator_tests
+    tests/backends/schema/schema_generator_tests.cpp
+  )
+  target_link_libraries(cjm_schema_generator_tests PRIVATE cjm_schema_generator)
+  add_test(NAME cjm_schema_generator_tests COMMAND cjm_schema_generator_tests)
+  set_tests_properties(cjm_schema_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 
   # PIPELINE GOLDEN tests below...
   add_executable(cjm_pipeline_golden_tests tests/backends/nlohmann/pipeline_golden_tests.cpp)
@@ -171,7 +184,7 @@ if (CJM_BUILD_TESTS)
     NAME cjm_basic_example_generated_header
     COMMAND ${CMAKE_COMMAND} -E compare_files
             ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp
-            ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/cjm/user.cjm.hpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/basic_pipeline.expected.cjm.hpp
   )
   # parser tests below...
   add_executable(cjm_parser_tests tests/frontends/cxx/parser/syntax_tests.cpp)
@@ -286,4 +299,22 @@ if (CJM_BUILD_TESTS)
   add_executable(cjm_model_contract_tests tests/core/model_contract_tests.cpp)
   target_link_libraries(cjm_model_contract_tests PRIVATE cjm_contract)
   add_test(NAME cjm_model_contract_tests COMMAND cjm_model_contract_tests)
+
+  add_test(NAME cjm_cli_generate_schema
+    COMMAND cjm generate-schema
+    --input ${CMAKE_CURRENT_SOURCE_DIR}/examples/basic/user.hpp
+    --output ${CMAKE_CURRENT_BINARY_DIR}/user.schema.json
+  )
+  set_tests_properties(
+    cjm_cli_generate_schema
+    PROPERTIES
+      PASS_REGULAR_EXPRESSION "cjm: generated"
+  )
+
+  add_test(
+    NAME cjm_basic_example_generated_schemas
+    COMMAND ${CMAKE_COMMAND} -E compare_files
+            ${CMAKE_CURRENT_BINARY_DIR}/examples/basic/generated/schemas/user.schema.json
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden/basic_user.expected.schema.json
+  )
 endif()
