@@ -5,9 +5,9 @@
 
 namespace cjm::generator::schema {
 
-void generate_schema_fragment(
-    std::ostringstream& out, const metadata::FieldType& type,
-    const std::vector<metadata::EnumModel>& enums = {});
+void generate_schema_fragment(std::ostringstream& out,
+                              const metadata::FieldType& type,
+                              const metadata::ProjectModel& project);
 /**
  * Return the JSON schema primitive type name for a scalar Metadata IR type.
  *
@@ -56,6 +56,18 @@ find_enum_model(const std::vector<metadata::EnumModel>& enums,
     return nullptr;
 }
 
+// Find the type model for a user-defined field type.
+const metadata::TypeModel*
+find_type_model(const std::vector<metadata::TypeModel>& types,
+                const metadata::FieldType& type) {
+    for (const auto& type_model : types) {
+        if (type.qualified_name == type_model.qualified_name) {
+            return &type_model;
+        }
+    }
+    return nullptr;
+}
+
 // Return whether an enum field has schema values available.
 bool is_supported_enum_schema_type(
     const metadata::FieldType& type,
@@ -74,14 +86,14 @@ bool is_supported_enum_schema_type(
 }
 
 /**
- * Return whether the schema backend can emit a schema for this validated field
- * type in the current v0.5 slice.
+ * Return whether the schema backend can emit a schema for this validated
+ * field type in the current v0.5 slice.
  *
- * This is backend capability gating. It does not validate C++ syntax or decide
- * whether the field type is semantically supported by CJM.
+ * This is backend capability gating. It does not validate C++ syntax or
+ * decide whether the field type is semantically supported by CJM.
  */
 bool is_supported_schema_type(const metadata::FieldType& type,
-                              const std::vector<metadata::EnumModel>& enums) {
+                              const metadata::ProjectModel& project) {
     if (is_supported_simple_schema_type(type)) {
         return true;
     }
@@ -103,18 +115,21 @@ bool is_supported_schema_type(const metadata::FieldType& type,
                is_supported_simple_schema_type(type.arguments[1]);
     }
     if (type.kind == metadata::FieldTypeKind::Enum) {
-        return is_supported_enum_schema_type(type, enums);
+        return is_supported_enum_schema_type(type, project.enums);
+    }
+    if (type.kind == metadata::FieldTypeKind::UserDefined) {
+        return find_type_model(project.types, type) != nullptr;
     }
     return false;
 }
 
 // Return whether a field should be listed in the schema required array.
 bool is_required_schema_field(const metadata::FieldModel& field,
-                              const std::vector<metadata::EnumModel>& enums) {
+                              const metadata::ProjectModel& project) {
     if (field.json.name.empty()) {
         return false;
     }
-    if (!is_supported_schema_type(field.type, enums)) {
+    if (!is_supported_schema_type(field.type, project)) {
         return false;
     }
     if (field.type.kind == metadata::FieldTypeKind::Optional) {
@@ -154,7 +169,8 @@ void generate_optional_schema_fragment(std::ostringstream& out,
 
 // Generate the JSON Schema fragment for a string-keyed map field.
 void generate_map_schema_fragment(std::ostringstream& out,
-                                  const metadata::FieldType& type) {
+                                  const metadata::FieldType& type,
+                                  const metadata::ProjectModel& project) {
     if (type.arguments.size() != 2) {
         return;
     }
@@ -164,7 +180,7 @@ void generate_map_schema_fragment(std::ostringstream& out,
     }
     const auto& val_kind = type.arguments[1].kind;
     out << "{ \"type\": \"object\", \"additionalProperties\": ";
-    generate_schema_fragment(out, type.arguments[1]);
+    generate_schema_fragment(out, type.arguments[1], project);
     out << " }";
 }
 
@@ -182,6 +198,13 @@ void generate_enum_schema_fragment(std::ostringstream& out,
     }
     out << "] }";
 }
+
+// Generate the JSON Schema fragment for a user-defined object field.
+void generate_object_ref_schema_fragment(std::ostringstream& out,
+                                         const metadata::TypeModel& type) {
+    out << "{ \"$ref\": \"#/$defs/" << type.name << "\" }";
+}
+
 /**
  * Generate the JSON Schema fragment for one validated field type.
  *
@@ -197,7 +220,7 @@ void generate_enum_schema_fragment(std::ostringstream& out,
  */
 void generate_schema_fragment(std::ostringstream& out,
                               const metadata::FieldType& type,
-                              const std::vector<metadata::EnumModel>& enums) {
+                              const metadata::ProjectModel& project) {
     if (is_supported_simple_schema_type(type)) {
         out << "{ \"type\": \"" << schema_type_name(type.kind) << "\" }";
         return;
@@ -207,7 +230,7 @@ void generate_schema_fragment(std::ostringstream& out,
         out << "{ \"type\": \"array\", \"items\": ";
 
         for (const auto& arg : type.arguments) {
-            generate_schema_fragment(out, arg);
+            generate_schema_fragment(out, arg, project);
         }
         out << " }";
 
@@ -217,7 +240,7 @@ void generate_schema_fragment(std::ostringstream& out,
     if (type.kind == metadata::FieldTypeKind::Array) {
         out << "{ \"type\": \"array\", \"items\": ";
         for (const auto& arg : type.arguments) {
-            generate_schema_fragment(out, arg);
+            generate_schema_fragment(out, arg, project);
         }
         out << ", \"minItems\": " << type.array_extent
             << ", \"maxItems\": " << type.array_extent << " }";
@@ -229,12 +252,17 @@ void generate_schema_fragment(std::ostringstream& out,
         return;
     }
     if (type.kind == metadata::FieldTypeKind::Map) {
-        generate_map_schema_fragment(out, type);
+        generate_map_schema_fragment(out, type, project);
         return;
     }
     if (type.kind == metadata::FieldTypeKind::Enum) {
-        const auto& enum_model = find_enum_model(enums, type);
+        const auto& enum_model = find_enum_model(project.enums, type);
         generate_enum_schema_fragment(out, *enum_model);
+        return;
+    }
+    if (type.kind == metadata::FieldTypeKind::UserDefined) {
+        const auto& object_model = find_type_model(project.types, type);
+        generate_object_ref_schema_fragment(out, *object_model);
         return;
     }
 }
@@ -242,14 +270,54 @@ void generate_schema_fragment(std::ostringstream& out,
 void generate_field_schema(std::ostringstream& out,
                            const metadata::FieldModel& field,
                            const std::string& indent,
-                           const std::vector<metadata::EnumModel>& enums) {
+                           const metadata::ProjectModel& project) {
     out << indent << "\"" << field.json.name << "\": ";
-    generate_schema_fragment(out, field.type, enums);
+    generate_schema_fragment(out, field.type, project);
+}
+
+// Generate a JSON Schema definition for one referenced object type.
+void generate_object_definition(std::ostringstream& out,
+                                const metadata::TypeModel& type,
+                                const metadata::ProjectModel& project) {
+    out << "    \"" << type.name << "\": {\n"
+        << "      \"type\": \"object\",\n"
+        << "      \"properties\": {\n";
+    bool wrote_property = false;
+    for (const auto& field : type.fields) {
+        if (field.json.name.empty()) {
+            continue;
+        }
+        if (!is_supported_schema_type(field.type, project)) {
+            continue;
+        }
+        if (wrote_property) {
+            out << ",\n";
+        }
+        generate_field_schema(out, field, "        ", project);
+        wrote_property = true;
+    }
+    out << "\n"
+        << "      },\n"
+        << "      \"required\": [";
+
+    bool wrote_required = false;
+    for (const auto& field : type.fields) {
+        if (!is_required_schema_field(field, project)) {
+            continue;
+        }
+        if (wrote_required) {
+            out << ", ";
+        }
+        out << "\"" << field.json.name << "\"";
+        wrote_required = true;
+    }
+    out << "]\n"
+        << "    }";
 }
 
 void generate_type_schema(std::ostringstream& out,
                           const metadata::TypeModel& type,
-                          const std::vector<metadata::EnumModel>& enums) {
+                          const metadata::ProjectModel& project) {
     out << "{\n"
         << "  \"$schema\": "
            "\"https://json-schema.org/draft/2020-12/schema\",\n"
@@ -262,13 +330,13 @@ void generate_type_schema(std::ostringstream& out,
         if (field.json.name.empty()) {
             continue;
         }
-        if (!is_supported_schema_type(field.type, enums)) {
+        if (!is_supported_schema_type(field.type, project)) {
             continue;
         }
         if (wrote_property) {
             out << ",\n";
         }
-        generate_field_schema(out, field, "    ", enums);
+        generate_field_schema(out, field, "    ", project);
         wrote_property = true;
     }
 
@@ -278,7 +346,7 @@ void generate_type_schema(std::ostringstream& out,
 
     bool wrote_required = false;
     for (const auto& field : type.fields) {
-        if (!is_required_schema_field(field, enums)) {
+        if (!is_required_schema_field(field, project)) {
             continue;
         }
         if (wrote_required) {
@@ -287,14 +355,30 @@ void generate_type_schema(std::ostringstream& out,
         out << "\"" << field.json.name << "\"";
         wrote_required = true;
     }
-    out << "]\n"
+    out << "]";
+
+    if (project.types.size() > 1) {
+        out << ",\n"
+            << "  \"$defs\": {\n";
+        bool wrote_definition = false;
+        for (uint32_t i = 1; i < project.types.size(); ++i) {
+            if (wrote_definition) {
+                out << ",\n";
+            }
+            generate_object_definition(out, project.types[i], project);
+            wrote_definition = true;
+        }
+        out << "\n"
+            << "  }";
+    }
+    out << "\n"
         << "}\n";
 }
 
 std::string generate_schema(const metadata::ProjectModel& project) {
     std::ostringstream out;
     if (!project.types.empty()) {
-        generate_type_schema(out, project.types.front(), project.enums);
+        generate_type_schema(out, project.types.front(), project);
     }
     return out.str();
 }

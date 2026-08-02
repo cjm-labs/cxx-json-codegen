@@ -189,12 +189,46 @@ ProjectModel make_enum_schema_project() {
     };
 
     EnumModel enum_status;
-    enum_status.name = "Status",
+    enum_status.name = "Status";
     enum_status.qualified_name = "company::model::Status";
     enum_status.enumerators = {"Active", "Disabled"};
     ProjectModel project;
     project.types = {enum_values};
     project.enums = {enum_status};
+    return project;
+}
+
+// Build a small project that exercises nested object schema mappings.
+ProjectModel make_nested_object_schema_project() {
+    TypeModel address;
+    address.name = "Address";
+    address.qualified_name = "company::model::Address";
+    address.fields = {FieldModel{
+        "city",
+        string_type,
+        JsonFieldMetadata{"city", false},
+    }};
+
+    TypeModel user;
+    user.name = "User";
+    user.fields = {
+        FieldModel{
+            "name",
+            string_type,
+            JsonFieldMetadata{"name", false},
+        },
+        FieldModel{
+            "address",
+            FieldType{
+                FieldTypeKind::UserDefined,
+                "Address",
+                "company::model::Address",
+            },
+            JsonFieldMetadata{"address", false},
+        },
+    };
+    ProjectModel project;
+    project.types = {user, address};
     return project;
 }
 
@@ -231,5 +265,7 @@ int main() {
                           "tests/golden/map_values.expected.schema.json");
     assert_schema_matches(make_enum_schema_project(),
                           "tests/golden/enum_values.expected.schema.json");
+    assert_schema_matches(make_nested_object_schema_project(),
+                          "tests/golden/nested_object.expected.schema.json");
     return 0;
 }
