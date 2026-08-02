@@ -179,20 +179,23 @@ int main(int argc, char** argv) {
         return kExitSuccess;
     }
 
-    GenerateOptions options;
-    if (!parse_generate_options(argc, argv, options)) {
-        std::cerr << "Run 'cjm --help' for usage.\n";
-        return kExitUsageError;
-    }
-
     if (command == "generate") {
+        GenerateOptions options;
+        if (!parse_generate_options(argc, argv, options)) {
+            std::cerr << "Run 'cjm --help' for usage.\n";
+            return kExitUsageError;
+        }
         return run_generate_command(options);
     }
     if (command == "generate-schema") {
+        GenerateOptions options;
+        if (!parse_generate_options(argc, argv, options)) {
+            std::cerr << "Run 'cjm --help' for usage.\n";
+            return kExitUsageError;
+        }
         return run_generate_schema_command(options);
     }
-    std::cerr << "cjm: unknown command: " << command << "\n";
-    std::cerr << "run 'cjm --help' for usage.\n";
 
+    std::cerr << "cjm: unknown command: " << command << "\n";
     return kExitUsageError;
 }
