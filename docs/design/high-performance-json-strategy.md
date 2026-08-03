@@ -79,7 +79,7 @@ Generated model-specific code knows:
 - unknown-field policy when documented
 - required and default policy when documented
 
-Conceptual generated code might eventually look like:
+Conceptual generated code might eventually include an in-place helper:
 
 ```cpp
 bool read_user(
@@ -93,6 +93,16 @@ void write_user(
 ```
 
 These examples are conceptual only. They do not define a public API.
+
+The default public decode API should prefer returning a new object so failed
+decodes do not expose a partially mutated caller-owned object:
+
+```cpp
+auto result = cjm::decode<User>(json_input);
+```
+
+An in-place API may exist later, but it must document whether it provides a
+strong guarantee or only leaves the target object valid after failure.
 
 ## JSON Runtime Responsibilities
 
@@ -276,6 +286,13 @@ The first implementation should prove decode over a limited conformance subset.
 Encode should follow contiguously through a builder/write spike so the simdjson
 mental model does not get interrupted by unrelated backend work.
 
+The simdjson spike should not begin until CJM has defined:
+
+- runtime JSON semantic profile
+- minimal decode error and structured path model
+- conformance fixture skeleton
+- static backend selection shape
+
 simdjson-specific constraints must be documented before promotion:
 
 - input buffer and padding lifetime
@@ -346,6 +363,27 @@ CJM should share:
 
 Code-level runtime abstractions should be extracted only after at least two real
 runtime backends prove a small shared helper is necessary.
+
+Backend selection should be static: generation time or build time, not dynamic
+runtime selection through a universal interface.
+
+Conceptual CLI and CMake shapes:
+
+```bash
+cjm generate --backend simdjson --input models.hpp --output models.simdjson.cjm.hpp
+```
+
+```cmake
+cjm_generate(
+  TARGET app
+  HEADERS models.hpp
+  JSON_BACKEND simdjson
+)
+```
+
+The exact spelling is future work, but the policy is not: backend-specific
+dependencies, generated filenames, C++ standard requirements, and unsupported
+capabilities must be resolved before generated code is compiled.
 
 ---
 
@@ -609,8 +647,10 @@ foundation:
 v0.6 may then begin the runtime backend program:
 
 - canonical runtime semantic profile
+- minimal decode error and structured path model
 - backend taxonomy and capability matrix
 - shared conformance fixture skeleton
+- static backend selection design
 - simdjson On-Demand decode spike
 - simdjson builder / encode spike
 - simdjson experimental backend if evidence supports promotion

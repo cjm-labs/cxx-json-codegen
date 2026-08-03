@@ -81,6 +81,17 @@ Purpose:
 v0.6 is a program. Its internal work packages are not automatically release
 tags.
 
+The program should be tracked as a broad direction, but implemented as small
+epics. The first implementation epic should be:
+
+```text
+v0.6 Foundation - Runtime Semantics and Conformance
+```
+
+That foundation epic must finish before a simdjson spike becomes the main focus.
+It defines what CJM means by JSON runtime behavior; it does not implement a
+high-performance backend.
+
 Public releases should represent user-consumable capability snapshots, such as:
 
 ```text
@@ -105,13 +116,19 @@ The exact tags may change. The dependency order should not.
 
 ## Work Package A - Runtime Semantics and Conformance Foundation
 
+This work package should be its own small epic.
+
+It is deliberately documentation- and test-shape-heavy. It should not introduce
+simdjson, Glaze, yyjson, or a universal runtime facade.
+
 Define:
 
-- backend-neutral runtime semantic profile
+- backend-neutral runtime JSON semantic profile
+- minimal decode error and path model
 - backend taxonomy
-- capability matrix as documentation
-- conformance fixture layout
-- backend selection shape for CLI and CMake
+- capability matrix as documentation and conformance expectations
+- conformance fixture layout with core and optional strict capabilities
+- static backend selection shape for CLI and CMake
 - optional dependency policy
 - C++ standard isolation rules
 - unsupported capability diagnostics
@@ -136,6 +153,15 @@ UserDefined
 
 and its recursive `arguments`.
 
+The foundation epic should produce these child issues:
+
+```text
+1. docs(runtime): define runtime JSON semantic profile
+2. docs(runtime): define decode error and path model
+3. test(runtime): sketch conformance fixture layout
+4. docs(runtime): define static backend selection shape
+```
+
 ## Work Package B - simdjson On-Demand Decode Spike
 
 Prove feasibility with the smallest useful model subset.
@@ -145,9 +171,12 @@ Initial scope:
 - scalar fields
 - strings
 - required fields
+- presence bits
+- one-pass object dispatch
+- one nested object
 - unknown-field policy
 - generated field dispatch
-- basic error propagation
+- backend-neutral decode error and path propagation
 - parser/input lifetime wrapper shape
 
 This spike does not make simdjson an official backend.
@@ -255,24 +284,138 @@ Performance alone is insufficient.
 
 The first runtime backend must not invent backend-local semantics.
 
-Before simdjson reaches MVP status, CJM should define the minimum portable
+Before simdjson reaches spike status, CJM should define the minimum portable
 runtime profile for:
 
 - missing required field
 - missing optional field
+- missing defaulted field, reserved for future metadata
 - explicit `null` for optional fields
 - explicit `null` for non-optional fields
 - unknown fields
 - duplicate keys
 - numeric overflow
+- floating-point range and malformed number behavior
 - invalid enum string
+- JSON type mismatch
 - fixed-array extent mismatch
 - trailing content
 - nested error path
 - partial output after decode failure
 
+Presence and nullability must remain separate concepts.
+
+Initial policy:
+
+```text
+ordinary non-optional field
+    presence: required
+    nullability: null forbidden
+
+std::optional<T>
+    presence: missing allowed
+    nullability: null maps to disengaged optional
+
+default metadata
+    future feature
+
+explicit required/optional override
+    future feature
+```
+
+This is a current runtime policy, not a permanent binding between C++ type shape
+and all future metadata semantics.
+
+Some behaviors are core errors. Others are capabilities or policies.
+
+For v0.6, duplicate-key handling should not be forced into the core profile until
+each backend's parse path can actually observe duplicates. The existing
+nlohmann/json DOM binding may not be able to reject duplicates from inside
+generated `from_json` after parsing has already completed.
+
+Capability examples:
+
+```text
+core
+    missing required field fails
+    null for non-nullable field fails
+    integer overflow fails
+    invalid enum string fails
+
+optional strict capability
+    duplicate key detection
+    strict unknown-field rejection
+    transactional decode guarantee
+```
+
 v0.7 may enrich and stabilize diagnostics, but v0.6 must define enough behavior
 for runtime backends to conform.
+
+---
+
+# Decode Error Model
+
+Runtime backends should not return unrelated backend-local error strings as the
+only public failure surface.
+
+v0.6 should define a minimal backend-neutral error model:
+
+```text
+decode_error_code
+structured path
+expected type
+actual type, when knowable
+runtime-specific detail, optional and non-semantic
+```
+
+The path model should be structured rather than only a formatted string:
+
+```text
+field segment
+index segment
+```
+
+This lets a nested decoder report a child error and let the parent prepend its
+own field segment without losing structure.
+
+The exact C++ ABI does not need to freeze in the first foundation epic, but the
+semantic shape must be defined before backend code starts returning errors.
+
+---
+
+# Decode Output Guarantee
+
+The default public decode shape should prefer returning a new object:
+
+```cpp
+auto result = cjm::decode<User>(json_input);
+```
+
+This avoids exposing a partially modified caller-owned object after failure.
+
+An in-place API such as:
+
+```cpp
+cjm::decode_into(json_input, existing_user);
+```
+
+may be added later, but it must advertise its output guarantee explicitly.
+
+Possible guarantees:
+
+```text
+strong
+    failure leaves the target object unchanged
+
+basic
+    failure leaves the target object valid but possibly partially updated
+
+new-object
+    failure produces no user object
+```
+
+The first simdjson spike should not silently choose an in-place partial-update
+model merely because it is easiest to implement.
 
 ---
 
@@ -282,13 +425,17 @@ The agreed priority is:
 
 ```text
 1. v0.5.x semantic foundation
-2. v0.6 conformance foundation
-3. simdjson On-Demand decode
-4. simdjson builder / encode
-5. simdjson experimental backend
-6. Glaze adapter spike
-7. yyjson compact-DOM evaluation
-8. backend comparison and promotion report
+2. runtime JSON semantic profile
+3. minimal decode error and path model
+4. conformance fixture skeleton
+5. static backend selection shape
+6. simdjson On-Demand decode spike
+7. simdjson decode MVP
+8. simdjson builder / encode spike
+9. simdjson experimental backend
+10. Glaze adapter spike
+11. yyjson compact-DOM evaluation
+12. backend comparison and promotion report
 ```
 
 Rationale:
@@ -307,6 +454,7 @@ Rationale:
 Do not add:
 
 - a universal `JsonRuntime` facade
+- runtime backend selection through dynamic runtime polymorphism
 - a second type algebra parallel to Metadata IR
 - mandatory optional runtime dependencies
 - C++23 requirements for CJM core or nlohmann users

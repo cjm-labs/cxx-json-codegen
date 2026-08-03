@@ -820,13 +820,23 @@ This milestone is a program, not a mechanical sequence of release tags. Internal
 work packages such as decode spikes, encode spikes, and backend comparisons
 should become public releases only when they produce user-consumable capability.
 
+The first v0.6 implementation epic should be small:
+
+```text
+v0.6 Foundation - Runtime Semantics and Conformance
+```
+
+It should define CJM runtime semantics before adding simdjson code.
+
 Foundation scope:
 
 - canonical runtime JSON semantic profile
+- minimal decode error and structured path model
 - backend taxonomy
 - backend capability matrix as documentation and conformance expectations
-- conformance fixture skeleton shared by runtime backends
-- backend selection shape for CLI and CMake
+- conformance fixture skeleton shared by runtime backends, with core and optional
+  strict capabilities
+- static backend selection shape for CLI and CMake
 - optional dependency policy
 - C++ standard isolation per backend target
 - generation-time diagnostics for unsupported backend capabilities
@@ -837,17 +847,24 @@ Minimum runtime semantic profile:
 - missing optional field behavior
 - explicit `null` for optional fields
 - explicit `null` for non-optional fields
+- presence and nullability as separate concepts
 - unknown-field policy
-- duplicate-key policy
+- duplicate-key policy or explicit unsupported strict capability
 - numeric range overflow behavior
 - invalid enum string behavior
 - fixed-array extent mismatch behavior
 - trailing-content behavior
 - nested error path shape
 - partial-output policy after decode failure
+- default public decode shape, preferring new-object decode over in-place partial
+  mutation
 
 Runtime backend work packages:
 
+- Runtime JSON Semantic Profile
+- Minimal Decode Error / Path Model
+- Conformance Fixture Skeleton
+- Static Backend Selection Design
 - simdjson On-Demand decode spike
 - simdjson decode MVP over a limited conformance subset
 - simdjson builder / encode spike
