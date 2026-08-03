@@ -104,11 +104,6 @@ int main() {
         name.type_spelling = "std::string";
 
         cjm::parser::CommentSyntax name_comment;
-        name_comment.text = R"(json:"name")";
-        name_comment.location.file = "user.hpp";
-        name_comment.location.line = 4;
-        name_comment.location.column = 30;
-        name.comments.push_back(name_comment);
         user.fields.push_back(name);
 
         file.declarations.push_back(user);

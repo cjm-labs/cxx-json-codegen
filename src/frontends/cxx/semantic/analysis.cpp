@@ -771,7 +771,7 @@ FieldAnalysisResult analyze_field(
         if (!metadata_result.success) {
             result.success = false;
             diagnostics.push_back(metadata_result.diagnostic);
-            continue;
+            return result; // Return if found invalid JSON metadata
         }
 
         std::string field_json_name = metadata_result.json_name;
@@ -795,7 +795,6 @@ FieldAnalysisResult analyze_field(
             result.include = true;
             return result;
         }
-
         if (!record_json_name(field_json_name, comment_location, json_names,
                               diagnostics)) {
             result.success = false;
@@ -805,7 +804,6 @@ FieldAnalysisResult analyze_field(
         // Build the Metadata IR field after metadata and type validation.
         metadata::FieldModel field;
         field.name = field_syntax.name;
-
         field.type = analyze_field_type(symbols, namespace_path, field_syntax,
                                         diagnostics, type_success);
         field.json.name = field_json_name;
@@ -820,6 +818,27 @@ FieldAnalysisResult analyze_field(
         result.include = true;
         return result;
     }
+    auto location = to_semantic_location(field_syntax.location);
+    if (!record_json_name(field_syntax.name, location, json_names,
+                          diagnostics)) {
+        result.success = false;
+        return result;
+    }
+    // Build the default JSON mapping for fields without CJM metadata.
+    bool type_success = true;
+    metadata::FieldModel field;
+    field.name = field_syntax.name;
+    field.type = analyze_field_type(symbols, namespace_path, field_syntax,
+                                    diagnostics, type_success);
+    if (!type_success) {
+        result.success = false;
+    }
+    field.json.name = field_syntax.name;
+    field.json.omit_empty = false;
+    field.json.ignored = false;
+    field.source_location = to_metadata_location(field_syntax.location);
+    result.field = field;
+    result.include = true;
     return result;
 }
 
