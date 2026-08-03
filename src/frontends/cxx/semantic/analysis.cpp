@@ -538,7 +538,7 @@ parse_json_field_metadata(const std::string& comment,
     const auto body = value.substr(1, value.size() - 2);
     const auto options = split_options(body);
 
-    if (options.empty() || options[0].empty()) {
+    if (body.empty() || options.empty()) {
         result.success = false;
         result.diagnostic.location = location;
         result.diagnostic.message =
@@ -567,6 +567,15 @@ parse_json_field_metadata(const std::string& comment,
             "unsupported CJM json metadata option: " + options[i];
         return result;
     }
+
+    if (result.json_name.empty() && !result.omit_empty) {
+        result.success = false;
+        result.diagnostic.location = location;
+        result.diagnostic.message =
+            "invalid cjm JSON metadata: empty JSON field name";
+        return result;
+    }
+
     result.success = true;
     return result;
 }
@@ -765,6 +774,11 @@ FieldAnalysisResult analyze_field(
             continue;
         }
 
+        std::string field_json_name = metadata_result.json_name;
+        if (field_json_name.empty()) {
+            field_json_name = field_syntax.name;
+        }
+
         bool type_success = true;
         if (metadata_result.ignored) {
             metadata::FieldModel ignored_field;
@@ -782,8 +796,8 @@ FieldAnalysisResult analyze_field(
             return result;
         }
 
-        if (!record_json_name(metadata_result.json_name, comment_location,
-                              json_names, diagnostics)) {
+        if (!record_json_name(field_json_name, comment_location, json_names,
+                              diagnostics)) {
             result.success = false;
             return result;
         }
@@ -794,8 +808,7 @@ FieldAnalysisResult analyze_field(
 
         field.type = analyze_field_type(symbols, namespace_path, field_syntax,
                                         diagnostics, type_success);
-
-        field.json.name = metadata_result.json_name;
+        field.json.name = field_json_name;
         field.json.omit_empty = metadata_result.omit_empty;
 
         field.source_location = to_metadata_location(field_syntax.location);
