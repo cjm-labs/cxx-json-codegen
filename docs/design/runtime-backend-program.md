@@ -162,6 +162,9 @@ The foundation epic should produce these child issues:
 4. docs(runtime): define static backend selection shape
 ```
 
+The runtime semantic profile lives in
+[Runtime JSON Semantic Profile](runtime-json-semantic-profile.md).
+
 ## Work Package B - simdjson On-Demand Decode Spike
 
 Prove feasibility with the smallest useful model subset.
@@ -283,6 +286,9 @@ Performance alone is insufficient.
 # Runtime Semantic Profile
 
 The first runtime backend must not invent backend-local semantics.
+
+The normative v0.6 foundation profile is defined in
+[Runtime JSON Semantic Profile](runtime-json-semantic-profile.md).
 
 Before simdjson reaches spike status, CJM should define the minimum portable
 runtime profile for:
