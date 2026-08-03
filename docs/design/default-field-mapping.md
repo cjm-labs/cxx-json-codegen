@@ -1,6 +1,7 @@
 # Default Field Mapping
 
-This document defines the v0.5.x field-mapping semantics for CJM.
+This document defines the v0.5.x field-mapping semantics for CJM, released in
+v0.5.1.
 
 The goal is to remove redundant same-name JSON tags while preserving explicit
 metadata for exceptions.

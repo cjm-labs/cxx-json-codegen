@@ -1,6 +1,6 @@
 # Runtime Backend Program
 
-This document records the agreed post-v0.5.0 backend plan.
+This document records the agreed post-v0.5.1 backend plan.
 
 The plan is intentionally not a promise to implement every candidate backend.
 It defines the order in which CJM should recover ownership of runtime semantics,
@@ -25,6 +25,9 @@ Metadata IR
     +--> JSON Schema
 ```
 
+v0.5.1 then froze default field mapping and canonical field participation
+semantics for future runtime backends.
+
 The next step is not to add many JSON runtimes at once.
 
 The next step is:
@@ -47,6 +50,10 @@ compare other runtime integration strategies
 # Version Shape
 
 ## v0.5.x - Semantic Foundation
+
+Status:
+
+- completed in v0.5.1
 
 Purpose:
 

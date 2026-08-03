@@ -182,6 +182,10 @@ Purpose:
 
 ## v0.5.x - Default Field Mapping
 
+Status:
+
+- released in v0.5.1
+
 Mapping scope:
 
 - exact C++ field-name defaulting for managed fields

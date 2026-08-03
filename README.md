@@ -29,9 +29,9 @@ C++ model types before CJM-generated integration is used.
 
 ## Early Adopters Welcome
 
-CJM v0.5.0 is the current development line for early adopters who want to try
-build-time JSON integration and generated JSON Schema artifacts for ordinary
-Modern C++ models.
+CJM v0.5.1 is the current development line for early adopters who want to try
+build-time JSON integration, default field mapping, and generated JSON Schema
+artifacts for ordinary Modern C++ models.
 
 The v0.4.0 workflow has been dogfooded through the public `FetchContent` +
 `cjm_generate` workflow in
@@ -40,7 +40,7 @@ optionals, vectors, ordered and unordered string-keyed maps, nested generated
 structs, enums, ignored fields, `omitempty`, fixed-width integers, fixed-size
 arrays, enum string output, and generated model-contract metadata for downstream
 tools. v0.5 adds an opt-in JSON Schema backend through the CLI and CMake
-workflow.
+workflow, and v0.5.1 makes same-name JSON field tags optional.
 
 If CJM fails on a practical model you expected to work, or if the CMake,
 diagnostics, or documentation feel confusing, please open an issue with the
@@ -87,7 +87,7 @@ Go-like developer experience for its first JSON backend:
 
 ## Usage Example
 
-Write ordinary C++ models and put JSON metadata next to the fields:
+Write ordinary C++ models. Same-name JSON fields do not need metadata:
 
 ```cpp
 #pragma once
@@ -95,8 +95,8 @@ Write ordinary C++ models and put JSON metadata next to the fields:
 #include <string>
 
 struct User {
-    std::string name; // json:"name"
-    int age = 0;      // json:"age"
+    std::string name;
+    int age = 0;
 };
 ```
 
@@ -173,8 +173,8 @@ The example model is ordinary C++:
 #include <string>
 
 struct User {
-    std::string name; // json:"name"
-    int age = 0;      // json:"age"
+    std::string name;
+    int age = 0;
 };
 ```
 
@@ -329,7 +329,7 @@ include(FetchContent)
 FetchContent_Declare(
   cxx_json_codegen
   GIT_REPOSITORY https://github.com/cjm-labs/cxx-json-codegen.git
-  GIT_TAG v0.5.0
+  GIT_TAG v0.5.1
 )
 
 FetchContent_MakeAvailable(cxx_json_codegen)
@@ -385,7 +385,8 @@ Current parser notes:
 
 - CJM uses a Tree-sitter-backed C++ frontend internally
 - write supported managed field declarations in the documented practical subset
-- put `json:"..."` metadata in a same-line `//` comment
+- put `json:"..."` metadata in a same-line `//` comment only when renaming,
+  adding `omitempty`, or ignoring a field
 - use qualified standard types such as `std::string`
 - pass every related header explicitly with `--input`
 
@@ -443,6 +444,7 @@ and optional generated schema artifacts.
 Current status:
 
 - v0.5.0 completed the first JSON Schema backend
+- v0.5.1 completed default field mapping and canonical field semantics
 - CJM has a parser -> semantic analysis -> Metadata IR pipeline with
   `nlohmann/json`, generated model-contract, and JSON Schema backends
 - First official C++ runtime integration backend: `nlohmann/json`
@@ -452,9 +454,8 @@ Current status:
 - The supported model surface is still a documented practical subset, not full
   C++ grammar support
 
-Next planned lines:
+Next planned line:
 
-- v0.5.x defines default field mapping and canonical field semantics
 - v0.6 defines runtime backend semantics and begins a simdjson-first backend
   program
 
@@ -469,7 +470,9 @@ Supported:
 - explicit CMake header registration with `cjm_generate`
 - one or more explicit input headers
 - public `struct` declarations in the supported parser subset
-- fields with Go-style `json:"name"` comments
+- fields default to their exact C++ field names
+- fields with Go-style `json:"name"` comments when an explicit JSON name is
+  needed
 - generated `to_json` / `from_json` for `nlohmann/json`
 - `bool`
 - signed and unsigned integer types
@@ -487,7 +490,7 @@ Supported:
 - `std::array<T, N>`
 - enum and enum class fields as JSON strings
 - `json:"-"` ignored fields
-- `omitempty` for supported optional fields
+- `json:",omitempty"` and explicit-name `omitempty` for supported optional fields
 
 JSON Schema output currently covers:
 
@@ -503,6 +506,8 @@ JSON Schema output currently covers:
 - nested generated structs as `$ref` entries with `$defs`
 - `json:"-"` fields omitted from schema properties
 - non-optional supported fields listed in `required`
+- default field names, explicit rename tags, `omitempty`, and ignored fields
+  based on normalized Metadata IR
 
 ## Current Limitations
 
@@ -555,6 +560,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
+- [v0.5.1 Release Notes](docs/releases/v0.5.1.md)
 - [v0.5.0 Release Notes](docs/releases/v0.5.0.md)
 - [v0.4.0 Release Notes](docs/releases/v0.4.0.md)
 - [v0.3.6 Release Notes](docs/releases/v0.3.6.md)

@@ -752,6 +752,8 @@ Schema export gives CJM a clean integration point with existing ecosystems.
 
 # v0.5.x - Default Field Mapping and Canonical Field Semantics
 
+> Completed in v0.5.1.
+
 Goal:
 
 > Remove redundant same-name JSON tags while preserving explicit metadata for
