@@ -147,7 +147,7 @@ ProjectModel make_basic_user_project() {
                 "int",
                 "int",
             },
-            JsonFieldMetadata{"", false},
+            JsonFieldMetadata{"", false, true},
             SourceLocation{"include/user.hpp", 9, 9},
         },
     };

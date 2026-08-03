@@ -150,7 +150,7 @@ void generate_enum_string_helpers(std::ostringstream& out,
 // Generate one to_json assignment from a validated Metadata IR field.
 void generate_to_json_field(std::ostringstream& out,
                             const metadata::FieldModel& field) {
-    if (field.json.name.empty()) {
+    if (field.json.ignored) {
         return;
     }
     if (field.type.kind == metadata::FieldTypeKind::Optional &&
@@ -175,7 +175,7 @@ void generate_to_json_field(std::ostringstream& out,
 // Generate one from_json assignment from a validated Metadata IR field.
 void generate_from_json_field(std::ostringstream& out,
                               const metadata::FieldModel& field) {
-    if (field.json.name.empty()) {
+    if (field.json.ignored) {
         return;
     }
     if (field.type.kind == metadata::FieldTypeKind::Optional &&

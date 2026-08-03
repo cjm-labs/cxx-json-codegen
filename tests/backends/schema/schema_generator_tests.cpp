@@ -50,7 +50,7 @@ ProjectModel make_simple_schema_project() {
         FieldModel{
             "internal_id",
             FieldType{FieldTypeKind::UnsignedInteger, "unsigned", "unsigned"},
-            JsonFieldMetadata{"", false},
+            JsonFieldMetadata{"", false, true},
             SourceLocation{"include/user.hpp", 4, 14}},
     };
 
@@ -300,7 +300,7 @@ ProjectModel make_practical_schema_project() {
             },
             JsonFieldMetadata{"address", false},
         },
-        FieldModel{"internal_id", int_type, JsonFieldMetadata{"", false}},
+        FieldModel{"internal_id", int_type, JsonFieldMetadata{"", false, true}},
     };
 
     EnumModel enum_status;

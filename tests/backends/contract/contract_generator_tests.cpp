@@ -150,7 +150,7 @@ ProjectModel make_basic_user_project() {
         FieldModel{
             "internal_id",
             int_type,
-            JsonFieldMetadata{"", false},
+            JsonFieldMetadata{"", false, true},
             SourceLocation{"include/user.hpp", 9, 9},
         },
         FieldModel{
