@@ -18,6 +18,7 @@ struct SourceLocation {
 struct JsonFieldMetadata {
     std::string name;
     bool omit_empty = false;
+    bool ignored = false;
 };
 
 // Parser-independent field type categories understood by semantic analysis.

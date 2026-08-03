@@ -224,7 +224,7 @@ void generate_contract_type_descriptor(
 // Generate one public contract field descriptor.
 void generate_contract_field_descriptor(std::ostringstream& out,
                                         const metadata::FieldModel& field) {
-    const bool ignored = field.json.name.empty();
+    const bool ignored = field.json.ignored;
 
     out << "    {\n"
         << "        \"" << field.name << "\",\n"

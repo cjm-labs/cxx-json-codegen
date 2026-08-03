@@ -52,6 +52,26 @@ multiple backends can consume the same model.
 
 ---
 
+# Field Metadata Semantics
+
+The v0.5.x field-mapping design is defined in
+[Default Field Mapping](default-field-mapping.md).
+
+The stable direction is:
+
+- supported fields in CJM-managed models are included by default
+- an untagged field uses its exact C++ field name as the effective JSON name
+- explicit `json:"name"` metadata renames a field
+- `json:",omitempty"` keeps the default field name and records `omit_empty`
+- `json:"-"` records explicit ignored-field intent
+- duplicate checks operate on effective JSON names
+- unsupported included fields fail during Semantic Analysis
+
+Backends consume normalized Metadata IR field facts. They must not parse source
+comments or independently decide default field names.
+
+---
+
 # v1.0 Supported Mapping Target
 
 By v1.0, CJM should support a documented production JSON mapping matrix.
@@ -140,6 +160,10 @@ Purpose:
 
 ## v0.5 - Schema
 
+Status:
+
+- implemented for v0.5.0
+
 Schema output for supported mappings:
 
 - primitive values
@@ -156,17 +180,40 @@ Purpose:
 
 - validate that the Metadata IR can support non-C++ output backends
 
-## v0.6 - Performance
+## v0.5.x - Default Field Mapping
 
 Mapping scope:
 
-- no major new mapping requirements
-- benchmark realistic model sets using mappings introduced through v0.5
+- exact C++ field-name defaulting for managed fields
+- explicit rename metadata as an override
+- default field names combined with `omitempty`
+- explicit ignored-field semantics
+- duplicate effective JSON name diagnostics
+- unsupported included fields fail closed
+
+Purpose:
+
+- make the normal model-authoring path less repetitive
+- make field participation explicit before runtime backend work begins
+
+## v0.6 - Canonical Runtime Semantics and Backend Program
+
+Mapping scope:
+
+- no new parallel type algebra
+- formally define the JSON semantics of existing Metadata IR `FieldType`
+  combinations
+- define a minimum runtime semantic profile for missing, null, unknown,
+  duplicate, overflow, enum, fixed-array, trailing-content, nested error path,
+  and partial-output behavior
+- build backend capability documentation and conformance fixtures before runtime
+  backend claims
 - preserve deterministic output and avoid unnecessary rewrites
 
 Purpose:
 
-- make supported mappings fast enough for real projects
+- prove that normalized Metadata IR can drive optional runtime JSON backends
+  without backend-specific semantic drift
 
 ## v0.7 - Reliability
 

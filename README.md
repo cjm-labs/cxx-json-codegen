@@ -442,15 +442,21 @@ and optional generated schema artifacts.
 
 Current status:
 
-- v0.5 Schema Backend is the current development line
+- v0.5.0 completed the first JSON Schema backend
 - CJM has a parser -> semantic analysis -> Metadata IR pipeline with
-  `nlohmann/json` and JSON Schema backends
-- First official C++ backend: `nlohmann/json`
+  `nlohmann/json`, generated model-contract, and JSON Schema backends
+- First official C++ runtime integration backend: `nlohmann/json`
 - First schema artifact backend: JSON Schema Draft 2020-12
 - CJM v0.3.0 has been dogfooded in a real downstream CMake project:
   [ull-md-engine](https://github.com/lmingzhi618/ull-md-engine)
 - The supported model surface is still a documented practical subset, not full
   C++ grammar support
+
+Next planned lines:
+
+- v0.5.x defines default field mapping and canonical field semantics
+- v0.6 defines runtime backend semantics and begins a simdjson-first backend
+  program
 
 ---
 
@@ -540,10 +546,12 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Discussions](DISCUSSIONS.md)
 - [Roadmap](ROADMAP.md)
 - [JSON Mapping Scope](docs/design/json-mapping-scope.md)
+- [Default Field Mapping](docs/design/default-field-mapping.md)
 - [Generated Model Contract](docs/design/generated-model-contract.md)
 - [Custom Converter Boundaries](docs/design/custom-converters.md)
 - [Backend Strategy](docs/design/backend-strategy.md)
 - [High-Performance JSON Strategy](docs/design/high-performance-json-strategy.md)
+- [Runtime Backend Program](docs/design/runtime-backend-program.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)

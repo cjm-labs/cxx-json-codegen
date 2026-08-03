@@ -327,17 +327,32 @@ metadata is not yet supported.
 
 # Ignored Fields
 
-If Semantic Analysis keeps ignored fields in the Metadata IR with an empty JSON
-name, the generated contract should expose:
+Ignored fields are explicit Metadata IR facts.
+
+Semantic Analysis should not encode ignored-field intent by leaving the JSON name
+empty. It should record that the field is ignored through an explicit field
+metadata property.
+
+The generated contract may expose ignored fields as:
 
 ```text
 ignored = true
 json_name = ""
 ```
 
-The nlohmann backend may skip ignored fields during `to_json` and `from_json`,
-but downstream tools may still want to know that the field was explicitly
-managed and ignored.
+Runtime JSON backends and schema backends skip ignored fields when producing
+JSON-facing surfaces. The contract may still expose them because downstream
+tools may want to distinguish:
+
+```text
+field was explicitly ignored
+```
+
+from:
+
+```text
+field was never part of the managed model surface
+```
 
 ---
 

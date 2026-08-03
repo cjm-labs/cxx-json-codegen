@@ -126,7 +126,7 @@ bool is_supported_schema_type(const metadata::FieldType& type,
 // Return whether a field should be listed in the schema required array.
 bool is_required_schema_field(const metadata::FieldModel& field,
                               const metadata::ProjectModel& project) {
-    if (field.json.name.empty()) {
+    if (field.json.ignored) {
         return false;
     }
     if (!is_supported_schema_type(field.type, project)) {
@@ -284,7 +284,7 @@ void generate_object_definition(std::ostringstream& out,
         << "      \"properties\": {\n";
     bool wrote_property = false;
     for (const auto& field : type.fields) {
-        if (field.json.name.empty()) {
+        if (field.json.ignored) {
             continue;
         }
         if (!is_supported_schema_type(field.type, project)) {
@@ -327,7 +327,7 @@ void generate_type_schema(std::ostringstream& out,
 
     bool wrote_property = false;
     for (const auto& field : type.fields) {
-        if (field.json.name.empty()) {
+        if (field.json.ignored) {
             continue;
         }
         if (!is_supported_schema_type(field.type, project)) {

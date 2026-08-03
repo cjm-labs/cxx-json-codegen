@@ -32,7 +32,7 @@ int main() {
         assert(model.fields[0].cpp_name == std::string_view("city"));
         assert(model.fields[0].type->kind == cjm::contract::type_kind::string);
     }
-    // Verify that field metadata remains inspectable through the public API.
+    // Verify normalized JSON mapping metadata exposed by the contract API.
     {
         const auto& model =
             cjm::contract::model_traits<company::model::User>::model;
@@ -40,9 +40,16 @@ int main() {
                           .field_count == 10);
         assert(model.fields[0].cpp_name == std::string_view("name"));
         assert(model.fields[0].json_name == std::string_view("name"));
-        assert(model.fields[5].omit_empty);
-        assert(model.fields[7].ignored);
+
+        assert(model.fields[5].json_name == std::string_view("nickname"));
+        assert(model.fields[5].cpp_name == std::string_view("nickname"));
+        assert(model.fields[5].omit_empty == true);
+        assert(model.fields[5].ignored == false);
+
         assert(model.fields[7].json_name == std::string_view(""));
+        assert(model.fields[7].cpp_name == std::string_view("internal_id"));
+        assert(model.fields[7].ignored == true);
+        assert(model.fields[7].omit_empty == false);
 
         assert(model.fields[2].type->kind == cjm::contract::type_kind::vector);
         assert(model.fields[2].type->argument_count == 1);

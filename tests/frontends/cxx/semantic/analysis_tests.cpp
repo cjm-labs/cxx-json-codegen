@@ -68,6 +68,14 @@ int main() {
         assert(ignored.ignored);
         assert(!ignored.omit_empty);
 
+        auto default_omit = cjm::semantic::parse_json_field_metadata(
+            R"(json:",omitempty")", location);
+        assert(default_omit.found);
+        assert(default_omit.success);
+        assert(default_omit.json_name == "");
+        assert(default_omit.omit_empty);
+        assert(!default_omit.ignored);
+
         auto unsupported = cjm::semantic::parse_json_field_metadata(
             R"(json:"name,unknown")", location);
         assert(unsupported.found);
@@ -75,6 +83,14 @@ int main() {
         assert(unsupported.diagnostic.location.file == "user.hpp");
         assert(unsupported.diagnostic.message ==
                "unsupported CJM json metadata option: unknown");
+
+        auto omitempty = cjm::semantic::parse_json_field_metadata(
+            R"(json:",omitempty")", location);
+        assert(omitempty.found);
+        assert(omitempty.success);
+        assert(omitempty.json_name == "");
+        assert(omitempty.omit_empty == true);
+        assert(omitempty.ignored == false);
     }
     {
         cjm::parser::SourceFileSyntax file;
@@ -88,11 +104,6 @@ int main() {
         name.type_spelling = "std::string";
 
         cjm::parser::CommentSyntax name_comment;
-        name_comment.text = R"(json:"name")";
-        name_comment.location.file = "user.hpp";
-        name_comment.location.line = 4;
-        name_comment.location.column = 30;
-        name.comments.push_back(name_comment);
         user.fields.push_back(name);
 
         file.declarations.push_back(user);
@@ -142,7 +153,7 @@ int main() {
         nickname.type_spelling = "std::string";
 
         cjm::parser::CommentSyntax nickname_comment;
-        nickname_comment.text = R"(json:"nickname,omitempty")";
+        nickname_comment.text = R"(json:",omitempty")";
         nickname_comment.location.file = "user.hpp";
         nickname_comment.location.line = 6;
         nickname_comment.location.column = 34;
@@ -157,11 +168,14 @@ int main() {
 
         assert(result.success);
         assert(result.project.types.size() == 1);
-        assert(result.project.types[0].fields.size() == 2);
+        assert(result.project.types[0].fields.size() == 3);
         assert(result.project.types[0].fields[0].name == "name");
-        assert(result.project.types[0].fields[1].name == "nickname");
-        assert(result.project.types[0].fields[1].json.name == "nickname");
-        assert(result.project.types[0].fields[1].json.omit_empty);
+        assert(result.project.types[0].fields[1].name == "password");
+        assert(result.project.types[0].fields[1].json.ignored == true);
+        assert(result.project.types[0].fields[1].json.name == "");
+        assert(result.project.types[0].fields[2].name == "nickname");
+        assert(result.project.types[0].fields[2].json.name == "nickname");
+        assert(result.project.types[0].fields[2].json.omit_empty == true);
     }
 
     {
@@ -202,6 +216,38 @@ int main() {
         assert(!result.success);
         assert(result.diagnostics.size() == 1);
         assert(result.diagnostics[0].location.line == 5);
+        assert(result.diagnostics[0].message ==
+               "duplicate JSON field name: name");
+    }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "user.hpp";
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+
+        cjm::parser::FieldSyntax name;
+        name.name = "name";
+        name.type_spelling = "std::string";
+
+        cjm::parser::FieldSyntax display_name;
+        display_name.name = "display_name";
+        display_name.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"name")";
+        comment.location.file = "user.hpp";
+        comment.location.line = 5;
+        comment.location.column = 31;
+        display_name.comments.push_back(comment);
+
+        user.fields.push_back(name);
+        user.fields.push_back(display_name);
+        file.declarations.push_back(user);
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success == false);
+        assert(result.diagnostics.size() == 1);
         assert(result.diagnostics[0].message ==
                "duplicate JSON field name: name");
     }
