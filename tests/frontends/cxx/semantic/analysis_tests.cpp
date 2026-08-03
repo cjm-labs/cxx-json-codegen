@@ -230,6 +230,38 @@ int main() {
         name.name = "name";
         name.type_spelling = "std::string";
 
+        cjm::parser::FieldSyntax display_name;
+        display_name.name = "display_name";
+        display_name.type_spelling = "std::string";
+
+        cjm::parser::CommentSyntax comment;
+        comment.text = R"(json:"name")";
+        comment.location.file = "user.hpp";
+        comment.location.line = 5;
+        comment.location.column = 31;
+        display_name.comments.push_back(comment);
+
+        user.fields.push_back(name);
+        user.fields.push_back(display_name);
+        file.declarations.push_back(user);
+        auto result = cjm::semantic::analyze_source_file(file);
+
+        assert(result.success == false);
+        assert(result.diagnostics.size() == 1);
+        assert(result.diagnostics[0].message ==
+               "duplicate JSON field name: name");
+    }
+    {
+        cjm::parser::SourceFileSyntax file;
+        file.path = "user.hpp";
+
+        cjm::parser::DeclarationSyntax user;
+        user.name = "User";
+
+        cjm::parser::FieldSyntax name;
+        name.name = "name";
+        name.type_spelling = "std::string";
+
         cjm::parser::CommentSyntax invalid_comment;
         invalid_comment.text = "json:name";
         invalid_comment.location.file = "user.hpp";
