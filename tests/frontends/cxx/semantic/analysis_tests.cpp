@@ -157,11 +157,14 @@ int main() {
 
         assert(result.success);
         assert(result.project.types.size() == 1);
-        assert(result.project.types[0].fields.size() == 2);
+        assert(result.project.types[0].fields.size() == 3);
         assert(result.project.types[0].fields[0].name == "name");
-        assert(result.project.types[0].fields[1].name == "nickname");
-        assert(result.project.types[0].fields[1].json.name == "nickname");
-        assert(result.project.types[0].fields[1].json.omit_empty);
+        assert(result.project.types[0].fields[1].name == "password");
+        assert(result.project.types[0].fields[1].json.ignored == true);
+        assert(result.project.types[0].fields[1].json.name == "");
+        assert(result.project.types[0].fields[2].name == "nickname");
+        assert(result.project.types[0].fields[2].json.name == "nickname");
+        assert(result.project.types[0].fields[2].json.omit_empty);
     }
 
     {

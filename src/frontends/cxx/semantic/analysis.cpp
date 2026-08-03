@@ -764,7 +764,21 @@ FieldAnalysisResult analyze_field(
             diagnostics.push_back(metadata_result.diagnostic);
             continue;
         }
+
+        bool type_success = true;
         if (metadata_result.ignored) {
+            metadata::FieldModel ignored_field;
+            ignored_field.name = field_syntax.name;
+            ignored_field.type =
+                analyze_field_type(symbols, namespace_path, field_syntax,
+                                   diagnostics, type_success);
+            ignored_field.json.name = "";
+            ignored_field.json.omit_empty = false;
+            ignored_field.json.ignored = true;
+            ignored_field.source_location =
+                to_metadata_location(field_syntax.location);
+            result.field = ignored_field;
+            result.include = true;
             return result;
         }
 
@@ -778,7 +792,6 @@ FieldAnalysisResult analyze_field(
         metadata::FieldModel field;
         field.name = field_syntax.name;
 
-        bool type_success = true;
         field.type = analyze_field_type(symbols, namespace_path, field_syntax,
                                         diagnostics, type_success);
 
