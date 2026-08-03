@@ -165,6 +165,9 @@ The foundation epic should produce these child issues:
 The runtime semantic profile lives in
 [Runtime JSON Semantic Profile](runtime-json-semantic-profile.md).
 
+The decode error shape lives in
+[Runtime Decode Error Model](runtime-decode-error-model.md).
+
 ## Work Package B - simdjson On-Demand Decode Spike
 
 Prove feasibility with the smallest useful model subset.
@@ -363,6 +366,9 @@ for runtime backends to conform.
 
 Runtime backends should not return unrelated backend-local error strings as the
 only public failure surface.
+
+The normative v0.6 foundation error shape is defined in
+[Runtime Decode Error Model](runtime-decode-error-model.md).
 
 v0.6 should define a minimal backend-neutral error model:
 
