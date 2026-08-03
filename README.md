@@ -559,6 +559,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Runtime Backend Program](docs/design/runtime-backend-program.md)
 - [Runtime JSON Semantic Profile](docs/design/runtime-json-semantic-profile.md)
 - [Runtime Decode Error Model](docs/design/runtime-decode-error-model.md)
+- [Runtime Conformance Fixture Layout](docs/design/runtime-conformance-fixtures.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)

@@ -168,6 +168,9 @@ The runtime semantic profile lives in
 The decode error shape lives in
 [Runtime Decode Error Model](runtime-decode-error-model.md).
 
+The conformance fixture shape lives in
+[Runtime Conformance Fixture Layout](runtime-conformance-fixtures.md).
+
 ## Work Package B - simdjson On-Demand Decode Spike
 
 Prove feasibility with the smallest useful model subset.

@@ -448,7 +448,7 @@ This profile does not add:
 This profile is the input to:
 
 - the [decode error and path model](runtime-decode-error-model.md)
-- the conformance fixture skeleton
+- the [conformance fixture skeleton](runtime-conformance-fixtures.md)
 - static backend selection design
 - simdjson On-Demand decode spike
 

@@ -438,7 +438,7 @@ This error model depends on
 
 It feeds:
 
-- conformance fixture layout
+- [conformance fixture layout](runtime-conformance-fixtures.md)
 - static backend selection diagnostics
 - simdjson On-Demand decode spike
 - future runtime backend promotion criteria
