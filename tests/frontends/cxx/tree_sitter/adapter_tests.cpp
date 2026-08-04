@@ -488,5 +488,23 @@ struct User {
                std::string::npos);
         assert(result.diagnostics[0].location.file == "preprocessor_field.hpp");
     }
+    {
+        const auto source =
+            read_text_file("tests/fixtures/multiline_fields.hpp");
+        const auto result = cjm::frontends::cxx::tree_sitter::parse_source_text(
+            "tests/fixtures/multiline_fields.hpp", source);
+        assert(result.success);
+        assert(result.diagnostics.empty());
+        assert(result.file.declarations.size() == 2);
+        assert(result.file.declarations[0].name == "Address");
+        assert(result.file.declarations[1].name == "Config");
+        assert(result.file.declarations[1].fields.size() == 7);
+        assert(result.file.declarations[1].fields[0].type_spelling.find(
+                   "\n", 0) != std::string::npos);
+        assert(result.file.declarations[1].fields[6].name == "nickname");
+        assert(result.file.declarations[1].fields[6].comments.size() == 1);
+        assert(result.file.declarations[1].fields[6].comments[0].text ==
+               "json:\",omitempty\"");
+    }
     return 0;
 }

@@ -1,7 +1,24 @@
+#include <fstream>
+#include <sstream>
+#include <cassert>
+
+#include "frontends/cxx/parser/parser.hpp"
 #include "frontends/cxx/parser/syntax.hpp"
 #include "frontends/cxx/semantic/analysis.hpp"
 
-#include <cassert>
+namespace {
+// Read a fixture file so Tree-sitter can parse the same source used by parser
+// tests.
+std::string read_text_file(const std::string& path) {
+    std::ifstream input(path);
+    assert(input);
+
+    std::ostringstream buffer;
+    buffer << input.rdbuf();
+    return buffer.str();
+}
+
+} // namespace
 
 int main() {
     {
@@ -940,4 +957,110 @@ int main() {
                "unsupported std::array extent for JSON mapping: N");
         assert(result.diagnostics[0].location.file == "array_values.hpp");
     }
+    {
+        const auto parser_result = cjm::parser::parse_source_file(
+            "tests/fixtures/multiline_fields.hpp");
+        assert(parser_result.success);
+        const auto syntax_result =
+            cjm::semantic::analyze_source_file(parser_result.file);
+        assert(syntax_result.success);
+        assert(syntax_result.diagnostics.empty());
+        assert(syntax_result.project.types.size() == 2);
+        assert(syntax_result.project.types[0].name == "Address");
+        assert(syntax_result.project.types[1].name == "Config");
+        assert(syntax_result.project.types[1].fields.size() == 7);
+        assert(syntax_result.project.types[1].fields[0].name == "names");
+        assert(syntax_result.project.types[1].fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::Vector);
+        assert(syntax_result.project.types[1].fields[0].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[0].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(syntax_result.project.types[1].fields[1].name == "counts");
+        assert(syntax_result.project.types[1].fields[1].type.kind ==
+               cjm::metadata::FieldTypeKind::Map);
+        assert(syntax_result.project.types[1].fields[1].type.arguments.size() ==
+               2);
+        assert(
+            syntax_result.project.types[1].fields[1].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(
+            syntax_result.project.types[1].fields[1].type.arguments[1].kind ==
+            cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(syntax_result.project.types[1].fields[2].name == "maybe_scores");
+        assert(syntax_result.project.types[1].fields[2].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[2].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::Optional);
+        assert(syntax_result.project.types[1]
+                   .fields[2]
+                   .type.arguments[0]
+                   .arguments.size() == 1);
+        assert(syntax_result.project.types[1]
+                   .fields[2]
+                   .type.arguments[0]
+                   .arguments[0]
+                   .kind == cjm::metadata::FieldTypeKind::SignedInteger);
+
+        assert(syntax_result.project.types[1].fields[3].name == "buckets");
+        assert(syntax_result.project.types[1].fields[3].type.kind ==
+               cjm::metadata::FieldTypeKind::Map);
+        assert(syntax_result.project.types[1].fields[3].type.arguments.size() ==
+               2);
+        assert(
+            syntax_result.project.types[1].fields[3].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(
+            syntax_result.project.types[1].fields[3].type.arguments[1].kind ==
+            cjm::metadata::FieldTypeKind::Vector);
+        assert(syntax_result.project.types[1]
+                   .fields[3]
+                   .type.arguments[1]
+                   .arguments.size() == 1);
+        assert(syntax_result.project.types[1]
+                   .fields[3]
+                   .type.arguments[1]
+                   .arguments[0]
+                   .kind == cjm::metadata::FieldTypeKind::SignedInteger);
+
+        assert(syntax_result.project.types[1].fields[4].name == "address");
+        assert(syntax_result.project.types[1].fields[4].type.kind ==
+               cjm::metadata::FieldTypeKind::Optional);
+
+        assert(syntax_result.project.types[1].fields[4].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[4].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::UserDefined);
+        assert(syntax_result.project.types[1]
+                   .fields[4]
+                   .type.arguments[0]
+                   .qualified_name == "company::model::Address");
+
+        assert(syntax_result.project.types[1].fields[5].name == "samples");
+        assert(syntax_result.project.types[1].fields[5].type.kind ==
+               cjm::metadata::FieldTypeKind::Array);
+        assert(syntax_result.project.types[1].fields[5].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[5].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(syntax_result.project.types[1].fields[5].type.array_extent == 4);
+
+        assert(syntax_result.project.types[1].fields[6].name == "nickname");
+        assert(syntax_result.project.types[1].fields[6].type.kind ==
+               cjm::metadata::FieldTypeKind::Optional);
+        assert(syntax_result.project.types[1].fields[6].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[6].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(syntax_result.project.types[1].fields[6].json.name ==
+               "nickname");
+        assert(syntax_result.project.types[1].fields[6].json.omit_empty ==
+               true);
+    }
+    return 0;
 }

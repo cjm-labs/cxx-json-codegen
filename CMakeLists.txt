@@ -208,6 +208,7 @@ if (CJM_BUILD_TESTS)
   add_executable(cjm_semantic_tests tests/frontends/cxx/semantic/analysis_tests.cpp)
   target_link_libraries(cjm_semantic_tests PRIVATE cjm_semantic)
   add_test(NAME cjm_semantic_tests COMMAND cjm_semantic_tests)
+  set_tests_properties(cjm_semantic_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   # practical generated compile tests below...
   add_executable(cjm_practical_generated_compile_tests tests/backends/nlohmann/practical_generated_compile_tests.cpp)
