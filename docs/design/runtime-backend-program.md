@@ -194,6 +194,12 @@ Initial scope:
 
 This spike does not make simdjson an official backend.
 
+The spike boundary lives in
+[simdjson On-Demand Decode Spike](simdjson-ondemand-decode-spike.md).
+The first code slice is intentionally narrower than the full work package: it
+starts with required scalar fields on one root object before expanding toward
+nested object traversal.
+
 ## Work Package C - simdjson Decode MVP
 
 Expand only after the spike is understood.

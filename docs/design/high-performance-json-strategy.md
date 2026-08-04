@@ -292,6 +292,7 @@ The simdjson spike should not begin until CJM has defined:
 - minimal decode error and structured path model
 - conformance fixture skeleton
 - static backend selection shape
+- [simdjson On-Demand decode spike boundary](simdjson-ondemand-decode-spike.md)
 
 simdjson-specific constraints must be documented before promotion:
 
