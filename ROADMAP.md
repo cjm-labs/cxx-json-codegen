@@ -1134,6 +1134,8 @@ Possible future work:
 - Glaze backend promotion
 - yyjson backend promotion
 - DAW JSON Link evaluation
+- binary JSON-like representation experiments only after runtime backend
+  evidence, following [Binary Format Strategy](docs/design/binary-format-strategy.md)
 - YAML backend
 - OpenAPI integration
 - reflection backend
