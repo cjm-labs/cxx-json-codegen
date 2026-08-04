@@ -123,6 +123,12 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_contract_generated_compile_tests PRIVATE cjm_contract)
   add_test(NAME cjm_contract_generated_compile_tests COMMAND cjm_contract_generated_compile_tests)
 
+  add_executable(cjm_recursive_contract_generated_compile_tests tests/backends/contract/recursive_contract_generated_compile_tests.cpp)
+  target_compile_features(cjm_recursive_contract_generated_compile_tests PRIVATE cxx_std_17)
+  target_include_directories(cjm_recursive_contract_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(cjm_recursive_contract_generated_compile_tests PRIVATE cjm_contract)
+  add_test(NAME cjm_recursive_contract_generated_compile_tests COMMAND cjm_recursive_contract_generated_compile_tests)
+
   add_executable(cjm_schema_generator_tests
     tests/backends/schema/schema_generator_tests.cpp
   )

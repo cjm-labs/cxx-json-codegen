@@ -180,6 +180,139 @@ ProjectModel make_basic_user_project() {
     return project;
 } // namespace
 
+// Build a project that exercises recursive contract type descriptors.
+ProjectModel make_recursive_contract_project() {
+    FieldType string_type{
+        FieldTypeKind::String,
+        "std::string",
+        "std::string",
+    };
+
+    FieldType int_type{
+        FieldTypeKind::SignedInteger,
+        "int",
+        "int",
+    };
+
+    FieldType vector_int_type{
+        FieldTypeKind::Vector,
+        "std::vector<int>",
+        "std::vector",
+    };
+    vector_int_type.arguments = {int_type};
+
+    FieldType vector_vector_int_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::vector<int>>",
+        "std::vector",
+    };
+    vector_vector_int_type.arguments = {vector_int_type};
+
+    FieldType vector_string_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::string>",
+        "std::vector",
+    };
+    vector_string_type.arguments = {string_type};
+
+    FieldType optional_vector_string_type{
+        FieldTypeKind::Optional,
+        "std::optional<std::vector<std::string>>",
+        "std::optional",
+    };
+    optional_vector_string_type.arguments = {vector_string_type};
+
+    FieldType map_string_vector_int_type{
+        FieldTypeKind::Map,
+        "std::map<std::string, std::vector<int>>",
+        "std::map",
+    };
+    map_string_vector_int_type.arguments = {string_type, vector_int_type};
+
+    FieldType address_type{
+        FieldTypeKind::UserDefined,
+        "RecursiveAddress",
+        "company::contract_test::RecursiveAddress",
+    };
+
+    FieldType vector_address_type{
+        FieldTypeKind::Vector,
+        "std::vector<RecursiveAddress>",
+        "std::vector",
+    };
+    vector_address_type.arguments = {address_type};
+
+    FieldType optional_address_type{
+        FieldTypeKind::Optional,
+        "std::optional<RecursiveAddress>",
+        "std::optional",
+    };
+    optional_address_type.arguments = {address_type};
+
+    FieldType map_string_address_type{
+        FieldTypeKind::Map,
+        "std::map<std::string, RecursiveAddress>",
+        "std::map",
+    };
+    map_string_address_type.arguments = {string_type, address_type};
+
+    FieldType vector_vector_address_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::vector<RecursiveAddress>>",
+        "std::vector",
+    };
+    vector_vector_address_type.arguments = {vector_address_type};
+
+    TypeModel address;
+    address.name = "RecursiveAddress";
+    address.namespace_path = {"company", "contract_test"};
+    address.qualified_name = "company::contract_test::RecursiveAddress";
+    address.source_location = SourceLocation{"include/recursive_contract.hpp",
+                                             10, 8};
+    address.fields = {
+        FieldModel{
+            "city",
+            string_type,
+            JsonFieldMetadata{"city", false},
+            SourceLocation{"include/recursive_contract.hpp", 11, 17},
+        },
+    };
+
+    TypeModel recursive;
+    recursive.name = "RecursiveContract";
+    recursive.namespace_path = {"company", "contract_test"};
+    recursive.qualified_name = "company::contract_test::RecursiveContract";
+    recursive.source_location =
+        SourceLocation{"include/recursive_contract.hpp", 14, 8};
+    recursive.fields = {
+        FieldModel{"matrix", vector_vector_int_type,
+                   JsonFieldMetadata{"matrix", false},
+                   SourceLocation{"include/recursive_contract.hpp", 15, 35}},
+        FieldModel{"aliases", optional_vector_string_type,
+                   JsonFieldMetadata{"aliases", true},
+                   SourceLocation{"include/recursive_contract.hpp", 16, 45}},
+        FieldModel{"buckets", map_string_vector_int_type,
+                   JsonFieldMetadata{"buckets", false},
+                   SourceLocation{"include/recursive_contract.hpp", 17, 51}},
+        FieldModel{"addresses", vector_address_type,
+                   JsonFieldMetadata{"addresses", false},
+                   SourceLocation{"include/recursive_contract.hpp", 18, 43}},
+        FieldModel{"maybe_address", optional_address_type,
+                   JsonFieldMetadata{"maybe_address", true},
+                   SourceLocation{"include/recursive_contract.hpp", 19, 49}},
+        FieldModel{"address_by_id", map_string_address_type,
+                   JsonFieldMetadata{"address_by_id", false},
+                   SourceLocation{"include/recursive_contract.hpp", 20, 57}},
+        FieldModel{"address_groups", vector_vector_address_type,
+                   JsonFieldMetadata{"address_groups", false},
+                   SourceLocation{"include/recursive_contract.hpp", 21, 56}},
+    };
+
+    ProjectModel project;
+    project.types = {address, recursive};
+    return project;
+}
+
 // Compare contract backend output with a golden file.
 void assert_contract_matches(const ProjectModel& project,
                              const std::string& expected_path,
@@ -204,6 +337,10 @@ int main() {
     assert_contract_matches(make_basic_user_project(),
                             "tests/golden/basic_user.expected.cjm.contract.hpp",
                             "tests/golden/basic_user.actual.cjm.contract.hpp");
+    assert_contract_matches(
+        make_recursive_contract_project(),
+        "tests/golden/recursive_contract.expected.cjm.contract.hpp",
+        "tests/golden/recursive_contract.actual.cjm.contract.hpp");
 
     return 0;
 }
