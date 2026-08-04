@@ -314,6 +314,119 @@ ProjectModel make_practical_schema_project() {
     return project;
 }
 
+// Build a project that exercises recursive schema fragments.
+ProjectModel make_recursive_schema_project() {
+    const FieldType vector_int_type{
+        FieldTypeKind::Vector, "std::vector<int>", "std::vector", {int_type}};
+    const FieldType vector_vector_int_type{FieldTypeKind::Vector,
+                                           "std::vector<std::vector<int>>",
+                                           "std::vector",
+                                           {vector_int_type}};
+    const FieldType vector_string_type{FieldTypeKind::Vector,
+                                       "std::vector<std::string>",
+                                       "std::vector",
+                                       {string_type}};
+    const FieldType optional_vector_string_type{
+        FieldTypeKind::Optional,
+        "std::optional<std::vector<std::string>>",
+        "std::optional",
+        {vector_string_type}};
+    const FieldType map_string_vector_int_type{
+        FieldTypeKind::Map,
+        "std::map<std::string, std::vector<int>>",
+        "std::map",
+        {string_type, vector_int_type}};
+    const FieldType optional_int_type{FieldTypeKind::Optional,
+                                      "std::optional<int>",
+                                      "std::optional",
+                                      {int_type}};
+    FieldType array_optional_int_type{FieldTypeKind::Array,
+                                      "std::array<std::optional<int>, 4>",
+                                      "std::array",
+                                      {optional_int_type}};
+    array_optional_int_type.array_extent = 4;
+
+    const FieldType status_type{
+        FieldTypeKind::Enum,
+        "Status",
+        "company::model::Status",
+    };
+    const FieldType vector_status_type{FieldTypeKind::Vector,
+                                       "std::vector<Status>",
+                                       "std::vector",
+                                       {status_type}};
+    const FieldType optional_status_type{FieldTypeKind::Optional,
+                                         "std::optional<Status>",
+                                         "std::optional",
+                                         {status_type}};
+
+    const FieldType address_type{
+        FieldTypeKind::UserDefined,
+        "Address",
+        "company::model::Address",
+    };
+    const FieldType vector_address_type{FieldTypeKind::Vector,
+                                        "std::vector<Address>",
+                                        "std::vector",
+                                        {address_type}};
+    const FieldType optional_address_type{FieldTypeKind::Optional,
+                                          "std::optional<Address>",
+                                          "std::optional",
+                                          {address_type}};
+    const FieldType map_string_address_type{FieldTypeKind::Map,
+                                            "std::map<std::string, Address>",
+                                            "std::map",
+                                            {string_type, address_type}};
+    const FieldType vector_vector_address_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::vector<Address>>",
+        "std::vector",
+        {vector_address_type}};
+
+    TypeModel recursive;
+    recursive.name = "RecursiveSchema";
+    recursive.qualified_name = "company::model::RecursiveSchema";
+    recursive.fields = {
+        FieldModel{"matrix", vector_vector_int_type,
+                   JsonFieldMetadata{"matrix", false}},
+        FieldModel{"aliases", optional_vector_string_type,
+                   JsonFieldMetadata{"aliases", true}},
+        FieldModel{"buckets", map_string_vector_int_type,
+                   JsonFieldMetadata{"buckets", false}},
+        FieldModel{"optional_samples", array_optional_int_type,
+                   JsonFieldMetadata{"optional_samples", false}},
+        FieldModel{"statuses", vector_status_type,
+                   JsonFieldMetadata{"statuses", false}},
+        FieldModel{"maybe_status", optional_status_type,
+                   JsonFieldMetadata{"maybe_status", true}},
+        FieldModel{"addresses", vector_address_type,
+                   JsonFieldMetadata{"addresses", false}},
+        FieldModel{"maybe_address", optional_address_type,
+                   JsonFieldMetadata{"maybe_address", true}},
+        FieldModel{"address_by_id", map_string_address_type,
+                   JsonFieldMetadata{"address_by_id", false}},
+        FieldModel{"address_groups", vector_vector_address_type,
+                   JsonFieldMetadata{"address_groups", false}},
+    };
+
+    TypeModel address;
+    address.name = "Address";
+    address.qualified_name = "company::model::Address";
+    address.fields = {
+        FieldModel{"city", string_type, JsonFieldMetadata{"city", false}},
+    };
+
+    EnumModel status;
+    status.name = "Status";
+    status.qualified_name = "company::model::Status";
+    status.enumerators = {"Active", "Disabled"};
+
+    ProjectModel project;
+    project.types = {recursive, address};
+    project.enums = {status};
+    return project;
+}
+
 /**
  * Compare schema backend output with one golden schema file.
  *
@@ -351,6 +464,7 @@ int main() {
                           "tests/golden/nested_object.expected.schema.json");
     assert_schema_matches(make_practical_schema_project(),
                           "tests/golden/practical_schema.expected.schema.json");
-
+    assert_schema_matches(make_recursive_schema_project(),
+                          "tests/golden/recursive_schema.expected.schema.json");
     return 0;
 }

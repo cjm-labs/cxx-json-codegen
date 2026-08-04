@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RecursiveSchema",
+  "type": "object",
+  "properties": {
+    "matrix": { "type": "array", "items": { "type": "array", "items": { "type": "integer" } } },
+    "aliases": { "anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }] },
+    "buckets": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "integer" } } },
+    "optional_samples": { "type": "array", "items": { "anyOf": [{ "type": "integer" }, { "type": "null" }] }, "minItems": 4, "maxItems": 4 },
+    "statuses": { "type": "array", "items": { "type": "string", "enum": ["Active", "Disabled"] } },
+    "maybe_status": { "anyOf": [{ "type": "string", "enum": ["Active", "Disabled"] }, { "type": "null" }] },
+    "addresses": { "type": "array", "items": { "$ref": "#/$defs/Address" } },
+    "maybe_address": { "anyOf": [{ "$ref": "#/$defs/Address" }, { "type": "null" }] },
+    "address_by_id": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Address" } },
+    "address_groups": { "type": "array", "items": { "type": "array", "items": { "$ref": "#/$defs/Address" } } }
+  },
+  "required": ["matrix", "buckets", "optional_samples", "statuses", "addresses", "address_by_id", "address_groups"],
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "city": { "type": "string" }
+      },
+      "required": ["city"]
+    }
+  }
+}
