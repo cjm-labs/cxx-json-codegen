@@ -470,6 +470,7 @@ Supported:
 - explicit CMake header registration with `cjm_generate`
 - one or more explicit input headers
 - public `struct` declarations in the supported parser subset
+- supported multiline field declarations in the Tree-sitter frontend subset
 - fields default to their exact C++ field names
 - fields with Go-style `json:"name"` comments when an explicit JSON name is
   needed
@@ -497,11 +498,11 @@ JSON Schema output currently covers:
 - JSON Schema Draft 2020-12 object schemas for supported generated structs
 - scalar and string fields
 - unsigned integers with `minimum: 0`
-- `std::vector<T>` and `std::array<T, N>` when `T` is a supported scalar or
-  string mapping
-- `std::optional<T>` when `T` is a supported scalar or string mapping
+- `std::vector<T>` and `std::array<T, N>` using recursive `schema(T)` for
+  supported `T`
+- `std::optional<T>` using `anyOf` with recursive `schema(T)` and `null`
 - `std::map<std::string, T>` and `std::unordered_map<std::string, T>` when `T`
-  is a supported scalar or string mapping
+  has a supported recursive schema mapping
 - enum and enum class fields as JSON string enums
 - nested generated structs as `$ref` entries with `$defs`
 - `json:"-"` fields omitted from schema properties
@@ -525,11 +526,8 @@ Not yet supported:
 - custom converters
 - custom enum string mapping policies
 - time and datetime mappings
-- schema output for nested containers whose element or value type is another
-  container, optional, enum, or generated struct
 - OpenAPI route generation
 - runtime JSON Schema validation
-- multiline managed field declarations are not yet documented as supported
 - private fields 
 - native JSON backend 
 - install/package distribution
@@ -557,6 +555,10 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Backend Strategy](docs/design/backend-strategy.md)
 - [High-Performance JSON Strategy](docs/design/high-performance-json-strategy.md)
 - [Runtime Backend Program](docs/design/runtime-backend-program.md)
+- [Runtime JSON Semantic Profile](docs/design/runtime-json-semantic-profile.md)
+- [Runtime Decode Error Model](docs/design/runtime-decode-error-model.md)
+- [Runtime Conformance Fixture Layout](docs/design/runtime-conformance-fixtures.md)
+- [Static Backend Selection](docs/design/static-backend-selection.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)

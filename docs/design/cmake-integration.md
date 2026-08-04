@@ -394,7 +394,7 @@ Potential future options:
 cjm_generate(
     TARGET app
     HEADERS user.hpp
-    BACKEND nlohmann
+    JSON_BACKEND nlohmann
     OUTPUT_DIR <dir>
     NAMESPACE my_project
     STRICT
@@ -404,6 +404,46 @@ cjm_generate(
 Options should be added conservatively.
 
 The default experience should remain simple.
+
+## Future Runtime Backend Selection
+
+Runtime JSON backend selection should be static and target one generated C++
+backend at a time:
+
+```cmake
+cjm_generate(
+    TARGET app
+    HEADERS user.hpp
+    JSON_BACKEND simdjson
+)
+```
+
+`JSON_BACKEND` selects generated runtime C++ integration. Artifact requests such
+as `GENERATE_SCHEMAS` remain separate:
+
+```cmake
+cjm_generate(
+    TARGET app
+    HEADERS user.hpp
+    JSON_BACKEND nlohmann
+    GENERATE_SCHEMAS
+)
+```
+
+Backend dependencies and C++ standard requirements should attach only to the
+targets that select that backend. Selecting an experimental backend must not
+raise the language standard or dependency set for default nlohmann users.
+
+When multiple runtime backend outputs are requested for the same input, the
+generated file layout must disambiguate by backend name, such as:
+
+```text
+<build-dir>/generated/cjm/nlohmann/user.cjm.hpp
+<build-dir>/generated/cjm/simdjson/user.cjm.hpp
+```
+
+See [Static Backend Selection](static-backend-selection.md) for the full design
+contract.
 
 ---
 

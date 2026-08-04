@@ -1,7 +1,72 @@
+#include <fstream>
+#include <sstream>
+#include <cassert>
+#include <cstdlib>
+#include <string>
+
+#include "frontends/cxx/parser/parser.hpp"
 #include "frontends/cxx/parser/syntax.hpp"
 #include "frontends/cxx/semantic/analysis.hpp"
 
-#include <cassert>
+namespace {
+// Read a fixture file so Tree-sitter can parse the same source used by parser
+// tests.
+std::string read_text_file(const std::string& path) {
+    std::ifstream input(path);
+    assert(input);
+
+    std::ostringstream buffer;
+    buffer << input.rdbuf();
+    return buffer.str();
+}
+
+// Return the generated model with the requested C++ type name.
+const cjm::metadata::TypeModel&
+find_type(const cjm::metadata::ProjectModel& project, const std::string& name) {
+    for (const auto& type : project.types) {
+        if (type.name == name) {
+            return type;
+        }
+    }
+    assert(false);
+    std::abort();
+}
+
+// Return the generated field with the requested C++ field name.
+const cjm::metadata::FieldModel&
+find_field(const cjm::metadata::TypeModel& type, const std::string& name) {
+    for (const auto& field : type.fields) {
+        if (field.name == name) {
+            return field;
+        }
+    }
+    assert(false);
+    std::abort();
+}
+
+// Assert that a Metadata IR field type has the expected kind.
+void assert_kind(const cjm::metadata::FieldType& type,
+                 cjm::metadata::FieldTypeKind kind) {
+    assert(type.kind == kind);
+}
+
+// Return the only recursive type argument for a one-argument container type.
+const cjm::metadata::FieldType&
+only_argument(const cjm::metadata::FieldType& type) {
+    assert(type.arguments.size() == 1);
+    return type.arguments[0];
+}
+
+// Return the value type for a string-keyed map field.
+const cjm::metadata::FieldType&
+map_string_value(const cjm::metadata::FieldType& type) {
+    assert_kind(type, cjm::metadata::FieldTypeKind::Map);
+    assert(type.arguments.size() == 2);
+    assert_kind(type.arguments[0], cjm::metadata::FieldTypeKind::String);
+    return type.arguments[1];
+}
+
+} // namespace
 
 int main() {
     {
@@ -940,4 +1005,203 @@ int main() {
                "unsupported std::array extent for JSON mapping: N");
         assert(result.diagnostics[0].location.file == "array_values.hpp");
     }
+    {
+        const auto parser_result = cjm::parser::parse_source_file(
+            "tests/fixtures/multiline_fields.hpp");
+        assert(parser_result.success);
+        const auto syntax_result =
+            cjm::semantic::analyze_source_file(parser_result.file);
+        assert(syntax_result.success);
+        assert(syntax_result.diagnostics.empty());
+        assert(syntax_result.project.types.size() == 2);
+        assert(syntax_result.project.types[0].name == "Address");
+        assert(syntax_result.project.types[1].name == "Config");
+        assert(syntax_result.project.types[1].fields.size() == 7);
+        assert(syntax_result.project.types[1].fields[0].name == "names");
+        assert(syntax_result.project.types[1].fields[0].type.kind ==
+               cjm::metadata::FieldTypeKind::Vector);
+        assert(syntax_result.project.types[1].fields[0].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[0].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(syntax_result.project.types[1].fields[1].name == "counts");
+        assert(syntax_result.project.types[1].fields[1].type.kind ==
+               cjm::metadata::FieldTypeKind::Map);
+        assert(syntax_result.project.types[1].fields[1].type.arguments.size() ==
+               2);
+        assert(
+            syntax_result.project.types[1].fields[1].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(
+            syntax_result.project.types[1].fields[1].type.arguments[1].kind ==
+            cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(syntax_result.project.types[1].fields[2].name == "maybe_scores");
+        assert(syntax_result.project.types[1].fields[2].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[2].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::Optional);
+        assert(syntax_result.project.types[1]
+                   .fields[2]
+                   .type.arguments[0]
+                   .arguments.size() == 1);
+        assert(syntax_result.project.types[1]
+                   .fields[2]
+                   .type.arguments[0]
+                   .arguments[0]
+                   .kind == cjm::metadata::FieldTypeKind::SignedInteger);
+
+        assert(syntax_result.project.types[1].fields[3].name == "buckets");
+        assert(syntax_result.project.types[1].fields[3].type.kind ==
+               cjm::metadata::FieldTypeKind::Map);
+        assert(syntax_result.project.types[1].fields[3].type.arguments.size() ==
+               2);
+        assert(
+            syntax_result.project.types[1].fields[3].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(
+            syntax_result.project.types[1].fields[3].type.arguments[1].kind ==
+            cjm::metadata::FieldTypeKind::Vector);
+        assert(syntax_result.project.types[1]
+                   .fields[3]
+                   .type.arguments[1]
+                   .arguments.size() == 1);
+        assert(syntax_result.project.types[1]
+                   .fields[3]
+                   .type.arguments[1]
+                   .arguments[0]
+                   .kind == cjm::metadata::FieldTypeKind::SignedInteger);
+
+        assert(syntax_result.project.types[1].fields[4].name == "address");
+        assert(syntax_result.project.types[1].fields[4].type.kind ==
+               cjm::metadata::FieldTypeKind::Optional);
+
+        assert(syntax_result.project.types[1].fields[4].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[4].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::UserDefined);
+        assert(syntax_result.project.types[1]
+                   .fields[4]
+                   .type.arguments[0]
+                   .qualified_name == "company::model::Address");
+
+        assert(syntax_result.project.types[1].fields[5].name == "samples");
+        assert(syntax_result.project.types[1].fields[5].type.kind ==
+               cjm::metadata::FieldTypeKind::Array);
+        assert(syntax_result.project.types[1].fields[5].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[5].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::SignedInteger);
+        assert(syntax_result.project.types[1].fields[5].type.array_extent == 4);
+
+        assert(syntax_result.project.types[1].fields[6].name == "nickname");
+        assert(syntax_result.project.types[1].fields[6].type.kind ==
+               cjm::metadata::FieldTypeKind::Optional);
+        assert(syntax_result.project.types[1].fields[6].type.arguments.size() ==
+               1);
+        assert(
+            syntax_result.project.types[1].fields[6].type.arguments[0].kind ==
+            cjm::metadata::FieldTypeKind::String);
+        assert(syntax_result.project.types[1].fields[6].json.name ==
+               "nickname");
+        assert(syntax_result.project.types[1].fields[6].json.omit_empty ==
+               true);
+    }
+    {
+        const auto parser_result =
+            cjm::parser::parse_source_file("tests/fixtures/recursive_types.hpp");
+        assert(parser_result.success);
+
+        const auto result =
+            cjm::semantic::analyze_source_file(parser_result.file);
+        assert(result.success);
+        assert(result.diagnostics.empty());
+        assert(result.project.types.size() == 2);
+
+        const auto& recursive_types =
+            find_type(result.project, "RecursiveTypes");
+        assert(recursive_types.fields.size() == 11);
+
+        const auto& matrix = find_field(recursive_types, "matrix").type;
+        assert_kind(matrix, cjm::metadata::FieldTypeKind::Vector);
+        const auto& matrix_row = only_argument(matrix);
+        assert_kind(matrix_row, cjm::metadata::FieldTypeKind::Vector);
+        assert_kind(only_argument(matrix_row),
+                    cjm::metadata::FieldTypeKind::SignedInteger);
+
+        const auto& optional_scores =
+            find_field(recursive_types, "optional_scores").type;
+        assert_kind(optional_scores, cjm::metadata::FieldTypeKind::Vector);
+        const auto& optional_score = only_argument(optional_scores);
+        assert_kind(optional_score, cjm::metadata::FieldTypeKind::Optional);
+        assert_kind(only_argument(optional_score),
+                    cjm::metadata::FieldTypeKind::SignedInteger);
+
+        const auto& aliases = find_field(recursive_types, "aliases").type;
+        assert_kind(aliases, cjm::metadata::FieldTypeKind::Optional);
+        const auto& alias_vector = only_argument(aliases);
+        assert_kind(alias_vector, cjm::metadata::FieldTypeKind::Vector);
+        assert_kind(only_argument(alias_vector),
+                    cjm::metadata::FieldTypeKind::String);
+
+        const auto& bucket_value =
+            map_string_value(find_field(recursive_types, "buckets").type);
+        assert_kind(bucket_value, cjm::metadata::FieldTypeKind::Vector);
+        assert_kind(only_argument(bucket_value),
+                    cjm::metadata::FieldTypeKind::SignedInteger);
+
+        const auto& optional_samples =
+            find_field(recursive_types, "optional_samples").type;
+        assert_kind(optional_samples, cjm::metadata::FieldTypeKind::Array);
+        assert(optional_samples.array_extent == 4);
+        const auto& optional_sample = only_argument(optional_samples);
+        assert_kind(optional_sample, cjm::metadata::FieldTypeKind::Optional);
+        assert_kind(only_argument(optional_sample),
+                    cjm::metadata::FieldTypeKind::SignedInteger);
+
+        const auto& statuses = find_field(recursive_types, "statuses").type;
+        assert_kind(statuses, cjm::metadata::FieldTypeKind::Vector);
+        const auto& status = only_argument(statuses);
+        assert_kind(status, cjm::metadata::FieldTypeKind::Enum);
+        assert(status.qualified_name == "company::model::Status");
+
+        const auto& maybe_status =
+            find_field(recursive_types, "maybe_status").type;
+        assert_kind(maybe_status, cjm::metadata::FieldTypeKind::Optional);
+        const auto& optional_status = only_argument(maybe_status);
+        assert_kind(optional_status, cjm::metadata::FieldTypeKind::Enum);
+        assert(optional_status.qualified_name == "company::model::Status");
+
+        const auto& addresses = find_field(recursive_types, "addresses").type;
+        assert_kind(addresses, cjm::metadata::FieldTypeKind::Vector);
+        const auto& address = only_argument(addresses);
+        assert_kind(address, cjm::metadata::FieldTypeKind::UserDefined);
+        assert(address.qualified_name == "company::model::Address");
+
+        const auto& maybe_address =
+            find_field(recursive_types, "maybe_address").type;
+        assert_kind(maybe_address, cjm::metadata::FieldTypeKind::Optional);
+        const auto& optional_address = only_argument(maybe_address);
+        assert_kind(optional_address, cjm::metadata::FieldTypeKind::UserDefined);
+        assert(optional_address.qualified_name == "company::model::Address");
+
+        const auto& address_by_id_value =
+            map_string_value(find_field(recursive_types, "address_by_id").type);
+        assert_kind(address_by_id_value,
+                    cjm::metadata::FieldTypeKind::UserDefined);
+        assert(address_by_id_value.qualified_name == "company::model::Address");
+
+        const auto& address_groups =
+            find_field(recursive_types, "address_groups").type;
+        assert_kind(address_groups, cjm::metadata::FieldTypeKind::Vector);
+        const auto& address_group = only_argument(address_groups);
+        assert_kind(address_group, cjm::metadata::FieldTypeKind::Vector);
+        const auto& grouped_address = only_argument(address_group);
+        assert_kind(grouped_address, cjm::metadata::FieldTypeKind::UserDefined);
+        assert(grouped_address.qualified_name == "company::model::Address");
+    }
+    return 0;
 }

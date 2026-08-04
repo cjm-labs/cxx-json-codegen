@@ -259,6 +259,133 @@ ProjectModel make_map_user_project() {
     return project;
 }
 
+// Build a project that exercises recursive nlohmann container generation.
+ProjectModel make_recursive_nlohmann_project() {
+    FieldType string_type{FieldTypeKind::String, "std::string", "std::string"};
+    FieldType int_type{FieldTypeKind::SignedInteger, "int", "int"};
+
+    FieldType vector_int_type{
+        FieldTypeKind::Vector,
+        "std::vector<int>",
+        "std::vector",
+    };
+    vector_int_type.arguments = {int_type};
+
+    FieldType vector_vector_int_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::vector<int>>",
+        "std::vector",
+    };
+    vector_vector_int_type.arguments = {vector_int_type};
+
+    FieldType vector_string_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::string>",
+        "std::vector",
+    };
+    vector_string_type.arguments = {string_type};
+
+    FieldType optional_vector_string_type{
+        FieldTypeKind::Optional,
+        "std::optional<std::vector<std::string>>",
+        "std::optional",
+    };
+    optional_vector_string_type.arguments = {vector_string_type};
+
+    FieldType map_string_vector_int_type{
+        FieldTypeKind::Map,
+        "std::map<std::string, std::vector<int>>",
+        "std::map",
+    };
+    map_string_vector_int_type.arguments = {string_type, vector_int_type};
+
+    FieldType array_vector_int_type{
+        FieldTypeKind::Array,
+        "std::array<std::vector<int>, 2>",
+        "std::array",
+    };
+    array_vector_int_type.arguments = {vector_int_type};
+    array_vector_int_type.array_extent = 2;
+
+    FieldType address_type{
+        FieldTypeKind::UserDefined,
+        "Address",
+        "company::model::Address",
+    };
+
+    FieldType vector_address_type{
+        FieldTypeKind::Vector,
+        "std::vector<Address>",
+        "std::vector",
+    };
+    vector_address_type.arguments = {address_type};
+
+    FieldType optional_address_type{
+        FieldTypeKind::Optional,
+        "std::optional<Address>",
+        "std::optional",
+    };
+    optional_address_type.arguments = {address_type};
+
+    FieldType map_string_address_type{
+        FieldTypeKind::Map,
+        "std::map<std::string, Address>",
+        "std::map",
+    };
+    map_string_address_type.arguments = {string_type, address_type};
+
+    FieldType vector_vector_address_type{
+        FieldTypeKind::Vector,
+        "std::vector<std::vector<Address>>",
+        "std::vector",
+    };
+    vector_vector_address_type.arguments = {vector_address_type};
+
+    TypeModel address;
+    address.name = "Address";
+    address.namespace_path = {"company", "model"};
+    address.qualified_name = "company::model::Address";
+    address.fields = {
+        FieldModel{"city", string_type, JsonFieldMetadata{"city", false},
+                   SourceLocation{"include/recursive.hpp", 8, 17}},
+    };
+
+    TypeModel recursive;
+    recursive.name = "RecursiveNlohmann";
+    recursive.namespace_path = {"company", "model"};
+    recursive.qualified_name = "company::model::RecursiveNlohmann";
+    recursive.fields = {
+        FieldModel{"matrix", vector_vector_int_type,
+                   JsonFieldMetadata{"matrix", false},
+                   SourceLocation{"include/recursive.hpp", 12, 35}},
+        FieldModel{"aliases", optional_vector_string_type,
+                   JsonFieldMetadata{"aliases", true},
+                   SourceLocation{"include/recursive.hpp", 14, 45}},
+        FieldModel{"buckets", map_string_vector_int_type,
+                   JsonFieldMetadata{"buckets", false},
+                   SourceLocation{"include/recursive.hpp", 15, 51}},
+        FieldModel{"sample_rows", array_vector_int_type,
+                   JsonFieldMetadata{"sample_rows", false},
+                   SourceLocation{"include/recursive.hpp", 16, 47}},
+        FieldModel{"addresses", vector_address_type,
+                   JsonFieldMetadata{"addresses", false},
+                   SourceLocation{"include/recursive.hpp", 17, 26}},
+        FieldModel{"maybe_address", optional_address_type,
+                   JsonFieldMetadata{"maybe_address", true},
+                   SourceLocation{"include/recursive.hpp", 18, 32}},
+        FieldModel{"address_by_id", map_string_address_type,
+                   JsonFieldMetadata{"address_by_id", false},
+                   SourceLocation{"include/recursive.hpp", 19, 40}},
+        FieldModel{"address_groups", vector_vector_address_type,
+                   JsonFieldMetadata{"address_groups", false},
+                   SourceLocation{"include/recursive.hpp", 20, 40}},
+    };
+
+    ProjectModel project;
+    project.types = {address, recursive};
+    return project;
+}
+
 } // namespace
 
 int main() {
@@ -268,5 +395,9 @@ int main() {
     assert_generated_matches(make_map_user_project(),
                              "tests/golden/map_user.expected.cjm.hpp",
                              "tests/golden/map_user.actual.cjm.hpp");
+    assert_generated_matches(
+        make_recursive_nlohmann_project(),
+        "tests/golden/recursive_nlohmann.expected.cjm.hpp",
+        "tests/golden/recursive_nlohmann.actual.cjm.hpp");
     return 0;
 }

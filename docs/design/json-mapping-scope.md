@@ -557,19 +557,20 @@ Metadata IR explicitly does so first.
 | ignored field | omitted from schema properties |
 | `omitempty` | does not by itself make a field required or optional |
 
-## v0.5 Implementation Boundary
+## Current Implementation Boundary
 
-The v0.5 implementation intentionally covers the practical subset already
+The current implementation intentionally covers the practical subset already
 represented in Metadata IR and golden tests.
 
 Implemented schema mappings:
 
 - scalar and string fields
 - unsigned integer fields with `minimum: 0`
-- `std::vector<T>` and `std::array<T, N>` when `T` is a scalar or string mapping
-- `std::optional<T>` when `T` is a scalar or string mapping
+- `std::vector<T>` and `std::array<T, N>` using recursive `schema(T)` for
+  supported `T`
+- `std::optional<T>` using `anyOf` with recursive `schema(T)` and `null`
 - `std::map<std::string, T>` and `std::unordered_map<std::string, T>` when `T`
-  is a scalar or string mapping
+  has a supported recursive schema mapping
 - enum and enum class fields as JSON string enums
 - direct generated-struct fields through `$ref` and `$defs`
 - ignored fields omitted from `properties`
@@ -577,11 +578,6 @@ Implemented schema mappings:
 
 Not yet implemented:
 
-- schema output for nested containers
-- schema output for containers whose element or value type is an enum or
-  generated struct
-- schema output for `std::optional<T>` when `T` is an enum, generated struct, or
-  container
 - custom enum string policies
 - default-value metadata
 - time or datetime schema formats

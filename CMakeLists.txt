@@ -123,6 +123,12 @@ if (CJM_BUILD_TESTS)
   target_link_libraries(cjm_contract_generated_compile_tests PRIVATE cjm_contract)
   add_test(NAME cjm_contract_generated_compile_tests COMMAND cjm_contract_generated_compile_tests)
 
+  add_executable(cjm_recursive_contract_generated_compile_tests tests/backends/contract/recursive_contract_generated_compile_tests.cpp)
+  target_compile_features(cjm_recursive_contract_generated_compile_tests PRIVATE cxx_std_17)
+  target_include_directories(cjm_recursive_contract_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(cjm_recursive_contract_generated_compile_tests PRIVATE cjm_contract)
+  add_test(NAME cjm_recursive_contract_generated_compile_tests COMMAND cjm_recursive_contract_generated_compile_tests)
+
   add_executable(cjm_schema_generator_tests
     tests/backends/schema/schema_generator_tests.cpp
   )
@@ -208,6 +214,7 @@ if (CJM_BUILD_TESTS)
   add_executable(cjm_semantic_tests tests/frontends/cxx/semantic/analysis_tests.cpp)
   target_link_libraries(cjm_semantic_tests PRIVATE cjm_semantic)
   add_test(NAME cjm_semantic_tests COMMAND cjm_semantic_tests)
+  set_tests_properties(cjm_semantic_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   # practical generated compile tests below...
   add_executable(cjm_practical_generated_compile_tests tests/backends/nlohmann/practical_generated_compile_tests.cpp)
@@ -221,6 +228,12 @@ if (CJM_BUILD_TESTS)
   target_include_directories(cjm_map_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_link_libraries(cjm_map_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json cjm_contract)
   add_test(NAME cjm_map_generated_compile_tests COMMAND cjm_map_generated_compile_tests)
+
+  add_executable(cjm_recursive_generated_compile_tests tests/backends/nlohmann/recursive_generated_compile_tests.cpp)
+  target_compile_features(cjm_recursive_generated_compile_tests PRIVATE cxx_std_17)
+  target_include_directories(cjm_recursive_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  target_link_libraries(cjm_recursive_generated_compile_tests PRIVATE nlohmann_json::nlohmann_json)
+  add_test(NAME cjm_recursive_generated_compile_tests COMMAND cjm_recursive_generated_compile_tests)
 
   add_executable(cjm_fixed_width_generated_compile_tests tests/backends/nlohmann/fixed_width_generated_compile_tests.cpp)
   target_compile_features(cjm_fixed_width_generated_compile_tests PRIVATE cxx_std_17)

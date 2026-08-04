@@ -902,6 +902,9 @@ Success criteria:
 - conformance fixtures describe shared behavior before backend-specific claims
 - no backend is promoted based on performance alone
 
+The static backend selection contract lives in
+[docs/design/static-backend-selection.md](docs/design/static-backend-selection.md).
+
 ---
 
 # v0.7 - Reliability

@@ -159,8 +159,21 @@ The foundation epic should produce these child issues:
 1. docs(runtime): define runtime JSON semantic profile
 2. docs(runtime): define decode error and path model
 3. test(runtime): sketch conformance fixture layout
-4. docs(runtime): define static backend selection shape
+4. test(mapping): verify multiline declarations and recursive type closure
+5. docs(runtime): define static backend selection shape
 ```
+
+The runtime semantic profile lives in
+[Runtime JSON Semantic Profile](runtime-json-semantic-profile.md).
+
+The decode error shape lives in
+[Runtime Decode Error Model](runtime-decode-error-model.md).
+
+The conformance fixture shape lives in
+[Runtime Conformance Fixture Layout](runtime-conformance-fixtures.md).
+
+The static backend selection shape lives in
+[Static Backend Selection](static-backend-selection.md).
 
 ## Work Package B - simdjson On-Demand Decode Spike
 
@@ -284,6 +297,9 @@ Performance alone is insufficient.
 
 The first runtime backend must not invent backend-local semantics.
 
+The normative v0.6 foundation profile is defined in
+[Runtime JSON Semantic Profile](runtime-json-semantic-profile.md).
+
 Before simdjson reaches spike status, CJM should define the minimum portable
 runtime profile for:
 
@@ -357,6 +373,9 @@ for runtime backends to conform.
 
 Runtime backends should not return unrelated backend-local error strings as the
 only public failure surface.
+
+The normative v0.6 foundation error shape is defined in
+[Runtime Decode Error Model](runtime-decode-error-model.md).
 
 v0.6 should define a minimal backend-neutral error model:
 
