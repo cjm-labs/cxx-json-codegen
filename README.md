@@ -445,6 +445,7 @@ Current status:
 
 - v0.5.0 completed the first JSON Schema backend
 - v0.5.1 completed default field mapping and canonical field semantics
+- v0.5.2 completed recursive schema coverage and the v0.6 runtime foundation
 - CJM has a parser -> semantic analysis -> Metadata IR pipeline with
   `nlohmann/json`, generated model-contract, and JSON Schema backends
 - First official C++ runtime integration backend: `nlohmann/json`
@@ -562,6 +563,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
+- [v0.5.2 Release Notes](docs/releases/v0.5.2.md)
 - [v0.5.1 Release Notes](docs/releases/v0.5.1.md)
 - [v0.5.0 Release Notes](docs/releases/v0.5.0.md)
 - [v0.4.0 Release Notes](docs/releases/v0.4.0.md)
