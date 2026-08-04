@@ -133,7 +133,7 @@ Example future API:
 cjm_generate(
     TARGET app
     HEADERS user.hpp
-    BACKEND nlohmann
+    JSON_BACKEND nlohmann
 )
 ```
 
@@ -143,12 +143,18 @@ or:
 cjm_generate(
     TARGET app
     HEADERS user.hpp
-    BACKEND simdjson
+    JSON_BACKEND simdjson
 )
 ```
 
-The exact backend option names are not frozen yet. v0.6 should define the
-selection shape before promoting additional runtime backends.
+`JSON_BACKEND` is the preferred future shape because runtime JSON backend
+selection is different from artifact backend requests such as JSON Schema
+generation. v0.6 defines this static selection policy before promoting
+additional runtime backends.
+
+See [Static Backend Selection](static-backend-selection.md) for the CLI/CMake
+selection contract, dependency isolation rules, generated artifact identity, and
+unsupported capability diagnostics.
 
 ---
 

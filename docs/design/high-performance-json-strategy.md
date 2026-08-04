@@ -385,6 +385,9 @@ The exact spelling is future work, but the policy is not: backend-specific
 dependencies, generated filenames, C++ standard requirements, and unsupported
 capabilities must be resolved before generated code is compiled.
 
+The detailed static selection contract lives in
+[Static Backend Selection](static-backend-selection.md).
+
 ---
 
 # Possible cjm-json Development Sequence
@@ -650,7 +653,7 @@ v0.6 may then begin the runtime backend program:
 - minimal decode error and structured path model
 - backend taxonomy and capability matrix
 - shared conformance fixture skeleton
-- static backend selection design
+- [static backend selection design](static-backend-selection.md)
 - simdjson On-Demand decode spike
 - simdjson builder / encode spike
 - simdjson experimental backend if evidence supports promotion

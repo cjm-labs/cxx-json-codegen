@@ -299,6 +299,6 @@ This fixture layout depends on:
 
 It feeds:
 
-- static backend selection design
+- [Static Backend Selection](static-backend-selection.md)
 - simdjson On-Demand decode spike
 - future backend promotion criteria

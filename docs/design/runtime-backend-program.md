@@ -159,7 +159,8 @@ The foundation epic should produce these child issues:
 1. docs(runtime): define runtime JSON semantic profile
 2. docs(runtime): define decode error and path model
 3. test(runtime): sketch conformance fixture layout
-4. docs(runtime): define static backend selection shape
+4. test(mapping): verify multiline declarations and recursive type closure
+5. docs(runtime): define static backend selection shape
 ```
 
 The runtime semantic profile lives in
@@ -170,6 +171,9 @@ The decode error shape lives in
 
 The conformance fixture shape lives in
 [Runtime Conformance Fixture Layout](runtime-conformance-fixtures.md).
+
+The static backend selection shape lives in
+[Static Backend Selection](static-backend-selection.md).
 
 ## Work Package B - simdjson On-Demand Decode Spike
 

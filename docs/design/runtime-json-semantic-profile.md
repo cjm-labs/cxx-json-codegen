@@ -449,7 +449,7 @@ This profile is the input to:
 
 - the [decode error and path model](runtime-decode-error-model.md)
 - the [conformance fixture skeleton](runtime-conformance-fixtures.md)
-- static backend selection design
+- [static backend selection design](static-backend-selection.md)
 - simdjson On-Demand decode spike
 
 Future milestones may expand the profile, but they should do so by updating CJM
