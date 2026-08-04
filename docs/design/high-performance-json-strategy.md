@@ -690,6 +690,11 @@ CJM v2.0 may still succeed with first-class C and C++ frontends, shared
 Metadata IR, language-neutral schema output, and explicit backend performance
 choices even if cjm-json remains experimental.
 
+Future binary representation experiments are separate from the active JSON
+runtime backend program. See [Binary Format Strategy](binary-format-strategy.md)
+for the distinction between binary JSON-like formats, tagged wire protocols,
+borrowed view semantics, and serialized layouts.
+
 ---
 
 # Product Messaging Boundary

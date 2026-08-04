@@ -343,6 +343,7 @@ This design depends on:
 
 - [Backend Strategy](backend-strategy.md)
 - [High-Performance JSON Strategy](high-performance-json-strategy.md)
+- [Binary Format Strategy](binary-format-strategy.md)
 - [Runtime Backend Program](runtime-backend-program.md)
 - [Runtime JSON Semantic Profile](runtime-json-semantic-profile.md)
 - [Runtime Decode Error Model](runtime-decode-error-model.md)

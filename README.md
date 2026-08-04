@@ -555,6 +555,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Custom Converter Boundaries](docs/design/custom-converters.md)
 - [Backend Strategy](docs/design/backend-strategy.md)
 - [High-Performance JSON Strategy](docs/design/high-performance-json-strategy.md)
+- [Binary Format Strategy](docs/design/binary-format-strategy.md)
 - [Runtime Backend Program](docs/design/runtime-backend-program.md)
 - [Runtime JSON Semantic Profile](docs/design/runtime-json-semantic-profile.md)
 - [Runtime Decode Error Model](docs/design/runtime-decode-error-model.md)
