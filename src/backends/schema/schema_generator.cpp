@@ -86,11 +86,8 @@ bool is_supported_enum_schema_type(
 }
 
 /**
- * Return whether the schema backend can emit a schema for this validated
- * field type in the current v0.5 slice.
- *
- * This is backend capability gating. It does not validate C++ syntax or
- * decide whether the field type is semantically supported by CJM.
+ * Return whether the schema backend can emit a schema fragment for this
+ * Metadata IR type.
  */
 bool is_supported_schema_type(const metadata::FieldType& type,
                               const metadata::ProjectModel& project) {
@@ -100,19 +97,17 @@ bool is_supported_schema_type(const metadata::FieldType& type,
 
     if (type.kind == metadata::FieldTypeKind::Vector ||
         type.kind == metadata::FieldTypeKind::Array) {
-        if (type.arguments.size() == 1 &&
-            is_supported_simple_schema_type(type.arguments[0])) {
-            return true;
-        }
+        return type.arguments.size() == 1 &&
+               is_supported_schema_type(type.arguments[0], project);
     }
     if (type.kind == metadata::FieldTypeKind::Optional) {
         return type.arguments.size() == 1 &&
-               is_supported_simple_schema_type(type.arguments[0]);
+               is_supported_schema_type(type.arguments[0], project);
     }
     if (type.kind == metadata::FieldTypeKind::Map) {
         return type.arguments.size() == 2 &&
                type.arguments[0].kind == metadata::FieldTypeKind::String &&
-               is_supported_simple_schema_type(type.arguments[1]);
+               is_supported_schema_type(type.arguments[1], project);
     }
     if (type.kind == metadata::FieldTypeKind::Enum) {
         return is_supported_enum_schema_type(type, project.enums);
@@ -138,47 +133,28 @@ bool is_required_schema_field(const metadata::FieldModel& field,
     return true;
 }
 
-// Generate the JSON Schema type array for an optional simple field type.
+// Generate a nullable JSON Schema fragment for one optional field type.
 void generate_optional_schema_fragment(std::ostringstream& out,
-                                       const metadata::FieldType& type) {
+                                       const metadata::FieldType& type,
+                                       const metadata::ProjectModel& project) {
     if (type.arguments.size() == 0) {
         return;
     }
-    const auto& kind = type.arguments[0].kind;
-    if (kind == metadata::FieldTypeKind::Bool) {
-        out << "{ \"type\": [\"boolean\", \"null\"] }";
-        return;
-    }
-    if (kind == metadata::FieldTypeKind::SignedInteger) {
-        out << "{ \"type\": [\"integer\", \"null\"] }";
-        return;
-    }
-    if (kind == metadata::FieldTypeKind::UnsignedInteger) {
-        out << "{ \"type\": [\"integer\", \"null\"], \"minimum\": 0 }";
-        return;
-    }
-    if (kind == metadata::FieldTypeKind::FloatingPoint) {
-        out << "{ \"type\": [\"number\", \"null\"] }";
-        return;
-    }
-    if (kind == metadata::FieldTypeKind::String) {
-        out << "{ \"type\": [\"string\", \"null\"] }";
-        return;
-    }
+    out << "{ \"anyOf\": [";
+    generate_schema_fragment(out, type.arguments[0], project);
+    out << ", { \"type\": \"null\" }] }";
 }
 
-// Generate the JSON Schema fragment for a string-keyed map field.
+// Generate a JSON Schema object fragment for a string-keyed map field.
 void generate_map_schema_fragment(std::ostringstream& out,
                                   const metadata::FieldType& type,
                                   const metadata::ProjectModel& project) {
     if (type.arguments.size() != 2) {
         return;
     }
-    if (!is_supported_simple_schema_type(type.arguments[0]) ||
-        (!is_supported_simple_schema_type(type.arguments[1]))) {
+    if (type.arguments[0].kind != metadata::FieldTypeKind::String) {
         return;
     }
-    const auto& val_kind = type.arguments[1].kind;
     out << "{ \"type\": \"object\", \"additionalProperties\": ";
     generate_schema_fragment(out, type.arguments[1], project);
     out << " }";
@@ -205,19 +181,7 @@ void generate_object_ref_schema_fragment(std::ostringstream& out,
     out << "{ \"$ref\": \"#/$defs/" << type.name << "\" }";
 }
 
-/**
- * Generate the JSON Schema fragment for one validated field type.
- *
- * Inputs:
- *     type - Metadata IR field type already validated by Semantic Analysis.
- *
- * Output:
- *     Writes a JSON Schema object fragment such `{"type": "string"}` or
- *     `{"type": "array", "items": { "type": "integer" } }`.
- *
- * This function maps IR facts to schema output. It must not parse C++ type
- * spellings or inspect parser-specific data.
- */
+// Generate the JSON Schema fragment for one supported Metadata IR field type.
 void generate_schema_fragment(std::ostringstream& out,
                               const metadata::FieldType& type,
                               const metadata::ProjectModel& project) {
@@ -227,28 +191,30 @@ void generate_schema_fragment(std::ostringstream& out,
     }
 
     if (type.kind == metadata::FieldTypeKind::Vector) {
+        if (type.arguments.size() != 1) {
+            return;
+        }
         out << "{ \"type\": \"array\", \"items\": ";
 
-        for (const auto& arg : type.arguments) {
-            generate_schema_fragment(out, arg, project);
-        }
+        generate_schema_fragment(out, type.arguments[0], project);
         out << " }";
 
         return;
     }
 
     if (type.kind == metadata::FieldTypeKind::Array) {
-        out << "{ \"type\": \"array\", \"items\": ";
-        for (const auto& arg : type.arguments) {
-            generate_schema_fragment(out, arg, project);
+        if (type.arguments.size() != 1) {
+            return;
         }
+        out << "{ \"type\": \"array\", \"items\": ";
+        generate_schema_fragment(out, type.arguments[0], project);
         out << ", \"minItems\": " << type.array_extent
             << ", \"maxItems\": " << type.array_extent << " }";
         return;
     }
 
     if (type.kind == metadata::FieldTypeKind::Optional) {
-        generate_optional_schema_fragment(out, type);
+        generate_optional_schema_fragment(out, type, project);
         return;
     }
     if (type.kind == metadata::FieldTypeKind::Map) {

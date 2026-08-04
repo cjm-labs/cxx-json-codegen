@@ -3,8 +3,8 @@
   "title": "OptionalValues",
   "type": "object",
   "properties": {
-    "nickname": { "type": ["string", "null"] },
-    "score": { "type": ["integer", "null"] },
+    "nickname": { "anyOf": [{ "type": "string" }, { "type": "null" }] },
+    "score": { "anyOf": [{ "type": "integer" }, { "type": "null" }] },
     "enabled": { "type": "boolean" }
   },
   "required": ["enabled"]
