@@ -1,6 +1,7 @@
 #include "backends/simdjson/cpp_generator.hpp"
 
 #include <cassert>
+#include <cstdlib>
 #include <string>
 
 namespace {
@@ -37,9 +38,8 @@ ProjectModel make_scalar_project() {
                             "std::int32_t"),
         make_required_field("limit", FieldTypeKind::UnsignedInteger,
                             "std::uint32_t"),
-        make_required_field("ratio", FieldTypeKind::UnsignedInteger, "double"),
-        make_required_field("name", FieldTypeKind::UnsignedInteger,
-                            "std::string"),
+        make_required_field("ratio", FieldTypeKind::FloatingPoint, "double"),
+        make_required_field("name", FieldTypeKind::String, "std::string"),
     };
 
     ProjectModel project;
@@ -85,6 +85,7 @@ int main() {
         cjm::generator::simdjson::generate_header(make_vector_project());
     assert(!vector_result.success);
     assert(vector_result.header.empty());
+    assert(vector_result.error.find("tags") != std::string::npos);
     assert(vector_result.error.find("std::vector<std::string>") !=
            std::string::npos);
     return 0;
