@@ -83,6 +83,13 @@ target_link_libraries(cjm_generator PUBLIC cjm_metadata)
 target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_generator PUBLIC cxx_std_17)
 
+if (CJM_ENABLE_SIMDJSON)
+  add_library(cjm_simdjson_generator src/backends/simdjson/cpp_generator.cpp)
+  target_link_libraries(cjm_simdjson_generator PUBLIC cjm_metadata)
+  target_include_directories(cjm_simdjson_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  target_compile_features(cjm_simdjson_generator PUBLIC cxx_std_17)
+endif()
+
 # parser library
 add_library(cjm_parser src/frontends/cxx/parser/parser.cpp)
 target_include_directories(cjm_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -107,6 +114,10 @@ if (CJM_BUILD_TESTS)
     target_compile_features(cjm_simdjson_dependency_smoke_tests PRIVATE cxx_std_17)
     target_link_libraries(cjm_simdjson_dependency_smoke_tests PRIVATE simdjson::simdjson)
     add_test(NAME cjm_simdjson_dependency_smoke_tests COMMAND cjm_simdjson_dependency_smoke_tests)
+
+    add_executable(cjm_simdjson_generator_tests tests/backends/simdjson/cpp_generator_tests.cpp)
+    target_link_libraries(cjm_simdjson_generator_tests PRIVATE cjm_simdjson_generator)
+    add_test(NAME cjm_simdjson_generator_tests COMMAND cjm_simdjson_generator_tests)
   endif()
 
   # METADATA tests below...
