@@ -1,0 +1,10 @@
+{
+  "result": "success",
+  "value": {
+    "enabled": true,
+    "count": -7,
+    "limit": 42,
+    "ratio": 3.5,
+    "name": "Ada"
+  }
+}
