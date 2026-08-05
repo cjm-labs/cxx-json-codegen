@@ -1,0 +1,7 @@
+{
+  "result": "error",
+  "error": {
+    "code": "trailing_content",
+    "path": []
+  }
+}

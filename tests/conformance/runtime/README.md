@@ -10,7 +10,7 @@ Current status:
 
 ```text
 runner: not implemented
-cases: not populated
+cases: five scalar decode spike fixtures populated
 backend dependencies: none
 ```
 
