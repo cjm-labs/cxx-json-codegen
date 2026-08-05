@@ -20,6 +20,12 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CJM_BUILD_TESTS "Build CJM tests" ON)
+option(CJM_ENABLE_SIMDJSON "Enable the experimental simdjson backend dependency" OFF)
+
+if (CJM_ENABLE_SIMDJSON)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMSimdjson.cmake)
+  cjm_add_simdjson_dependency()
+endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitter.cmake)
@@ -95,6 +101,13 @@ target_link_libraries(cjm PRIVATE cjm_generator cjm_schema_generator cjm_semanti
 
 if (CJM_BUILD_TESTS)
   enable_testing()
+
+  if (CJM_ENABLE_SIMDJSON)
+    add_executable(cjm_simdjson_dependency_smoke_tests tests/backends/simdjson/dependency_smoke_tests.cpp)
+    target_compile_features(cjm_simdjson_dependency_smoke_tests PRIVATE cxx_std_17)
+    target_link_libraries(cjm_simdjson_dependency_smoke_tests PRIVATE simdjson::simdjson)
+    add_test(NAME cjm_simdjson_dependency_smoke_tests COMMAND cjm_simdjson_dependency_smoke_tests)
+  endif()
 
   # METADATA tests below...
   add_executable(cjm_metadata_tests
