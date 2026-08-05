@@ -1,0 +1,14 @@
+{
+  "result": "error",
+  "error": {
+    "code": "expected_integer",
+    "path": [
+      {
+        "kind": "field",
+        "name": "count"
+      }
+    ],
+    "expected": "integer",
+    "actual": "string"
+  }
+}
