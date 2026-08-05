@@ -25,21 +25,29 @@ FieldModel make_required_field(const std::string& name, FieldTypeKind kind,
     };
 }
 
-// Build the required scalar model accepted by the initial simdjson spike.
-ProjectModel make_scalar_project() {
+ProjectModel make_bool_project() {
     TypeModel type;
-    type.name = "ScalarValues";
-    type.qualified_name = "ScalarValues";
+    type.name = "BoolValues";
+    type.qualified_name = "BoolValues";
     type.source_location =
-        SourceLocation{"tests/fixtures/scalar_values.hpp", 1, 1};
+        SourceLocation{"tests/fixtures/bool_values.hpp", 1, 1};
     type.fields = {
         make_required_field("enabled", FieldTypeKind::Bool, "bool"),
+    };
+
+    ProjectModel project;
+    project.types = {type};
+    return project;
+}
+
+// Build one model containing a scalar kind not implemented yet.
+ProjectModel make_signed_integer_project() {
+    TypeModel type;
+    type.name = "SignedValues";
+    type.qualified_name = "SignedValues";
+    type.fields = {
         make_required_field("count", FieldTypeKind::SignedInteger,
                             "std::int32_t"),
-        make_required_field("limit", FieldTypeKind::UnsignedInteger,
-                            "std::uint32_t"),
-        make_required_field("ratio", FieldTypeKind::FloatingPoint, "double"),
-        make_required_field("name", FieldTypeKind::String, "std::string"),
     };
 
     ProjectModel project;
@@ -73,14 +81,34 @@ ProjectModel make_vector_project() {
 } // namespace
 
 int main() {
-    const auto scalar_result =
-        cjm::generator::simdjson::generate_header(make_scalar_project());
+    const auto bool_result =
+        cjm::generator::simdjson::generate_header(make_bool_project());
 
-    assert(scalar_result.success);
-    assert(scalar_result.error.empty());
-    assert(!scalar_result.header.empty());
-    assert(scalar_result.header.find("#include <simdjson.h>") !=
+    assert(bool_result.success);
+    assert(bool_result.error.empty());
+    assert(!bool_result.header.empty());
+    assert(bool_result.header.find("#include <simdjson.h>") !=
            std::string::npos);
+    assert(bool_result.header.find(
+               "std::optional<BoolValues> cjm_decode_simdjson_BoolValues(") !=
+           std::string::npos);
+    assert(bool_result.header.find("bool has_enabled = false;") !=
+           std::string::npos);
+    assert(bool_result.header.find("for (auto field : object)") !=
+           std::string::npos);
+    assert(bool_result.header.find("field.unescaped_key().get(key)") !=
+           std::string::npos);
+    assert(bool_result.header.find(
+               "field.value().get_bool().get(value.enabled)") !=
+           std::string::npos);
+
+    const auto signed_result = cjm::generator::simdjson::generate_header(
+        make_signed_integer_project());
+    assert(!signed_result.success);
+    assert(signed_result.header.empty());
+    assert(signed_result.error.find("count") != std::string::npos);
+    assert(signed_result.error.find("std::int32_t") != std::string::npos);
+
     const auto vector_result =
         cjm::generator::simdjson::generate_header(make_vector_project());
     assert(!vector_result.success);
