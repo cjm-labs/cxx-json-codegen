@@ -34,6 +34,11 @@ This spike is not a complete JSON backend.
 
 # External simdjson Constraints
 
+The selected research dependency is simdjson v4.6.4. The generated spike stays
+on C++17 and uses documented On-Demand APIs exposed through `simdjson.h`.
+Pinning this release makes the experiment reproducible; it does not freeze a
+future CJM compatibility window.
+
 The simdjson On-Demand API is not a compact DOM. It avoids materializing a full
 JSON tree and parses values as they are used.
 
@@ -50,8 +55,9 @@ The spike must design around these constraints:
 
 References:
 
-- [simdjson On-Demand basics](https://simdjson.org/api/0.8.0/md_doc_ondemand.html)
-- [simdjson On-Demand parser reference](https://simdjson.github.io/simdjson/classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1parser.html)
+- [simdjson v4.6.4 basics](https://github.com/simdjson/simdjson/blob/v4.6.4/doc/basics.md)
+- [simdjson v4.6.4 builder](https://github.com/simdjson/simdjson/blob/v4.6.4/doc/builder.md)
+- [simdjson v4.6.4 release](https://github.com/simdjson/simdjson/releases/tag/v4.6.4)
 
 These are runtime constraints. They must not leak into Metadata IR.
 
@@ -95,8 +101,6 @@ Supported field kinds:
 Bool
 SignedInteger
 UnsignedInteger
-FloatingPoint
-String
 ```
 
 Rules:
@@ -105,13 +109,14 @@ Rules:
 - the JSON root must be an object
 - each supported field is decoded from its effective JSON field name
 - ignored fields are skipped because they are already represented in Metadata IR
-- strings decode into owned `std::string`
 - scalar type aliases may work only when Semantic Analysis has already
   normalized them into a supported scalar `FieldTypeKind`
 
 Unsupported in this spike:
 
 - optional fields
+- floating-point fields
+- strings
 - arrays
 - vectors
 - maps
@@ -126,6 +131,22 @@ Unsupported in this spike:
 - round trip
 
 Unsupported types must fail at generation time when practical.
+
+---
+
+# Native simdjson Comparison Boundary
+
+simdjson v4.6.4 documents native custom-type paths, including pre-C++20
+`get<T>` specialization, C++20 `tag_invoke`, experimental C++20
+`simdjson::from`, and optional C++26 static reflection.
+
+The current scalar spike does not implement or benchmark these paths. It proves
+only that Metadata IR can drive explicit C++17 On-Demand control flow and
+portable CJM error translation.
+
+Before generated-codec performance or product-value claims, a later vertical
+slice must compare the generated path with the relevant native paths and label
+their C++ standard, compiler, semantic options, and API stability.
 
 ---
 
@@ -223,13 +244,8 @@ missing required field
     missing_required_field
     path: field("<json-name>")
 
-null for a non-optional scalar field
-    null_for_non_nullable
-    path: field("<json-name>")
-
 wrong scalar JSON kind
-    expected_bool, expected_integer, expected_unsigned_integer,
-    expected_number, or expected_string
+    expected_bool, expected_integer, or expected_unsigned_integer
     path: field("<json-name>")
 
 integer outside supported range
@@ -245,6 +261,11 @@ trailing non-whitespace content
     path: []
 ```
 
+Explicit `null` must fail for these required non-optional fields. A dedicated
+`null_for_non_nullable` result is part of the shared runtime profile but is not
+a required conformance claim for this limited scalar spike. It must be added
+before a broader generated-codec backend claims profile conformance.
+
 Backend-local simdjson status codes or diagnostic strings may appear in
 `runtime_detail`. Tests should not depend on exact simdjson diagnostic text.
 
@@ -252,7 +273,10 @@ Backend-local simdjson status codes or diagnostic strings may appear in
 
 # String Policy
 
-The first spike decodes JSON strings into owned `std::string`.
+The current scalar spike does not decode string fields.
+
+When string decode enters the next generated-codec vertical slice, its initial
+policy is owned `std::string`.
 
 Borrowed string views are out of scope.
 
@@ -262,7 +286,7 @@ Reasons:
 - extracted views can depend on input or runtime-managed storage
 - borrowed lifetime rules belong to a later explicit ownership design
 
-This spike may measure or record copy costs later, but it must not claim
+That later slice may measure or record copy costs, but it must not claim
 zero-copy string decode.
 
 ---
@@ -351,10 +375,12 @@ The first code slice must keep these risks visible:
 This boundary is complete when:
 
 - the first supported scalar subset is explicit
+- the selected simdjson release and documented API surface are explicit
 - unsupported types and capabilities are explicit
 - input, parser, document, and output lifetimes are named
 - output guarantee is selected
 - unknown-field and duplicate-key policy are not left implicit
 - error mapping targets CJM's portable decode error model
 - conformance fixture relationship is clear
+- native typed-conversion paths are identified as future comparison baselines
 - no user-facing simdjson support is claimed yet

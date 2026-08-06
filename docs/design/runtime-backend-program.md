@@ -1,6 +1,6 @@
 # Runtime Backend Program
 
-This document records the agreed post-v0.5.1 backend plan.
+This document records the agreed post-v0.5 runtime backend plan.
 
 The plan is intentionally not a promise to implement every candidate backend.
 It defines the order in which CJM should recover ownership of runtime semantics,
@@ -28,6 +28,11 @@ Metadata IR
 v0.5.1 then froze default field mapping and canonical field participation
 semantics for future runtime backends.
 
+v0.5.2 completed recursive schema coverage and documented the runtime semantic,
+decode-error, conformance-fixture, and static-selection foundation. That
+foundation defines the experiment boundary; it does not implement a
+high-performance runtime backend.
+
 The next step is not to add many JSON runtimes at once.
 
 The next step is:
@@ -53,7 +58,7 @@ compare other runtime integration strategies
 
 Status:
 
-- completed in v0.5.1
+- completed through v0.5.2
 
 Purpose:
 
@@ -82,33 +87,32 @@ v0.6 is a program. Its internal work packages are not automatically release
 tags.
 
 The program should be tracked as a broad direction, but implemented as small
-epics. The first implementation epic should be:
+epics. Its completed foundation epic was:
 
 ```text
 v0.6 Foundation - Runtime Semantics and Conformance
 ```
 
-That foundation epic must finish before a simdjson spike becomes the main focus.
-It defines what CJM means by JSON runtime behavior; it does not implement a
-high-performance backend.
+That foundation defines what CJM means by JSON runtime behavior; it does not
+implement a high-performance backend. The current v0.6.0 work is the first
+limited simdjson scalar decode spike built on that foundation.
 
 Public releases should represent user-consumable capability snapshots, such as:
 
 ```text
-v0.5.1
-    default field mapping and canonical field semantics
+v0.5.2
+    recursive schema coverage and runtime foundation
 
 v0.6.0
-    experimental simdjson backend with decode, encode, conformance, and docs
+    limited simdjson On-Demand scalar decode spike
 
-v0.6.1
-    optional Glaze backend, if mature
-
-v0.6.2
-    yyjson evaluation or compact-DOM experiment, if useful
+later v0.6 releases
+    generated-codec vertical slices, native baselines, encode, or promotion
+    only when the corresponding evidence is complete
 ```
 
-The exact tags may change. The dependency order should not.
+The exact tags may change. No release number is reserved for Glaze, yyjson, or
+any other backend before its experiment justifies a user-consumable result.
 
 ---
 
@@ -116,9 +120,9 @@ The exact tags may change. The dependency order should not.
 
 ## Work Package A - Runtime Semantics and Conformance Foundation
 
-This work package should be its own small epic.
+Status: completed in v0.5.2.
 
-It is deliberately documentation- and test-shape-heavy. It should not introduce
+It is deliberately documentation- and test-shape-heavy. It does not introduce
 simdjson, Glaze, yyjson, or a universal runtime facade.
 
 Define:
@@ -153,7 +157,7 @@ UserDefined
 
 and its recursive `arguments`.
 
-The foundation epic should produce these child issues:
+The foundation epic produced these work items:
 
 ```text
 1. docs(runtime): define runtime JSON semantic profile
@@ -177,32 +181,59 @@ The static backend selection shape lives in
 
 ## Work Package B - simdjson On-Demand Decode Spike
 
-Prove feasibility with the smallest useful model subset.
+Prove feasibility with the smallest generated model subset.
 
 Initial scope:
 
-- scalar fields
-- strings
-- required fields
+- one root object
+- required `bool`, signed integer, and unsigned integer fields
 - presence bits
 - one-pass object dispatch
-- one nested object
 - unknown-field policy
-- generated field dispatch
-- backend-neutral decode error and path propagation
+- root-field decode error and path propagation
 - parser/input lifetime wrapper shape
 
 This spike does not make simdjson an official backend.
 
 The spike boundary lives in
 [simdjson On-Demand Decode Spike](simdjson-ondemand-decode-spike.md).
-The first code slice is intentionally narrower than the full work package: it
-starts with required scalar fields on one root object before expanding toward
-nested object traversal.
+Floating point, strings, optionals, containers, enums, and nested objects remain
+outside this spike. They belong to later vertical slices after the scalar
+control flow and error translation are understood.
 
-## Work Package C - simdjson Decode MVP
+## Work Package C - simdjson Native Baselines And Generated Vertical Slice
 
-Expand only after the spike is understood.
+Before broader generated-codec claims, compare the generated path with the
+strongest relevant native paths in the pinned simdjson release.
+
+Candidate baselines:
+
+- handwritten On-Demand traversal
+- pre-C++20 `get<T>` specialization
+- C++20 `tag_invoke` customization
+- experimental C++20 `simdjson::from`, when useful as a labeled comparison
+- C++26 static reflection when a suitable compiler is available
+
+The first meaningful generated vertical slice should cover:
+
+- required unsigned integer and string fields
+- one optional integer
+- one nested generated object
+- arbitrary input field order
+- presence tracking
+- owned strings
+- unknown-field policy
+- missing, null, type, and nested-path failures
+- new-object output guarantee
+- generated compile and runtime tests
+
+Different C++ standards and semantic options must be reported explicitly. This
+work package tests whether CJM adds value over native typed conversion; it does
+not assume that simdjson lacks model binding.
+
+## Work Package D - simdjson Decode MVP
+
+Expand only after the generated vertical slice is understood.
 
 Candidate scope:
 
@@ -217,7 +248,7 @@ Candidate scope:
 Decode-only work may be useful internally, but it must not be marketed as a
 complete JSON backend unless clearly labeled experimental and decode-only.
 
-## Work Package D - simdjson Builder / Encode Spike
+## Work Package E - simdjson Builder / Encode Spike
 
 Keep simdjson decode and encode work contiguous.
 
@@ -231,7 +262,7 @@ Prove:
 - optional omission behavior
 - output buffer ownership
 
-## Work Package E - simdjson Experimental Backend
+## Work Package F - simdjson Experimental Backend
 
 Promote only after decode and encode have both passed the limited conformance
 subset.
@@ -245,21 +276,44 @@ Expected evidence:
 - unsupported combinations fail at generation time
 - lifecycle constraints are documented
 - user-facing API is clearly experimental
+- native baseline comparison is recorded
+- runtime API use and version coupling are documented
 
-## Work Package F - Glaze Adapter Spike
+## Work Package G1 - Glaze Metadata Adapter Evaluation
 
-Evaluate Glaze as an optional direct-typed adapter backend.
+Evaluate CJM-generated Glaze metadata as an optional adapter backend.
 
-The spike should answer:
+The evaluation should answer:
 
 - how CJM-generated metadata maps to Glaze customization points
 - how rename, ignore, enum strings, optional, and unknown-field policy align
 - how C++23 requirements stay isolated to selected backend targets
-- whether CJM adds value beyond raw Glaze metadata
+- whether generated metadata removes meaningful user maintenance
+- what compile-time reflection, lookup-table, and typed-engine work remains
 
 Glaze must not raise CJM core or nlohmann users to C++23.
 
-## Work Package G - yyjson Compact-DOM Evaluation
+## Work Package G2 - Glaze Generated Custom Codec Evaluation
+
+Evaluate generated custom serialization separately from metadata generation.
+
+The comparison should distinguish:
+
+- Glaze automatic reflection
+- handwritten explicit `glz::meta<T>`
+- CJM-generated `glz::meta<T>`
+- handwritten custom Glaze codec
+- CJM-generated custom Glaze codec
+
+Before generator work, classify every Glaze API used as documented public,
+documented extension, public-header helper, or internal detail. The generated
+codec experiment should stop if the public customization surface is
+insufficient, native metadata already provides equivalent value, or upgrade
+cost is not bounded.
+
+Keeping only the metadata adapter is a valid outcome.
+
+## Work Package H - yyjson Compact-DOM Evaluation
 
 Evaluate yyjson as a compact document / DOM backend or control group.
 
@@ -272,7 +326,7 @@ The evaluation should answer:
 - whether yyjson helps future C frontend work
 - what ownership and string lifetime rules are required
 
-## Work Package H - Backend Comparison Report
+## Work Package I - Backend Comparison Report
 
 Classify each candidate:
 
@@ -299,6 +353,19 @@ Performance alone is insufficient.
 
 ---
 
+# Recursive Composition And Test Risk
+
+Generated type handling should recurse through the existing Metadata IR
+constructors rather than add emitters for individual type combinations.
+
+Implementation can therefore remain compositional while semantic tests still
+form a large cross-product. Optional, container, nested-object, null, missing,
+wrong-type, cleanup, and structured-path behavior must be expanded through
+constructor tests, pairwise combinations, selected deep stress cases, failure
+corpora, and differential tests rather than one immediate Cartesian product.
+
+---
+
 # Runtime Semantic Profile
 
 The first runtime backend must not invent backend-local semantics.
@@ -306,7 +373,7 @@ The first runtime backend must not invent backend-local semantics.
 The normative v0.6 foundation profile is defined in
 [Runtime JSON Semantic Profile](runtime-json-semantic-profile.md).
 
-Before simdjson reaches spike status, CJM should define the minimum portable
+The simdjson spike and every later backend must consume the minimum portable
 runtime profile for:
 
 - missing required field
@@ -455,19 +522,22 @@ The agreed priority is:
 4. conformance fixture skeleton
 5. static backend selection shape
 6. simdjson On-Demand decode spike
-7. simdjson decode MVP
-8. simdjson builder / encode spike
-9. simdjson experimental backend
-10. Glaze adapter spike
-11. yyjson compact-DOM evaluation
-12. backend comparison and promotion report
+7. simdjson native baselines and generated vertical slice
+8. simdjson decode MVP
+9. simdjson builder / encode spike
+10. simdjson experimental backend evidence review
+11. Glaze metadata adapter evaluation
+12. Glaze generated custom codec evaluation, only if justified
+13. yyjson compact-DOM evaluation
+14. backend comparison and promotion report
 ```
 
 Rationale:
 
-- simdjson-first best validates CJM's generated-codec differentiation
+- simdjson-first best validates CJM's generated-codec differentiation while its
+  native typed paths provide fair comparison baselines
 - decode and encode should stay contiguous to preserve implementation context
-- Glaze is valuable but represents a different direct-typed adapter model
+- Glaze metadata and custom-codec paths answer different product questions
 - yyjson is valuable but represents a compact document / DOM model
 - runtime candidates should be compared after shared semantics and conformance
   exist
@@ -486,6 +556,8 @@ Do not add:
 - native scanner, parser, formatter, or generic DOM code in CJM
 - all runtime candidates in one PR
 - performance claims without fair benchmark methodology
+- claims that generated codecs outperform native runtime binding without
+  equivalent semantics and toolchain labels
 - new STL container mappings merely to expand surface area
 
 The best near-term work is to make the existing Metadata IR semantics explicit,

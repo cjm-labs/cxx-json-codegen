@@ -64,11 +64,13 @@ All backends consume it.
 
 Future backends may include:
 
-- nlohmann/json backend
+- compatibility backends such as nlohmann/json
 - schema backend
 - documentation backend
-- direct-typed adapter backends such as Glaze or DAW JSON Link
-- generated codec backends such as simdjson On-Demand
+- metadata adapter backends such as CJM-generated Glaze metadata or DAW JSON
+  Link contracts
+- generated codec backends such as simdjson On-Demand or an independently
+  justified Glaze custom codec
 - compact document / DOM backends such as yyjson
 - SAX or state-machine experiments such as RapidJSON SAX
 - optional native runtime research outside the core CJM repository
@@ -660,8 +662,10 @@ Initial backend:
 Potential later backends:
 
 - artifact backends such as JSON Schema and documentation output
-- direct-typed adapter backends such as Glaze or DAW JSON Link
-- generated codec backends such as simdjson On-Demand
+- metadata adapter backends such as CJM-generated Glaze metadata or DAW JSON
+  Link contracts
+- generated codec backends such as simdjson On-Demand or an independently
+  justified Glaze custom codec
 - compact document / DOM backends such as yyjson
 - later SAX or state-machine experiments such as RapidJSON SAX
 - optional native runtime research outside the core CJM repository
@@ -820,13 +824,20 @@ This milestone is a program, not a mechanical sequence of release tags. Internal
 work packages such as decode spikes, encode spikes, and backend comparisons
 should become public releases only when they produce user-consumable capability.
 
-The first v0.6 implementation epic should be small:
+Codec-first is the preferred high-performance experiment order. It does not
+require every runtime to receive a generated codec. A metadata adapter, exact-
+version experiment, deferred result, or rejected backend is valid when it offers
+better total engineering value.
+
+The completed v0.6 foundation epic was:
 
 ```text
 v0.6 Foundation - Runtime Semantics and Conformance
 ```
 
-It should define CJM runtime semantics before adding simdjson code.
+It defined CJM runtime semantics before simdjson code. The current v0.6.0 epic
+is a limited simdjson On-Demand scalar decode spike, not a complete runtime
+backend.
 
 Foundation scope:
 
@@ -866,10 +877,15 @@ Runtime backend work packages:
 - Conformance Fixture Skeleton
 - Static Backend Selection Design
 - simdjson On-Demand decode spike
+- simdjson native typed-conversion baselines
+- simdjson generated-codec vertical slice with owned strings, optional presence,
+  and one nested model
 - simdjson decode MVP over a limited conformance subset
 - simdjson builder / encode spike
 - simdjson experimental backend with decode, encode, conformance, and docs
-- Glaze direct-typed adapter spike after simdjson context is preserved
+- Glaze metadata adapter evaluation after simdjson context is preserved
+- separate Glaze generated custom codec evaluation only if its documented API
+  and evidence justify the maintenance cost
 - yyjson compact document / DOM evaluation
 - backend comparison and promotion report
 
@@ -877,7 +893,10 @@ Backend classification:
 
 - `nlohmann/json` is the official compatibility backend
 - simdjson On-Demand is the preferred first generated-codec experiment
-- Glaze is a later optional direct-typed C++ backend candidate
+- simdjson native custom-type conversion and reflection paths are comparison
+  baselines, not capabilities CJM may ignore
+- Glaze metadata generation is a later optional adapter candidate
+- Glaze custom codec generation is a distinct, stoppable experiment
 - yyjson is a compact document / DOM candidate, not a no-DOM backend
 - DAW JSON Link is a possible time-boxed direct-typed C++17 spike
 - RapidJSON SAX is a possible low-level state-machine experiment
@@ -890,6 +909,8 @@ Non-goals:
 - raising CJM core or nlohmann users to C++23
 - implementing all runtime candidates in one PR
 - declaring the fastest backend before fair benchmarks
+- assuming generated codecs are superior before comparison with runtime-native
+  typed paths
 - native scanner, parser, formatter, or generic DOM implementation inside CJM
 
 Generated files should not be rewritten if contents do not change.
@@ -900,6 +921,9 @@ Success criteria:
 - simdjson decode and encode work proceeds contiguously
 - unsupported backend/type combinations fail clearly at generation time
 - conformance fixtures describe shared behavior before backend-specific claims
+- runtime-native baselines use labeled compiler, C++ standard, semantic options,
+  and error behavior
+- runtime APIs are classified before generated code depends on them
 - no backend is promoted based on performance alone
 
 The static backend selection contract lives in

@@ -29,9 +29,9 @@ C++ model types before CJM-generated integration is used.
 
 ## Early Adopters Welcome
 
-CJM v0.5.1 is the current development line for early adopters who want to try
-build-time JSON integration, default field mapping, and generated JSON Schema
-artifacts for ordinary Modern C++ models.
+CJM v0.5.2 is the latest release for early adopters who want to try build-time
+JSON integration, default field mapping, recursive generated JSON Schema, and
+the documented runtime-semantics foundation for ordinary Modern C++ models.
 
 The v0.4.0 workflow has been dogfooded through the public `FetchContent` +
 `cjm_generate` workflow in
@@ -40,7 +40,8 @@ optionals, vectors, ordered and unordered string-keyed maps, nested generated
 structs, enums, ignored fields, `omitempty`, fixed-width integers, fixed-size
 arrays, enum string output, and generated model-contract metadata for downstream
 tools. v0.5 adds an opt-in JSON Schema backend through the CLI and CMake
-workflow, and v0.5.1 makes same-name JSON field tags optional.
+workflow, v0.5.1 makes same-name JSON field tags optional, and v0.5.2 completes
+recursive schema coverage and the documented v0.6 runtime foundation.
 
 If CJM fails on a practical model you expected to work, or if the CMake,
 diagnostics, or documentation feel confusing, please open an issue with the
@@ -329,7 +330,7 @@ include(FetchContent)
 FetchContent_Declare(
   cxx_json_codegen
   GIT_REPOSITORY https://github.com/cjm-labs/cxx-json-codegen.git
-  GIT_TAG v0.5.1
+  GIT_TAG v0.5.2
 )
 
 FetchContent_MakeAvailable(cxx_json_codegen)
@@ -457,8 +458,12 @@ Current status:
 
 Next planned line:
 
-- v0.6 defines runtime backend semantics and begins a simdjson-first backend
-  program
+- v0.6 begins with a limited simdjson On-Demand decode spike and evaluates
+  generated codecs against relevant runtime-native binding paths
+
+No simdjson, Glaze, or yyjson backend is available in the v0.5.2 release.
+Codec-first describes the next experiment strategy, not a current runtime
+capability or performance claim.
 
 ---
 
