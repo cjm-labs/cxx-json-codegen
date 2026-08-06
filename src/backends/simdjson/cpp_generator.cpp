@@ -12,9 +12,9 @@ namespace {
 bool is_supported_scalar_kind(metadata::FieldTypeKind kind) {
     switch (kind) {
     case metadata::FieldTypeKind::Bool:
-        return true;
     case metadata::FieldTypeKind::SignedInteger:
     case metadata::FieldTypeKind::UnsignedInteger:
+        return true;
     case metadata::FieldTypeKind::FloatingPoint:
     case metadata::FieldTypeKind::String:
     case metadata::FieldTypeKind::Enum:
@@ -38,6 +38,15 @@ std::string generated_type_name(const metadata::TypeModel& type) {
     return "::" + name;
 }
 
+// Write one generated source line at the requested indentation level.
+void write_line(std::ostringstream& out, std::size_t indent_level,
+                const std::string& text) {
+    for (std::size_t level = 0; level < indent_level; ++level) {
+        out << "    ";
+    }
+    out << text << '\n';
+}
+
 // Generate the experimental decode error and structured path types.
 void generate_decode_error_model(std::ostringstream& out) {
     out << "#ifndef CJM_SIMDJSON_RUNTIME_TYPES_DEFINED\n"
@@ -50,6 +59,9 @@ void generate_decode_error_model(std::ostringstream& out) {
         << "    syntax_error,\n"
         << "    expected_object,\n"
         << "    expected_bool,\n"
+        << "    expected_integer,\n"
+        << "    expected_unsigned_integer,\n"
+        << "    integer_overflow,\n"
         << "    missing_required_field\n"
         << "};\n"
         << "\n"
@@ -82,9 +94,119 @@ void generate_decode_error_model(std::ostringstream& out) {
         << "#endif\n";
 }
 
-// Generate the required bool decoder for one model.
-void generate_bool_decode_function(std::ostringstream& out,
-                                   const metadata::TypeModel& type) {
+// Generate one structured field path append.
+void generate_field_error_path(std::ostringstream& out,
+                               const metadata::FieldModel& field,
+                               std::size_t indent_level) {
+    write_line(out, indent_level, "error.path.push_back(");
+    write_line(out, indent_level + 1,
+               "{DecodePathSegmentKind::field, \"" + field.json.name +
+                   "\", 0});");
+}
+
+// Generate one required bool field decoder.
+void generate_bool_field_decode(std::ostringstream& out,
+                                const metadata::FieldModel& field) {
+    write_line(out, 2, "if (key == \"" + field.json.name + "\") {");
+    write_line(out, 3,
+               "runtime_error = field.value().get_bool().get(value." +
+                   field.name + ");");
+    write_line(out, 3, "if (runtime_error) {");
+    write_line(out, 4, "error.code = DecodeErrorCode::expected_bool;");
+    generate_field_error_path(out, field, 4);
+    write_line(out, 4, "error.runtime_error = runtime_error;");
+    write_line(out, 4, "return std::nullopt;");
+    write_line(out, 3, "}");
+    write_line(out, 3, "has_" + field.name + " = true;");
+    write_line(out, 3, "continue;");
+    write_line(out, 2, "}");
+}
+
+// Generate one required signed or unsigned integer field decoder.
+void generate_integer_field_decode(std::ostringstream& out,
+                                   const metadata::FieldModel& field) {
+    const bool is_signed =
+        field.type.kind == metadata::FieldTypeKind::SignedInteger;
+    const std::string decoded_type =
+        is_signed ? "std::int64_t" : "std::uint64_t";
+    const std::string getter = is_signed ? "get_int64" : "get_uint64";
+    const std::string expected_error =
+        is_signed ? "DecodeErrorCode::expected_integer"
+                  : "DecodeErrorCode::expected_unsigned_integer";
+    const std::string decoded_name = "decoded_" + field.name;
+
+    write_line(out, 2, "if (key == \"" + field.json.name + "\") {");
+    write_line(out, 3,
+               "using target_type = decltype(value." + field.name + ");");
+    write_line(out, 3, decoded_type + " " + decoded_name + " = 0;");
+    write_line(out, 3,
+               "runtime_error = field.value()." + getter + "().get(" +
+                   decoded_name + ");");
+    write_line(out, 3, "if (runtime_error) {");
+    write_line(out, 4, "error.code = " + expected_error + ";");
+    generate_field_error_path(out, field, 4);
+    write_line(out, 4, "error.runtime_error = runtime_error;");
+    write_line(out, 4, "return std::nullopt;");
+    write_line(out, 3, "}");
+    out << "\n";
+
+    if (is_signed) {
+        write_line(out, 3,
+                   "const auto target_min = static_cast<std::int64_t>(");
+        write_line(out, 4, "(std::numeric_limits<target_type>::min)());");
+    }
+
+    write_line(out, 3,
+               "const auto target_max = static_cast<" + decoded_type + ">(");
+    write_line(out, 4, "(std::numeric_limits<target_type>::max)());");
+
+    std::string overflow_condition = decoded_name + " > target_max";
+    if (is_signed) {
+        overflow_condition =
+            decoded_name + " < target_min || " + overflow_condition;
+    }
+
+    write_line(out, 3, "if (" + overflow_condition + ") {");
+    write_line(out, 4, "error.code = DecodeErrorCode::integer_overflow;");
+    generate_field_error_path(out, field, 4);
+    write_line(out, 4, "return std::nullopt;");
+    write_line(out, 3, "}");
+    out << "\n";
+
+    write_line(out, 3,
+               "value." + field.name + " = static_cast<target_type>(" +
+                   decoded_name + ");");
+    write_line(out, 3, "has_" + field.name + " = true;");
+    write_line(out, 3, "continue;");
+    write_line(out, 2, "}");
+}
+
+// Generate one supported scalar field decoder.
+void generate_field_decode(std::ostringstream& out,
+                           const metadata::FieldModel& field) {
+    switch (field.type.kind) {
+    case metadata::FieldTypeKind::Bool:
+        generate_bool_field_decode(out, field);
+        return;
+    case metadata::FieldTypeKind::SignedInteger:
+    case metadata::FieldTypeKind::UnsignedInteger:
+        generate_integer_field_decode(out, field);
+        return;
+    case metadata::FieldTypeKind::FloatingPoint:
+    case metadata::FieldTypeKind::String:
+    case metadata::FieldTypeKind::Enum:
+    case metadata::FieldTypeKind::Array:
+    case metadata::FieldTypeKind::Vector:
+    case metadata::FieldTypeKind::Map:
+    case metadata::FieldTypeKind::Optional:
+    case metadata::FieldTypeKind::UserDefined:
+        return;
+    }
+}
+
+// Generate the required scalar decoder for one model.
+void generate_decode_function(std::ostringstream& out,
+                              const metadata::TypeModel& type) {
     const auto cpp_type = generated_type_name(type);
 
     out << "namespace cjm::simdjson {\n"
@@ -144,22 +266,7 @@ void generate_bool_decode_function(std::ostringstream& out,
         if (field.json.ignored) {
             continue;
         }
-
-        out << "        if (key == \"" << field.json.name << "\") {\n"
-            << "            runtime_error = "
-               "field.value().get_bool().get(value."
-            << field.name << ");\n"
-            << "            if (runtime_error) {\n"
-            << "                error.code = DecodeErrorCode::expected_bool;\n"
-            << "                error.path.push_back(\n"
-            << "                    {DecodePathSegmentKind::field, \""
-            << field.json.name << "\", 0});\n"
-            << "                error.runtime_error = runtime_error;\n"
-            << "                return std::nullopt;\n"
-            << "            }\n"
-            << "            has_" << field.name << " = true;\n"
-            << "            continue;\n"
-            << "        }\n";
+        generate_field_decode(out, field);
     }
 
     out << "    }\n"
@@ -228,6 +335,8 @@ GenerationResult generate_header(const metadata::ProjectModel& project) {
            << "#include <simdjson.h>\n"
            << "\n"
            << "#include <cstddef>\n"
+           << "#include <cstdint>\n"
+           << "#include <limits>\n"
            << "#include <optional>\n"
            << "#include <string>\n"
            << "#include <string_view>\n"
@@ -238,7 +347,7 @@ GenerationResult generate_header(const metadata::ProjectModel& project) {
 
     for (const auto& type : project.types) {
         header << "\n";
-        generate_bool_decode_function(header, type);
+        generate_decode_function(header, type);
     }
 
     return GenerationResult{true, header.str(), {}};

@@ -6,6 +6,8 @@
 #include <simdjson.h>
 
 #include <cstddef>
+#include <cstdint>
+#include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -21,6 +23,9 @@ enum class DecodeErrorCode {
     syntax_error,
     expected_object,
     expected_bool,
+    expected_integer,
+    expected_unsigned_integer,
+    integer_overflow,
     missing_required_field
 };
 

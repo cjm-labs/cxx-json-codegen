@@ -53,14 +53,18 @@ ProjectModel make_bool_project() {
     return project;
 }
 
-// Build one model containing a scalar kind not implemented yet.
-ProjectModel make_signed_integer_project() {
+// Build one model containing a required signed and unsigned integer fields.
+ProjectModel make_integer_project() {
     TypeModel type;
-    type.name = "SignedValues";
-    type.qualified_name = "SignedValues";
+    type.name = "IntegerValues";
+    type.qualified_name = "IntegerValues";
     type.fields = {
         make_required_field("count", FieldTypeKind::SignedInteger,
                             "std::int32_t"),
+        make_required_field("limit", FieldTypeKind::UnsignedInteger,
+                            "std::uint32_t"),
+        make_required_field("narrow", FieldTypeKind::SignedInteger,
+                            "std::int8_t"),
     };
 
     ProjectModel project;
@@ -126,12 +130,21 @@ int main() {
                "field.value().get_bool().get(value.enabled)") !=
            std::string::npos);
 
-    const auto signed_result = cjm::generator::simdjson::generate_header(
-        make_signed_integer_project());
-    assert(!signed_result.success);
-    assert(signed_result.header.empty());
-    assert(signed_result.error.find("count") != std::string::npos);
-    assert(signed_result.error.find("std::int32_t") != std::string::npos);
+    const auto integer_result =
+        cjm::generator::simdjson::generate_header(make_integer_project());
+    assert(integer_result.success);
+    assert(integer_result.error.empty());
+    assert(integer_result.header.find("from_json<::IntegerValues>(") !=
+           std::string::npos);
+    assert(integer_result.header.find("get_int64().get(decoded_count)") !=
+           std::string::npos);
+    assert(integer_result.header.find("get_uint64().get(decoded_limit)") !=
+           std::string::npos);
+    assert(integer_result.header.find(
+               "(std::numeric_limits<target_type>::max)()") !=
+           std::string::npos);
+    assert(integer_result.header.find("DecodeErrorCode::integer_overflow") !=
+           std::string::npos);
 
     const auto vector_result =
         cjm::generator::simdjson::generate_header(make_vector_project());
