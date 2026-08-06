@@ -28,46 +28,22 @@ bool is_supported_scalar_kind(metadata::FieldTypeKind kind) {
     return false;
 }
 
-// Open the namespace containing one generated model.
-void open_namespace(std::ostringstream& out,
-                    const std::vector<std::string>& namespace_path) {
-    if (namespace_path.empty()) {
-        return;
+// Return the globally qualified C++ name of one generated model.
+std::string generated_type_name(const metadata::TypeModel& type) {
+    const auto& name =
+        type.qualified_name.empty() ? type.name : type.qualified_name;
+    if (name.rfind("::", 0) == 0) {
+        return name;
     }
-
-    out << "namespace ";
-    for (std::size_t index = 0; index < namespace_path.size(); ++index) {
-        if (index > 0) {
-            out << "::";
-        }
-        out << namespace_path[index];
-    }
-    out << " {\n\n";
-}
-
-// Close the namespace containing one generated model.
-void close_namespace(std::ostringstream& out,
-                     const std::vector<std::string>& namespace_path) {
-    if (namespace_path.empty()) {
-        return;
-    }
-
-    out << "} // namespace ";
-    for (std::size_t index = 0; index < namespace_path.size(); ++index) {
-        if (index > 0) {
-            out << "::";
-        }
-        out << namespace_path[index];
-    }
-    out << "\n";
+    return "::" + name;
 }
 
 // Generate the experimental decode error and structured path types.
 void generate_decode_error_model(std::ostringstream& out) {
-    out << "#ifndef CJM_EXPERIMENTAL_SIMDJSON_DECODE_ERROR_DEFINED\n"
-        << "#define CJM_EXPERIMENTAL_SIMDJSON_DECODE_ERROR_DEFINED\n"
+    out << "#ifndef CJM_SIMDJSON_RUNTIME_TYPES_DEFINED\n"
+        << "#define CJM_SIMDJSON_RUNTIME_TYPES_DEFINED\n"
         << "\n"
-        << "namespace cjm::experimental::simdjson {\n"
+        << "namespace cjm::simdjson {\n"
         << "\n"
         << "enum class DecodeErrorCode {\n"
         << "    none,\n"
@@ -96,7 +72,12 @@ void generate_decode_error_model(std::ostringstream& out) {
            "::simdjson::SUCCESS;\n"
         << "};\n"
         << "\n"
-        << "} // namespace cjm::experimental::simdjson\n"
+        << "template <typename T>\n"
+        << "std::optional<T> from_json(\n"
+        << "    std::string_view input,\n"
+        << "    DecodeError& error);\n"
+        << "\n"
+        << "} // namespace cjm::simdjson\n"
         << "\n"
         << "#endif\n";
 }
@@ -104,18 +85,15 @@ void generate_decode_error_model(std::ostringstream& out) {
 // Generate the required bool decoder for one model.
 void generate_bool_decode_function(std::ostringstream& out,
                                    const metadata::TypeModel& type) {
-    open_namespace(out, type.namespace_path);
+    const auto cpp_type = generated_type_name(type);
 
-    out << "inline std::optional<" << type.name << "> cjm_decode_simdjson_"
-        << type.name << "(\n"
-        << "    std::string_view input,\n"
-        << "    ::cjm::experimental::simdjson::DecodeError& error) {\n"
-        << "    using DecodeErrorCode =\n"
-        << "        ::cjm::experimental::simdjson::DecodeErrorCode;\n"
-        << "    using DecodePathSegmentKind =\n"
-        << "        ::cjm::experimental::simdjson::"
-           "DecodePathSegmentKind;\n"
+    out << "namespace cjm::simdjson {\n"
         << "\n"
+        << "template <>\n"
+        << "inline std::optional<" << cpp_type << ">\n"
+        << "from_json<" << cpp_type << ">(\n"
+        << "    std::string_view input,\n"
+        << "    DecodeError& error) {\n"
         << "    // 1. Prepare the padded input owned for this decode.\n"
         << "    error = {};\n"
         << "    ::simdjson::padded_string padded_input(input);\n"
@@ -142,7 +120,7 @@ void generate_bool_decode_function(std::ostringstream& out,
         << "    }\n"
         << "\n"
         << "    // 3. Build a new object and track its required fields.\n"
-        << "    " << type.name << " value{};\n";
+        << "    " << cpp_type << " value{};\n";
 
     for (const auto& field : type.fields) {
         if (!field.json.ignored) {
@@ -181,8 +159,7 @@ void generate_bool_decode_function(std::ostringstream& out,
             << "            }\n"
             << "            has_" << field.name << " = true;\n"
             << "            continue;\n"
-            << "        }\n"
-            << "\n";
+            << "        }\n";
     }
 
     out << "    }\n"
@@ -207,9 +184,9 @@ void generate_bool_decode_function(std::ostringstream& out,
     out << "\n"
         << "    // 6. Return the completely decoded object.\n"
         << "    return value;\n"
-        << "}\n";
-
-    close_namespace(out, type.namespace_path);
+        << "}\n"
+        << "\n"
+        << "} // namespace cjm::simdjson\n";
 }
 
 // Return the first unsupported-field diagnostic, or an empty string.

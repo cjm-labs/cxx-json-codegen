@@ -2,6 +2,9 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 #include <string>
 
 namespace {
@@ -13,6 +16,16 @@ using cjm::metadata::JsonFieldMetadata;
 using cjm::metadata::ProjectModel;
 using cjm::metadata::SourceLocation;
 using cjm::metadata::TypeModel;
+
+// Read one expected generated file.
+std::string read_file(const std::string& path) {
+    std::ifstream file(path);
+    assert(file.is_open());
+
+    std::ostringstream contents;
+    contents << file.rdbuf();
+    return contents.str();
+}
 
 // Build one required field whols JSON name matches its C++ member name.
 FieldModel make_required_field(const std::string& name, FieldTypeKind kind,
@@ -89,9 +102,20 @@ int main() {
     assert(!bool_result.header.empty());
     assert(bool_result.header.find("#include <simdjson.h>") !=
            std::string::npos);
-    assert(bool_result.header.find(
-               "std::optional<BoolValues> cjm_decode_simdjson_BoolValues(") !=
+    assert(bool_result.header.find("namespace cjm::simdjson") !=
            std::string::npos);
+    assert(bool_result.header.find("from_json<::BoolValues>(") !=
+           std::string::npos);
+    assert(bool_result.header.find("cjm_decode_simdjson_BoolValues") ==
+           std::string::npos);
+
+    const auto expected =
+        read_file("tests/golden/simdjson_bool.expected.cjm.hpp");
+    if (bool_result.header != expected) {
+        std::cerr << "generated simdjson header: \n" << bool_result.header;
+    }
+    assert(bool_result.header == expected);
+
     assert(bool_result.header.find("bool has_enabled = false;") !=
            std::string::npos);
     assert(bool_result.header.find("for (auto field : object)") !=
