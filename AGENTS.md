@@ -441,7 +441,8 @@ Merge Commit
 Delete Feature Branch
 ```
 
-Each feature branch should correspond to a single major task or GitHub Issue whenever practical.
+For maintainer-led milestone work, each epic or release slice should use one
+feature branch. Complete its child issues as focused commits on that branch.
 
 Examples:
 
@@ -455,6 +456,8 @@ feature/parser
 feature/semantic-analysis
 
 feature/cmake-integration
+
+feature/v0.6.0-simdjson-decode-spike
 ```
 
 ---
@@ -760,171 +763,169 @@ Future contributors should be able to understand how major architectural decisio
 
 CJM is both a production-oriented developer tool and a learning project.
 
-Code changes must optimize for correctness, maintainability, and human comprehension. Completing an issue quickly is not sufficient if the resulting implementation is difficult to understand incrementally.
+Code changes must optimize for correctness, maintainability, and the maintainer's
+understanding. Completing an issue quickly is not sufficient if the maintainer
+cannot explain the resulting design without reading the implementation.
 
-### 1. Keep each issue and commit cognitively small
+### 1. Preserve maintainer ownership of code
 
-Each commit should introduce one primary concept or behavior.
+During guided development, the maintainer writes and applies production code,
+tests, and CMake changes. The AI assistant must not edit these files unless the
+maintainer explicitly asks it to perform the implementation.
 
-A commit should normally be understandable without requiring the reader to absorb several unrelated mechanisms at once.
+The assistant may implement documentation tasks assigned to it. After a larger
+documentation change, summarize the decisions and contracts that the maintainer
+needs to understand instead of requiring a line-by-line reading of repetitive
+explanatory text.
 
-Avoid combining changes such as:
+When code is requested for manual application, present it as a focused `git diff`
+with exact file paths and enough hunk context to locate the change. Explain the
+purpose of the change before showing the diff. A complete implementation may be
+shown for complex or unfamiliar code only after the maintainer requests it.
 
-* metadata parsing;
-* symbol-table construction;
-* alias resolution;
-* recursive type analysis;
-* diagnostics;
-* generator behavior;
+### 2. Use one branch per epic or release slice
 
-in a single commit unless they are inseparable.
+State the current branch before beginning a task. Child issues belonging to the
+same epic or release slice normally share one feature branch and are separated by
+focused commits rather than additional short-lived branches.
 
-Large issues must be decomposed into ordered sub-issues or commits. Each step must build naturally on the previous step.
+End each completed coding step with one proposed Conventional Commit message.
+Commit messages must describe the project change and must not contain assistant
+branding or identity.
 
-### 2. Explain the design before implementing it
+### 3. Follow the guided development loop
 
-Before producing code, describe:
+Use this order for every non-trivial change:
 
-1. the exact goal of the change;
-2. why the change is needed;
-3. the input and expected output;
-4. the affected modules and files;
-5. what is explicitly out of scope;
-6. how this change connects to the previous and following commits.
+1. explain the problem and the existing architecture;
+2. present the meaningful design options and tradeoffs;
+3. let the maintainer decide unresolved semantics;
+4. define tests and invariants;
+5. implement one small slice;
+6. explain what the diff proves and changes;
+7. confirm understanding before entering the next slice.
 
-Do not begin with a large implementation dump.
+Do not skip directly from a requirement to a large implementation.
 
-### 3. Design top-down and implement bottom-up
+### 4. State the task contract before code
 
-Start by defining the high-level workflow.
+Before each task, state:
 
-Example:
+1. which architectural layer owns the change;
+2. why that layer owns it;
+3. which existing invariants could be broken;
+4. how the change will be verified;
+5. which assumptions or semantics remain undecided;
+6. the exact files and functions the maintainer will touch.
 
-```text
-Collect symbols
-    ↓
-Resolve field types
-    ↓
-Validate JSON metadata
-    ↓
-Build Metadata IR
-```
+Instructions must use concrete actions such as add, remove, rename, or replace.
+Avoid ambiguous directions such as "keep or adjust".
 
-Then define small functions representing the individual steps. Implement and test one step at a time.
+### 5. Require understanding before completing public abstractions
 
-Orchestration functions should show the algorithmic structure clearly and delegate details to focused helper functions.
+The AI assistant must not advance a public abstraction to a complete
+implementation while the maintainer cannot explain its purpose and contract
+without code.
 
-### 4. Document non-trivial functions
+Before implementation, the maintainer should be able to explain:
 
-Every non-trivial function must have a short documentation comment describing:
+* what problem the abstraction solves;
+* which layer owns it;
+* its inputs and outputs;
+* the invariants it establishes;
+* why a simpler alternative is insufficient.
 
-* its purpose;
-* each important input parameter;
-* its return value or output effect;
-* its failure behavior;
-* what responsibility does not belong to the function.
+If these points are unclear, remain in design discussion or implement only a
+small experimental slice.
 
-Example:
+### 6. Keep issues and commits cognitively small
 
-```cpp
-/**
- * Resolve a parser field type spelling into the Metadata IR type model.
- *
- * Inputs:
- *   symbols        - Known declarations, enums, and aliases.
- *   namespace_path - Namespace containing the field declaration.
- *   field          - Parser syntax containing the original type spelling.
- *
- * Output:
- *   Returns a normalized FieldType on success.
- *   Returns an error diagnostic for unsupported or unresolved types.
- *
- * This function performs semantic mapping only. It does not generate C++ code.
- */
-```
+Each commit should introduce one primary concept or behavior. Avoid combining
+metadata parsing, symbol lookup, type resolution, diagnostics, and generator
+behavior in one commit unless they are inseparable.
 
-### 5. Show the implementation stages inside orchestration functions
+Large issues must be decomposed into ordered child issues or commits. Each step
+must build naturally on the previous step and must not silently include adjacent
+roadmap features.
 
-Use numbered comments for important algorithmic stages.
+### 7. Design top-down and implement bottom-up
 
-Example:
+Explain the high-level workflow first. Then identify the small functions that
+represent its stages and implement one stage at a time.
 
-```cpp
-bool place_elephant_in_refrigerator(
-    Refrigerator& refrigerator,
-    const Elephant& elephant) {
+Orchestration functions should expose important stages with numbered comments
+and delegate details to focused helpers. A function comment should state only
+what the function does. Do not fill comments with unrelated responsibilities or
+lists of things the function does not do.
 
-    // 1. Validate that the refrigerator can contain the elephant.
-    if (!can_contain(refrigerator, elephant)) {
-        return false;
-    }
+### 8. Give precise implementation guidance
 
-    // 2. Open the refrigerator.
-    refrigerator.open();
+Before asking the maintainer to edit code, identify:
 
-    // 3. Place the elephant inside.
-    refrigerator.put_in(elephant);
+* the exact file;
+* the existing function that is the entry point;
+* every function to add or change;
+* the purpose of each function;
+* the order in which the edits should be made;
+* the focused test that validates the slice.
 
-    // 4. Restore the refrigerator to its closed state.
-    refrigerator.close();
+For a simple learning exercise, provide function names, signatures when needed,
+and purpose comments while leaving implementation bodies to the maintainer. For
+complex or unfamiliar library integration, provide a complete `git diff` when
+the maintainer asks for one, but still explain each API used.
 
-    return true;
-}
-```
+### 9. Make tests focused and independently runnable
 
-Comments should reveal the structure of the algorithm. Do not comment every obvious statement.
+Each test case should prove one function contract or one observable behavior.
+Test names should identify the function and scenario, for example
+`generate_header.required_integer`.
 
-### 6. Prefer focused functions and modules
+CTest remains the repository-wide test runner. New C++ unit tests should use the
+approved test framework and register individual cases with CTest. Existing
+standalone `main()` and `assert`-based tests remain valid CTest tests and must not
+be migrated as part of unrelated feature work.
 
-Avoid multi-page functions that combine:
+Migrate legacy tests in a dedicated stabilization or release-closing task after
+the new framework has proved reliable. Until then, the legacy and framework-based
+test executables are expected to coexist.
 
-* string parsing;
-* name lookup;
-* symbol management;
-* validation;
-* diagnostics;
-* IR construction.
+The test infrastructure should allow the maintainer to run one exact test case
+without executing unrelated unit tests. Use targeted tests during each slice and
+run broader suites only at integration or completion boundaries.
 
-Extract cohesive concepts into named functions or modules.
+Golden tests must report useful mismatch context. A failure should identify the
+relevant line or difference instead of printing only a boolean equality failure.
+Do not expose private production helpers solely to test them; test them through
+their owning public or module-level contract unless they have an independent
+stable contract.
 
-A high-level function should primarily coordinate operations. Detailed parsing, lookup, classification, and validation should live in focused components.
+### 10. Explain what tests actually prove
 
-### 7. Make tests follow the same incremental structure
+Tests must be written around approved invariants rather than implementation
+incidents. For each test, explain:
 
-Each commit must contain focused tests for the behavior introduced in that commit.
+* the behavior being exercised;
+* the invariant it proves;
+* why the assertion is sufficient;
+* which nearby cases remain unsupported or untested.
 
-Do not introduce a large integration test as the first explanation of several new concepts.
+Prefer focused tests before combined integration tests. A large integration test
+must not be the first explanation of several new concepts.
 
-Recommended order:
+### 11. Use a completion gate
 
-1. data model test;
-2. helper-function unit test;
-3. single-feature semantic test;
-4. combined integration test.
+Before moving to the next issue, the maintainer should be able to explain:
 
-### 8. Preserve learning boundaries
+* why the chosen design belongs in its layer;
+* which alternatives were considered;
+* which new invariant was added;
+* which cases are explicitly unsupported;
+* what the tests genuinely prove.
 
-When implementing a requested issue, do not silently add adjacent future features.
+If any answer remains unclear, explain the current slice again or reduce it
+further. Do not continue merely because the tests pass.
 
-If an adjacent feature becomes necessary, stop and explain why. Propose a separate follow-up issue or commit.
-
-Prefer an incomplete but well-defined step over a large speculative implementation.
-
-### 9. Present code in reviewable increments
-
-When guiding the developer interactively:
-
-1. explain the current step;
-2. show the function skeleton;
-3. explain the skeleton;
-4. implement one helper;
-5. add its focused test;
-6. summarize what was learned;
-7. only then proceed to the next helper.
-
-Do not present hundreds of lines of code before the developer has understood the design.
-
-### 10. Definition of a good commit
+### 12. Definition of a good commit
 
 A good CJM commit should answer all of the following clearly:
 
@@ -932,9 +933,8 @@ A good CJM commit should answer all of the following clearly:
 * Why does it belong in this layer?
 * What are its inputs and outputs?
 * Which function or module owns it?
-* How is it tested?
+* Which invariant does it add or preserve?
+* How can its focused test be run?
+* What does the test prove?
 * What remains intentionally unsupported?
 * What should the next commit build on?
-
-
-
