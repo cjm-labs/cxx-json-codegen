@@ -87,32 +87,35 @@ v0.6 is a program. Its internal work packages are not automatically release
 tags.
 
 The program should be tracked as a broad direction, but implemented as small
-epics. Its completed foundation epic was:
+epics. Its completed epics are:
 
 ```text
 v0.6 Foundation - Runtime Semantics and Conformance
+v0.6 simdjson On-Demand Scalar Decode Spike
 ```
 
-That foundation defines what CJM means by JSON runtime behavior; it does not
-implement a high-performance backend. The current v0.6.0 work is the first
-limited simdjson scalar decode spike built on that foundation.
+The foundation defines what CJM means by JSON runtime behavior. The scalar
+decode spike, internally tracked as the v0.6.0 epic, proved the first limited
+generated simdjson path without creating a complete high-performance backend.
 
-Public releases should represent user-consumable capability snapshots, such as:
+Public releases represent user-consumable capability snapshots rather than
+internal work-package completion:
 
 ```text
 v0.5.2
     recursive schema coverage and runtime foundation
 
 v0.6.0
-    limited simdjson On-Demand scalar decode spike
+    unassigned until a user-consumable v0.6 capability is ready
 
 later v0.6 releases
     generated-codec vertical slices, native baselines, encode, or promotion
     only when the corresponding evidence is complete
 ```
 
-The exact tags may change. No release number is reserved for Glaze, yyjson, or
-any other backend before its experiment justifies a user-consumable result.
+The merged scalar spike therefore has no release tag. No release number is
+reserved for simdjson, Glaze, yyjson, or another backend before its experiment
+justifies a user-consumable result.
 
 ---
 
@@ -181,6 +184,8 @@ The static backend selection shape lives in
 
 ## Work Package B - simdjson On-Demand Decode Spike
 
+Status: completed as an internal experimental epic.
+
 Prove feasibility with the smallest generated model subset.
 
 Initial scope:
@@ -192,6 +197,16 @@ Initial scope:
 - unknown-field policy
 - root-field decode error and path propagation
 - parser/input lifetime wrapper shape
+
+The completed spike provides evidence that:
+
+- Metadata IR can drive generated C++17 simdjson On-Demand code
+- one-pass field iteration avoids order-insensitive object rescans
+- required booleans and signed, unsigned, and narrow integers can decode into a
+  new strongly typed object
+- missing fields, scalar type mismatches, integer overflow, and trailing content
+  map to portable CJM errors and structured paths
+- the optional simdjson dependency does not affect the default build
 
 This spike does not make simdjson an official backend.
 
@@ -506,8 +521,8 @@ new-object
     failure produces no user object
 ```
 
-The first simdjson spike should not silently choose an in-place partial-update
-model merely because it is easiest to implement.
+The first simdjson spike selected new-object decode and therefore does not expose
+an accidental in-place partial-update guarantee.
 
 ---
 

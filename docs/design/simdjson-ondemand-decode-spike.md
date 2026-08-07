@@ -1,9 +1,12 @@
 # simdjson On-Demand Decode Spike
 
-This document defines the first simdjson On-Demand decode spike for CJM.
+Status: completed as an internal experimental spike.
 
-It is a boundary document. It does not implement simdjson integration, add a
-dependency, define a public C++ ABI, or promote simdjson to an official backend.
+This document defines the first simdjson On-Demand decode spike for CJM and
+records its outcome.
+
+It remains the boundary for the merged implementation. It does not define a
+public C++ ABI or promote simdjson to an official backend.
 
 ---
 
@@ -29,6 +32,29 @@ forward-only runtime backend without changing parser, Semantic Analysis, or the
 default nlohmann backend.
 
 This spike is not a complete JSON backend.
+
+---
+
+# Outcome
+
+The spike completed successfully. It proved that CJM Metadata IR can generate a
+C++17 simdjson On-Demand decoder that:
+
+- owns padded input for the duration of one decode
+- iterates root object fields once regardless of their JSON order
+- constructs a new strongly typed object
+- decodes required booleans and signed, unsigned, and narrow integers
+- rejects missing required fields, scalar type mismatches, integer overflow,
+  and trailing content with portable CJM errors
+- preserves root-field paths independently of simdjson diagnostic strings
+- remains isolated behind an optional CMake dependency gate
+
+Generated bool and integer headers compile and run, and both the default and
+simdjson-enabled repository test configurations pass. The spike did not evaluate
+runtime-native typed-conversion baselines or establish a performance result.
+
+No public v0.6.0 release was produced. Public backend selection, broader type
+coverage, encode, and an official support commitment remain later work.
 
 ---
 
@@ -372,6 +398,8 @@ The first code slice must keep these risks visible:
 
 # Acceptance Criteria For This Design
 
+Status: satisfied by the completed scalar spike.
+
 This boundary is complete when:
 
 - the first supported scalar subset is explicit
@@ -384,3 +412,6 @@ This boundary is complete when:
 - conformance fixture relationship is clear
 - native typed-conversion paths are identified as future comparison baselines
 - no user-facing simdjson support is claimed yet
+
+These criteria close the feasibility spike only. They do not satisfy the
+promotion criteria for an experimental or official user-facing backend.

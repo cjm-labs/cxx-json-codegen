@@ -335,7 +335,10 @@ The initial backend optimized for progress.
 The post-v0.5 strategy optimizes for shared semantics, explicit backend choice,
 and evidence-driven promotion.
 
-CJM should first freeze default field mapping and canonical runtime semantics.
+CJM froze default field mapping and canonical runtime semantics before beginning
+runtime implementation work.
 
-Then it can evaluate runtime backends, beginning with simdjson generated-codec
-work, without turning CJM itself into an unbounded JSON parser project.
+The completed simdjson scalar decode spike validated generated-codec feasibility
+without turning CJM itself into an unbounded JSON parser project. Broader support
+and promotion still require native baselines, vertical slices, conformance, and
+user-consumable integration.
