@@ -32,5 +32,18 @@ int main() {
     assert(missing_error.path[0].field_name == "enabled");
     assert(missing_error.runtime_error == simdjson::SUCCESS);
 
+    cjm::simdjson::DecodeError type_mismatch_error;
+
+    const auto type_mismatch_result = cjm::simdjson::from_json<BoolValues>(
+        R"({"enabled":123})", type_mismatch_error);
+
+    assert(!type_mismatch_result.has_value());
+    assert(type_mismatch_error.code ==
+           cjm::simdjson::DecodeErrorCode::expected_bool);
+    assert(type_mismatch_error.path.size() == 1);
+    assert(type_mismatch_error.path[0].kind ==
+           cjm::simdjson::DecodePathSegmentKind::field);
+    assert(type_mismatch_error.path[0].field_name == "enabled");
+    assert(type_mismatch_error.runtime_error == simdjson::INCORRECT_TYPE);
     return 0;
 }
