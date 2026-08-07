@@ -45,5 +45,18 @@ int main() {
            cjm::simdjson::DecodePathSegmentKind::field);
     assert(type_mismatch_error.path[0].field_name == "enabled");
     assert(type_mismatch_error.runtime_error == simdjson::INCORRECT_TYPE);
+
+    cjm::simdjson::DecodeError trailing_error;
+
+    const auto trailing_result = cjm::simdjson::from_json<BoolValues>(
+        R"({"enabled":true}
+{"enabled":false})",
+        trailing_error);
+
+    assert(!trailing_result.has_value());
+    assert(trailing_error.code ==
+           cjm::simdjson::DecodeErrorCode::trailing_content);
+    assert(trailing_error.path.empty());
+    assert(trailing_error.runtime_error == simdjson::TRAILING_CONTENT);
     return 0;
 }

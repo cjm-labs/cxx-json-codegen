@@ -21,6 +21,7 @@ namespace cjm::simdjson {
 enum class DecodeErrorCode {
     none,
     syntax_error,
+    trailing_content,
     expected_object,
     expected_bool,
     expected_integer,
@@ -183,7 +184,14 @@ from_json<::IntegerValues>(
         }
     }
 
-    // 5. Verify that every required field was present.
+    // 5. Reject non-whitespace content after the root object.
+    if (!document.at_end()) {
+        error.code = DecodeErrorCode::trailing_content;
+        error.runtime_error = ::simdjson::TRAILING_CONTENT;
+        return std::nullopt;
+    }
+
+    // 6. Verify that every required field was present.
     if (!has_count) {
         error.code = DecodeErrorCode::missing_required_field;
         error.path.push_back(
@@ -203,7 +211,7 @@ from_json<::IntegerValues>(
         return std::nullopt;
     }
 
-    // 6. Return the completely decoded object.
+    // 7. Return the completely decoded object.
     return value;
 }
 

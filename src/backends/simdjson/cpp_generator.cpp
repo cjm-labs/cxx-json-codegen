@@ -57,6 +57,7 @@ void generate_decode_error_model(std::ostringstream& out) {
         << "enum class DecodeErrorCode {\n"
         << "    none,\n"
         << "    syntax_error,\n"
+        << "    trailing_content,\n"
         << "    expected_object,\n"
         << "    expected_bool,\n"
         << "    expected_integer,\n"
@@ -271,7 +272,14 @@ void generate_decode_function(std::ostringstream& out,
 
     out << "    }\n"
         << "\n"
-        << "    // 5. Verify that every required field was present.\n";
+        << "    // 5. Reject non-whitespace content after the root object.\n"
+        << "    if (!document.at_end()) {\n"
+        << "        error.code = DecodeErrorCode::trailing_content;\n"
+        << "        error.runtime_error = ::simdjson::TRAILING_CONTENT;\n"
+        << "        return std::nullopt;\n"
+        << "    }\n"
+        << "\n"
+        << "    // 6. Verify that every required field was present.\n";
 
     for (const auto& field : type.fields) {
         if (field.json.ignored) {
@@ -289,7 +297,7 @@ void generate_decode_function(std::ostringstream& out,
     }
 
     out << "\n"
-        << "    // 6. Return the completely decoded object.\n"
+        << "    // 7. Return the completely decoded object.\n"
         << "    return value;\n"
         << "}\n"
         << "\n"
