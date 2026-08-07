@@ -309,17 +309,23 @@ presence tracking, optional/null policy, recursive model calls, and structured
 error propagation. The runtime continues to own structural parsing, string
 unescaping, numeric conversion, output buffering, escaping, and formatting.
 
-The first implementation should prove decode over a limited conformance subset.
-Encode should follow contiguously through a builder/write spike so the simdjson
-mental model does not get interrupted by unrelated backend work.
+The first implementation proved decode over a limited scalar conformance subset.
+It established one-pass field dispatch, new-object output, required-field
+tracking, numeric range checks, portable errors, and trailing-content rejection.
+It did not establish broader type coverage or a performance result.
 
-The simdjson spike should not begin until CJM has defined:
+The prerequisite set completed before the spike was:
 
 - runtime JSON semantic profile
 - minimal decode error and structured path model
 - conformance fixture skeleton
 - static backend selection shape
 - [simdjson On-Demand decode spike boundary](simdjson-ondemand-decode-spike.md)
+
+The next simdjson work should preserve this context while comparing relevant
+runtime-native typed-conversion paths and extending the generated decoder through
+owned strings, optional presence, and one nested model. Decode should then proceed
+to a limited MVP, followed contiguously by a builder/write encode spike.
 
 simdjson-specific constraints must be documented before promotion:
 
@@ -771,15 +777,14 @@ rejecting the backend.
 
 # Version Relationship
 
-Before broad runtime backend work, CJM should complete the v0.5.x semantic
-foundation:
+Before broad runtime backend work, CJM completed the v0.5.x semantic foundation:
 
 - default field mapping
 - effective JSON field-name normalization
 - explicit ignored-field semantics
 - fail-closed unsupported included fields
 
-v0.6 may then begin the runtime backend program:
+The v0.6 runtime foundation and first implementation spike are also complete:
 
 - canonical runtime semantic profile
 - minimal decode error and structured path model
@@ -787,8 +792,12 @@ v0.6 may then begin the runtime backend program:
 - shared conformance fixture skeleton
 - [static backend selection design](static-backend-selection.md)
 - simdjson On-Demand decode spike
+
+Remaining v0.6 work may continue with:
+
 - simdjson native typed-conversion baselines
 - meaningful generated-codec vertical slice
+- simdjson decode MVP over a limited conformance subset
 - simdjson builder / encode spike
 - simdjson experimental backend if evidence supports promotion
 

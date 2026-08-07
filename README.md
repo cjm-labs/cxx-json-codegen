@@ -447,6 +447,8 @@ Current status:
 - v0.5.0 completed the first JSON Schema backend
 - v0.5.1 completed default field mapping and canonical field semantics
 - v0.5.2 completed recursive schema coverage and the v0.6 runtime foundation
+- the first v0.6 simdjson On-Demand scalar decode spike is complete and proved
+  that Metadata IR can drive an optional, one-pass generated decoder
 - CJM has a parser -> semantic analysis -> Metadata IR pipeline with
   `nlohmann/json`, generated model-contract, and JSON Schema backends
 - First official C++ runtime integration backend: `nlohmann/json`
@@ -458,12 +460,14 @@ Current status:
 
 Next planned line:
 
-- v0.6 begins with a limited simdjson On-Demand decode spike and evaluates
-  generated codecs against relevant runtime-native binding paths
+- v0.6 continues with simdjson runtime-native baselines and a generated-codec
+  vertical slice covering owned strings, optional presence, and one nested model
+- the first public v0.6 tag will be assigned only when the result is a
+  user-consumable capability snapshot
 
 No simdjson, Glaze, or yyjson backend is available in the v0.5.2 release.
-Codec-first describes the next experiment strategy, not a current runtime
-capability or performance claim.
+The merged simdjson code remains an internal experimental spike: it has no
+public backend-selection path and makes no performance claim.
 
 ---
 

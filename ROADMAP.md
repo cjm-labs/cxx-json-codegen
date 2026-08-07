@@ -829,15 +829,20 @@ require every runtime to receive a generated codec. A metadata adapter, exact-
 version experiment, deferred result, or rejected backend is valid when it offers
 better total engineering value.
 
-The completed v0.6 foundation epic was:
+The completed v0.6 epics are:
 
 ```text
 v0.6 Foundation - Runtime Semantics and Conformance
+v0.6 simdjson On-Demand Scalar Decode Spike
 ```
 
-It defined CJM runtime semantics before simdjson code. The current v0.6.0 epic
-is a limited simdjson On-Demand scalar decode spike, not a complete runtime
-backend.
+The foundation defined CJM runtime semantics before simdjson code. The scalar
+decode spike, internally tracked as the v0.6.0 epic, then proved that Metadata
+IR can generate a C++17 simdjson On-Demand decoder with one-pass field dispatch,
+required-field tracking, range checks, and portable structured errors.
+
+Completing that epic did not create a public v0.6.0 release. The spike has no
+public backend-selection path and does not make simdjson an official backend.
 
 Foundation scope:
 
@@ -870,13 +875,16 @@ Minimum runtime semantic profile:
 - default public decode shape, preferring new-object decode over in-place partial
   mutation
 
-Runtime backend work packages:
+Completed runtime backend work packages:
 
 - Runtime JSON Semantic Profile
 - Minimal Decode Error / Path Model
 - Conformance Fixture Skeleton
 - Static Backend Selection Design
 - simdjson On-Demand decode spike
+
+Remaining runtime backend work packages:
+
 - simdjson native typed-conversion baselines
 - simdjson generated-codec vertical slice with owned strings, optional presence,
   and one nested model
@@ -892,7 +900,8 @@ Runtime backend work packages:
 Backend classification:
 
 - `nlohmann/json` is the official compatibility backend
-- simdjson On-Demand is the preferred first generated-codec experiment
+- simdjson On-Demand is a validated generated-codec research candidate, not an
+  official backend
 - simdjson native custom-type conversion and reflection paths are comparison
   baselines, not capabilities CJM may ignore
 - Glaze metadata generation is a later optional adapter candidate

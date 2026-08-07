@@ -395,8 +395,8 @@ basic
     failure leaves existing_user valid but possibly partially updated
 ```
 
-The simdjson spike must not accidentally define the public output guarantee by
-choosing the easiest in-place implementation.
+The completed simdjson spike follows this new-object guarantee and does not
+define an accidental in-place partial-update contract.
 
 ---
 
