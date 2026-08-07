@@ -230,14 +230,48 @@ Out of scope:
 
 # Runtime Backend Direction
 
-Future runtime backends may provide different integration strategies:
+Future runtime work should distinguish three integration categories.
 
-- compatibility DOM integration through `nlohmann/json`
-- generated-codec integration through simdjson On-Demand and builder
-- direct-typed adapter integration through libraries such as Glaze or DAW JSON
-  Link
-- compact document / DOM integration through yyjson
-- later SAX or state-machine experiments through libraries such as RapidJSON SAX
+## Compatibility Backend
+
+Example: `nlohmann/json`.
+
+CJM generates readable library integration around a mature, stable runtime API.
+The primary goals are adoption, compatibility, C++17 support, and low
+maintenance cost. A compatibility backend remains valuable even when it is not
+the fastest available path.
+
+## Metadata Adapter Backend
+
+Example: CJM-generated `glz::meta<T>`.
+
+CJM generates runtime-specific metadata and lets the runtime's native typed
+engine own object dispatch, reflection, parsing, and writing. This can remove
+duplicate user metadata, but it does not automatically remove the runtime's
+template instantiation, compile-time maps, or object lookup generation.
+
+## Generated Codec Backend
+
+Examples include simdjson On-Demand plus builder and a possible Glaze custom
+codec experiment.
+
+CJM generates explicit model-specific control flow for field dispatch,
+presence, recursive calls, and portable error propagation. The selected runtime
+continues to own generic JSON parsing, escaping, number conversion, formatting,
+and buffering.
+
+Generated codecs are CJM's preferred high-performance differentiation
+hypothesis. They are not required for every runtime. A metadata adapter or
+compatibility integration should be retained when it provides better total
+engineering value.
+
+Some runtimes may be evaluated in more than one category. In particular, a
+Glaze metadata adapter and a Glaze generated custom codec are separate
+experiments with different maintenance and build-cost questions.
+
+Other possible runtime shapes include compact document integration through
+yyjson and later SAX or state-machine experiments through libraries such as
+RapidJSON SAX.
 
 Possible future generated-codec usage:
 
@@ -260,6 +294,13 @@ This should be designed only after field semantics, runtime semantics, and
 backend conformance have been defined. A high-performance backend should remain
 optional and should not change the default backend or public workflow without
 explicit approval.
+
+Generated-codec experiments must be compared with the strongest relevant
+runtime-native path. For simdjson this may include documented custom-type
+conversion or static reflection, depending on the selected C++ standard and
+compiler. For Glaze it includes automatic reflection and explicit metadata.
+Different toolchain and semantic requirements must be labeled rather than
+treated as equivalent configurations.
 
 CJM should not introduce a universal runtime facade before real backend
 implementations prove a small shared abstraction is necessary.

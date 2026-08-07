@@ -20,6 +20,12 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(CJM_BUILD_TESTS "Build CJM tests" ON)
+option(CJM_ENABLE_SIMDJSON "Enable the experimental simdjson backend dependency" OFF)
+
+if (CJM_ENABLE_SIMDJSON)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMSimdjson.cmake)
+  cjm_add_simdjson_dependency()
+endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMGenerate.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMTreeSitter.cmake)
@@ -77,6 +83,13 @@ target_link_libraries(cjm_generator PUBLIC cjm_metadata)
 target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_generator PUBLIC cxx_std_17)
 
+if (CJM_ENABLE_SIMDJSON)
+  add_library(cjm_simdjson_generator src/backends/simdjson/cpp_generator.cpp)
+  target_link_libraries(cjm_simdjson_generator PUBLIC cjm_metadata)
+  target_include_directories(cjm_simdjson_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+  target_compile_features(cjm_simdjson_generator PUBLIC cxx_std_17)
+endif()
+
 # parser library
 add_library(cjm_parser src/frontends/cxx/parser/parser.cpp)
 target_include_directories(cjm_parser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -95,6 +108,32 @@ target_link_libraries(cjm PRIVATE cjm_generator cjm_schema_generator cjm_semanti
 
 if (CJM_BUILD_TESTS)
   enable_testing()
+
+  if (CJM_ENABLE_SIMDJSON)
+    add_executable(cjm_simdjson_dependency_smoke_tests tests/backends/simdjson/dependency_smoke_tests.cpp)
+    target_compile_features(cjm_simdjson_dependency_smoke_tests PRIVATE cxx_std_17)
+    target_link_libraries(cjm_simdjson_dependency_smoke_tests PRIVATE simdjson::simdjson)
+    add_test(NAME cjm_simdjson_dependency_smoke_tests COMMAND cjm_simdjson_dependency_smoke_tests)
+
+    add_executable(cjm_simdjson_generator_tests tests/backends/simdjson/cpp_generator_tests.cpp)
+    target_link_libraries(cjm_simdjson_generator_tests PRIVATE cjm_simdjson_generator)
+    add_test(NAME cjm_simdjson_generator_tests COMMAND cjm_simdjson_generator_tests)
+    set_tests_properties(cjm_simdjson_generator_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+    add_executable(cjm_simdjson_bool_generated_compile_tests tests/backends/simdjson/bool_generated_compile_tests.cpp)
+    target_compile_features(cjm_simdjson_bool_generated_compile_tests PRIVATE cxx_std_17)
+    target_include_directories(cjm_simdjson_bool_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(cjm_simdjson_bool_generated_compile_tests PRIVATE simdjson::simdjson)
+    add_test(NAME cjm_simdjson_bool_generated_compile_tests COMMAND cjm_simdjson_bool_generated_compile_tests)
+
+    add_executable(cjm_simdjson_integer_generated_compile_tests tests/backends/simdjson/integer_generated_compile_tests.cpp)
+    target_compile_features(cjm_simdjson_integer_generated_compile_tests PRIVATE cxx_std_17)
+    target_include_directories(cjm_simdjson_integer_generated_compile_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(cjm_simdjson_integer_generated_compile_tests PRIVATE simdjson::simdjson)
+    add_test(NAME cjm_simdjson_integer_generated_compile_tests
+             COMMAND cjm_simdjson_integer_generated_compile_tests)
+
+  endif()
 
   # METADATA tests below...
   add_executable(cjm_metadata_tests

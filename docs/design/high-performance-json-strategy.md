@@ -40,6 +40,24 @@ The governing boundary is:
 
 > CJM owns model knowledge. A JSON runtime owns generic JSON primitives.
 
+CJM should prioritize explicit model-specific codec generation as its strongest
+high-performance hypothesis. This is an experiment strategy, not a requirement
+that every runtime receive a generated codec and not a present-tense
+performance claim.
+
+Each runtime should use the integration form that provides the best total
+engineering value:
+
+- compatibility integration when API stability and adoption matter most
+- metadata adapters when native typed engines already provide the required
+  behavior
+- generated codecs when explicit model-specific control flow may add measurable
+  semantic, build-cost, diagnostic, or runtime value
+
+Runtime-native typed paths are mandatory comparison baselines. CJM must not
+justify a generated codec by assuming that the selected runtime lacks binding
+facilities.
+
 For a possible future native engine, the current working repository name is:
 
 ```text
@@ -196,7 +214,7 @@ library is involved.
 Artifact backends consume Metadata IR field facts such as C++ name, effective
 JSON name, ignored status, type category, source location, and enum values.
 
-## DOM Adapter Backends
+## Compatibility And Document Backends
 
 Examples:
 
@@ -225,7 +243,7 @@ yyjson is a compact document / DOM candidate. It is valuable as a high-
 performance DOM control group and possible C-compatible runtime, but it should
 not be described as a no-DOM or direct-typed backend.
 
-## Direct-Typed Adapter Backends
+## Metadata Adapter Backends
 
 Examples:
 
@@ -248,7 +266,9 @@ JSON bytes <-> C++ object
 ```
 
 These backends let CJM remove duplicate user metadata while preserving the
-runtime library's typed read/write path.
+runtime library's typed read/write path. They do not automatically remove the
+runtime's template instantiation, compile-time reflection, lookup-table
+generation, or recursive typed-engine instantiation.
 
 Glaze is a strong optional candidate but currently raises C++ standard concerns
 for selected backend targets. That requirement must not raise CJM core or
@@ -260,9 +280,11 @@ are understood.
 
 ## Generated Codec Backends
 
-Example:
+Examples:
 
 - simdjson On-Demand plus builder
+- a possible Glaze custom codec
+- a possible yyjson model binding
 
 Conceptual decode flow:
 
@@ -282,6 +304,11 @@ C++ object
 This is CJM's preferred first high-performance runtime experiment because it
 tests CJM's own generated-codec value directly.
 
+The generated codec owns model-specific behavior such as field dispatch,
+presence tracking, optional/null policy, recursive model calls, and structured
+error propagation. The runtime continues to own structural parsing, string
+unescaping, numeric conversion, output buffering, escaping, and formatting.
+
 The first implementation should prove decode over a limited conformance subset.
 Encode should follow contiguously through a builder/write spike so the simdjson
 mental model does not get interrupted by unrelated backend work.
@@ -292,6 +319,7 @@ The simdjson spike should not begin until CJM has defined:
 - minimal decode error and structured path model
 - conformance fixture skeleton
 - static backend selection shape
+- [simdjson On-Demand decode spike boundary](simdjson-ondemand-decode-spike.md)
 
 simdjson-specific constraints must be documented before promotion:
 
@@ -302,6 +330,66 @@ simdjson-specific constraints must be documented before promotion:
 - copy versus borrow policy for strings
 - unknown-field validation behavior
 - partial-output policy after errors
+
+The reason to begin with simdjson is not that simdjson lacks typed conversion.
+The reason is that its forward-consumption model makes generated control flow,
+lifetime ownership, field dispatch, and portable error translation directly
+measurable.
+
+## Runtime-Native Baselines
+
+Generated integrations must be compared with the strongest relevant native
+path supported by the pinned runtime release.
+
+For simdjson, candidate baselines include:
+
+- handwritten On-Demand field traversal
+- documented pre-C++20 `get<T>` specialization
+- documented C++20 `tag_invoke` customization
+- experimental C++20 `simdjson::from`, when useful as a labeled comparison
+- C++26 static-reflection conversion when a suitable compiler is available
+
+For Glaze, candidate baselines include:
+
+- automatic reflection
+- handwritten explicit `glz::meta<T>`
+- handwritten custom serialization
+
+The C++ standard, compiler, runtime version, semantic options, and error
+behavior of every baseline must be recorded. A C++17 generated path and a C++26
+reflection path are useful comparisons, but they are not the same toolchain
+contract.
+
+## Glaze Integration Modes
+
+Glaze requires two independent evaluations.
+
+The metadata-adapter evaluation asks whether CJM-generated `glz::meta<T>`
+removes meaningful user maintenance while preserving Glaze's native typed
+engine.
+
+The generated-custom-codec evaluation asks whether documented Glaze `from/to`
+and `parse/serialize` customization points can support explicit CJM-generated
+control flow with acceptable build cost, runtime performance, readability, and
+upgrade cost.
+
+The second experiment is optional. A valid outcome is to keep only the metadata
+adapter because native reflection is sufficient or the lower-level integration
+surface is too costly to maintain.
+
+Current primary-source snapshot:
+
+- simdjson v4.6.4 documents custom types and reflection in its
+  [versioned basics guide](https://github.com/simdjson/simdjson/blob/v4.6.4/doc/basics.md)
+  and custom encoding in its
+  [versioned builder guide](https://github.com/simdjson/simdjson/blob/v4.6.4/doc/builder.md)
+- Glaze documents [pure reflection](https://stephenberry.github.io/glaze/pure-reflection/),
+  [custom serialization](https://stephenberry.github.io/glaze/custom-serialization/),
+  and [C++23 toolchain requirements](https://stephenberry.github.io/glaze/installation/)
+
+Glaze v7.5.0 is the current inspection reference, not a selected CJM
+dependency. A future G0 evaluation must pin an exact release and reclassify the
+API surface against matching source and documentation.
 
 ## SAX / State-Machine Backends
 
@@ -331,6 +419,28 @@ A possible `cjm-json` runtime remains separate optional research. The CJM
 repository should not implement a scanner, parser, formatter, generic DOM,
 number parser, or SIMD structural scanner merely to support runtime backend
 work.
+
+---
+
+# Runtime API Stability Policy
+
+Every runtime API used by generated code or a backend support layer must be
+classified as one of:
+
+- documented public API
+- documented extension or customization API
+- callable public-header implementation helper without a compatibility promise
+- internal implementation detail
+
+Official integrations should use documented public or extension APIs. A pinned
+research spike may isolate a weaker helper behind one backend-specific support
+layer, but internal APIs must not leak into Metadata IR, CJM core, or generated
+public contracts.
+
+Pinning a runtime version makes the experiment reproducible; it does not make
+an internal API stable. Each backend evaluation must record the runtime version,
+headers and APIs used, C++ and compiler requirements, tested compatibility
+window, upgrade procedure, and fallback plan.
 
 ---
 
@@ -543,18 +653,28 @@ Correctness equivalence must record whether each configuration validates:
 A permissive fast path must not be compared against a strict validated path
 without labeling the difference.
 
-Possible baselines may include:
+Relevant native baselines are mandatory for the runtime under evaluation.
 
-- handwritten nlohmann/json
-- CJM-generated nlohmann/json
-- Glaze
-- reflect-cpp
-- yyjson plus binding
-- simdjson On-Demand plus binding
-- RapidJSON
-- future cjm-json
+The simdjson experiment should distinguish:
 
-This document does not require every baseline before product work can continue.
+- handwritten On-Demand traversal
+- native custom-type conversion
+- experimental convenience conversion when relevant
+- C++26 reflection when the compiler is available
+- CJM-generated On-Demand codec
+
+The Glaze experiment should distinguish:
+
+- automatic reflection
+- handwritten explicit metadata
+- CJM-generated metadata
+- handwritten custom codec
+- CJM-generated custom codec
+
+Additional control groups may include handwritten and CJM-generated
+`nlohmann/json`, yyjson plus binding, RapidJSON, reflect-cpp, or future
+`cjm-json`. This document does not require unrelated runtime baselines before a
+focused experiment can continue.
 
 ---
 
@@ -635,6 +755,18 @@ Promotion requires:
 
 Creating a repository does not automatically trigger promotion.
 
+## Stop Or Narrow Decision
+
+A generated-codec experiment should stop or narrow when it depends broadly on
+implementation-detail APIs, duplicates generic parser logic, cannot preserve
+CJM semantics safely, shows negligible build-cost benefit, materially regresses
+runtime performance or code size, or costs substantially more to maintain than
+the runtime's best native typed path.
+
+Valid outcomes include retaining only a metadata adapter, keeping one exact
+version experimental, documenting a negative result, deferring the work, or
+rejecting the backend.
+
 ---
 
 # Version Relationship
@@ -655,12 +787,15 @@ v0.6 may then begin the runtime backend program:
 - shared conformance fixture skeleton
 - [static backend selection design](static-backend-selection.md)
 - simdjson On-Demand decode spike
+- simdjson native typed-conversion baselines
+- meaningful generated-codec vertical slice
 - simdjson builder / encode spike
 - simdjson experimental backend if evidence supports promotion
 
 Later v0.6 work may evaluate:
 
-- Glaze as an optional direct-typed adapter backend
+- Glaze metadata generation as an optional adapter backend
+- Glaze custom codec generation as a separate, stoppable experiment
 - yyjson as a compact document / DOM candidate
 - DAW JSON Link as a time-boxed direct-typed C++17 spike
 - RapidJSON SAX as a lower-priority state-machine experiment
@@ -712,3 +847,7 @@ A more accurate product principle is:
 > performance choices.
 
 Do not add speculative performance claims without evidence.
+
+Codec-first describes the preferred experiment order. It does not mean that a
+generated codec has already proved superior or that every evaluated runtime
+must become an official backend.

@@ -1,0 +1,14 @@
+{
+  "result": "error",
+  "error": {
+    "code": "missing_required_field",
+    "path": [
+      {
+        "kind": "field",
+        "name": "count"
+      }
+    ],
+    "expected": "non_null",
+    "actual": "missing"
+  }
+}
