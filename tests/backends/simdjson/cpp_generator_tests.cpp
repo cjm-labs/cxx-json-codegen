@@ -146,6 +146,14 @@ int main() {
     assert(integer_result.header.find("DecodeErrorCode::integer_overflow") !=
            std::string::npos);
 
+    const auto integer_expected =
+        read_file("tests/golden/simdjson_integer.expected.cjm.hpp");
+    if (integer_result.header != integer_expected) {
+        std::cerr << "generated simdjson integer header:\n"
+                  << integer_result.header;
+    }
+    assert(integer_result.header == integer_expected);
+
     const auto vector_result =
         cjm::generator::simdjson::generate_header(make_vector_project());
     assert(!vector_result.success);
