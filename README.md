@@ -380,6 +380,42 @@ change before v1.0.
 ctest --test-dir build --output-on-failure
 ```
 
+### Developer Test Workflow
+
+Configure a Debug test build before doing focused C++ test work:
+
+```sh
+cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
+ctest --test-dir build/debug --output-on-failure
+```
+
+New C++ unit tests use Catch2 and are discovered as individual CTest cases.
+Run one named case through CTest with its target-prefixed name:
+
+```sh
+ctest --test-dir build/debug \
+  -R '^cjm_metadata_named_tests\.field_type\.records_array_extent$' \
+  --output-on-failure
+```
+
+You can also run the Catch2 executable directly with the shorter case name:
+
+```sh
+./build/debug/tests/cjm_metadata_named_tests \
+  "field_type.records_array_extent"
+```
+
+CTest remains the repository-wide runner. Existing standalone `main()` and
+`assert`-based tests continue to run beside Catch2-discovered cases.
+
+To verify a production-style build without the test framework:
+
+```sh
+cmake -S . -B build/no-tests -DCJM_BUILD_TESTS=OFF
+cmake --build build/no-tests --target cjm
+```
+
 ### Keep the First Try Smooth
 
 Current parser notes:
@@ -571,6 +607,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Runtime Conformance Fixture Layout](docs/design/runtime-conformance-fixtures.md)
 - [Static Backend Selection](docs/design/static-backend-selection.md)
 - [simdjson On-Demand Decode Spike](docs/design/simdjson-ondemand-decode-spike.md)
+- [Named C++ Test Infrastructure](docs/design/cpp-test-infrastructure.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
@@ -645,3 +682,8 @@ cp tests/golden/example.actual.cjm.hpp tests/golden/example.expected.cjm.hpp
 ```
 
 Do not commit `*.actual.*` files. They are ignored by git and exist only to help inspect local failures.
+
+New Catch2-based golden tests should use the test-only diagnostics helper under
+`tests/support/golden_diff.hpp`. It reports the first mismatch line and column,
+including missing or extra trailing content, without exposing test support
+through production headers.
