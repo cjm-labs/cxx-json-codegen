@@ -160,19 +160,71 @@ Unsupported types must fail at generation time when practical.
 
 ---
 
-# Native simdjson Comparison Boundary
+# Native simdjson API Classification
 
-simdjson v4.6.4 documents native custom-type paths, including pre-C++20
-`get<T>` specialization, C++20 `tag_invoke`, experimental C++20
-`simdjson::from`, and optional C++26 static reflection.
+In this program, `typed` does not mean `reflective`. simdjson v4.6.4 exposes
+several distinct layers that must not be treated as one design:
 
-The current scalar spike does not implement or benchmark these paths. It proves
-only that Metadata IR can drive explicit C++17 On-Demand control flow and
-portable CJM error translation.
+| Path | Toolchain boundary | Member discovery | Role in CJM |
+| --- | --- | --- | --- |
+| Explicit `get_bool()`, `get_int64()`, `get_uint64()`, and scalar `get(T&)` calls | C++17 | None | Selected primitive for explicit generated decoding |
+| Custom `value::get<T>` or `document::get<T>` specialization | Pre-C++20 | None; the specialization spells out each field | Same-standard native model-binding comparison |
+| `tag_invoke(deserialize_tag, ...)` | C++20 concepts | None; the customization spells out each field | Labeled cross-standard comparison only |
+| `simdjson::from` | Experimental C++20 | No independent model-binding strategy | Optional convenience-API comparison only |
+| Automatic `get<T>` and `extract_into` with `SIMDJSON_STATIC_REFLECTION` | Experimental C++26 reflection | Public members are discovered at compile time | Excluded from the current generated-backend route |
 
-Before generated-codec performance or product-value claims, a later vertical
-slice must compare the generated path with the relevant native paths and label
-their C++ standard, compiler, semantic options, and API stability.
+CJM's selected implementation boundary remains build-time model discovery into
+Metadata IR followed by explicit generated C++17 traversal. The generated code
+may call simdjson's typed scalar extraction functions, but the user compiler is
+not asked to rediscover model fields or instantiate a generic reflective model
+walker.
+
+The same-standard native model-binding baseline uses an explicit C++17
+`document::get<T>` specialization for a root model covering the same bool,
+signed-integer, and unsigned-integer categories. This is a test-only comparison
+control, not a CJM integration design. The specialization spells out every field
+and therefore introduces neither reflection nor automatic member discovery.
+
+The named baseline tests prove that this specialization:
+
+- decodes required `bool`, `std::int64_t`, and `std::uint64_t` fields from a root
+  object with arbitrary input field order
+- returns `NO_SUCH_FIELD` for a missing field
+- returns `INCORRECT_TYPE` for a scalar type mismatch
+- performs conversion while padded input, parser, and document remain alive,
+  matching simdjson's documented lifetime requirements
+
+The native specialization is concise, but it does not remove the important
+backend differences:
+
+- `object["field"]` uses order-insensitive lookup and may rescan the object;
+  the test does not establish one-pass traversal
+- native errors contain a simdjson code but no CJM portable error code,
+  expected type, or structured field path
+- the field mapping is coupled to simdjson's member-template specialization
+  surface and must be maintained explicitly
+
+The baseline does not test narrow-integer overflow, malformed JSON, trailing
+content, unknown fields, compile cost, or runtime performance. Those results
+must not be inferred from the three named cases.
+
+The C++20 `tag_invoke` path remains relevant because it is the pinned release's
+recommended custom-type interface for C++20 users. It is not reflection, but it
+would change the generated artifact's toolchain and customization-point
+contract. This comparison records the API difference without adding an
+executable C++20 baseline or raising CJM's C++ standard merely to compile it.
+
+C++26 static reflection is not an acceptance baseline for this work. It asks the
+user compiler to discover model members, which is a different architecture from
+CJM's build-time Metadata IR and generated-code approach. It may be studied in a
+future compiler experiment, but it must not justify replacing explicit generated
+code in the current backend program.
+
+The native baseline does not change the next generated-codec vertical slice.
+CJM should continue with explicit one-pass generated traversal, owned strings,
+optional presence, one nested generated model, and portable error paths. Any
+later compile-time or runtime performance claim must measure the relevant path
+and label its C++ standard, compiler, semantic options, and API stability.
 
 ---
 
