@@ -221,13 +221,36 @@ control flow and error translation are understood.
 Before broader generated-codec claims, compare the generated path with the
 strongest relevant native paths in the pinned simdjson release.
 
-Candidate baselines:
+The same-toolchain controls are:
 
 - handwritten On-Demand traversal
-- pre-C++20 `get<T>` specialization
-- C++20 `tag_invoke` customization
-- experimental C++20 `simdjson::from`, when useful as a labeled comparison
-- C++26 static reflection when a suitable compiler is available
+- explicit C++17 `get<T>` specialization for the same model and scalar subset
+
+Neither control uses reflection. Both spell out field access explicitly. They
+separate the value of CJM's generated traversal and portable error contract from
+the value of simdjson's parser and scalar conversion APIs.
+
+Cross-toolchain references are:
+
+- C++20 `tag_invoke` customization, which uses concepts and a customization
+  point but does not discover model members
+- experimental C++20 `simdjson::from`, when useful as a labeled convenience-API
+  comparison rather than a separate model-binding strategy
+
+C++26 automatic conversion and `extract_into` under
+`SIMDJSON_STATIC_REFLECTION` are excluded from the current work package. They
+move model-member discovery into the user compiler and therefore do not test the
+same architectural contract as CJM's build-time Metadata IR.
+
+The current design decision is:
+
+- CJM continues to discover and validate models before the user compilation
+- the generated simdjson path continues to emit explicit C++17 field traversal
+- native custom-type APIs remain comparison evidence, not the generated backend
+  contract
+- a C++20 comparison must remain isolated and must not raise the standard for
+  CJM core, default users, or the C++17 generated path
+- compile-time and runtime advantages remain unclaimed until measured
 
 The first meaningful generated vertical slice should cover:
 
@@ -244,7 +267,8 @@ The first meaningful generated vertical slice should cover:
 
 Different C++ standards and semantic options must be reported explicitly. This
 work package tests whether CJM adds value over native typed conversion; it does
-not assume that simdjson lacks model binding.
+not assume that simdjson lacks model binding. A reflection-based result cannot
+serve as evidence for the C++17 generated-code contract.
 
 ## Work Package D - simdjson Decode MVP
 
