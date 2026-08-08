@@ -303,3 +303,8 @@ add_test(
 add_executable(cjm_metadata_named_tests ${PROJECT_SOURCE_DIR}/tests/core/ir/model_named_tests.cpp)
 target_link_libraries(cjm_metadata_named_tests PRIVATE cjm_metadata Catch2::Catch2WithMain)
 catch_discover_tests(cjm_metadata_named_tests TEST_PREFIX cjm_metadata_named_tests.)
+
+add_executable(cjm_test_support_named_tests ${PROJECT_SOURCE_DIR}/tests/support/golden_diff_tests.cpp)
+target_link_libraries(cjm_test_support_named_tests PRIVATE Catch2::Catch2WithMain)
+target_include_directories(cjm_test_support_named_tests PRIVATE ${PROJECT_SOURCE_DIR}/tests)
+catch_discover_tests(cjm_test_support_named_tests TEST_PREFIX cjm_test_support_named_tests.)
