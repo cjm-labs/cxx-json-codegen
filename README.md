@@ -571,6 +571,7 @@ See [ROADMAP.md](ROADMAP.md) for the current product roadmap.
 - [Runtime Conformance Fixture Layout](docs/design/runtime-conformance-fixtures.md)
 - [Static Backend Selection](docs/design/static-backend-selection.md)
 - [simdjson On-Demand Decode Spike](docs/design/simdjson-ondemand-decode-spike.md)
+- [Named C++ Test Infrastructure](docs/design/cpp-test-infrastructure.md)
 - [ull-md-engine Dogfood Report](docs/dogfood/ull-md-engine-v0.3.0.md)
 - [Early-Adopter Outreach](docs/community/early-adopter-outreach.md)
 - [Early-Adopter Launch Posts](docs/community/early-adopter-launch-posts.md)
