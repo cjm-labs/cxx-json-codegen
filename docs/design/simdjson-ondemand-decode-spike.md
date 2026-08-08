@@ -179,18 +179,40 @@ may call simdjson's typed scalar extraction functions, but the user compiler is
 not asked to rediscover model fields or instantiate a generic reflective model
 walker.
 
-The first same-standard native model-binding baseline should therefore use an
-explicit C++17 `get<T>` specialization for the same scalar model. This is a
-comparison control, not a CJM integration design. It can show the ownership,
-error, and maintenance differences between native binding and CJM-generated
-portable decoding without introducing reflection or changing the language
-standard.
+The same-standard native model-binding baseline uses an explicit C++17
+`document::get<T>` specialization for a root model covering the same bool,
+signed-integer, and unsigned-integer categories. This is a test-only comparison
+control, not a CJM integration design. The specialization spells out every field
+and therefore introduces neither reflection nor automatic member discovery.
+
+The named baseline tests prove that this specialization:
+
+- decodes required `bool`, `std::int64_t`, and `std::uint64_t` fields from a root
+  object with arbitrary input field order
+- returns `NO_SUCH_FIELD` for a missing field
+- returns `INCORRECT_TYPE` for a scalar type mismatch
+- performs conversion while padded input, parser, and document remain alive,
+  matching simdjson's documented lifetime requirements
+
+The native specialization is concise, but it does not remove the important
+backend differences:
+
+- `object["field"]` uses order-insensitive lookup and may rescan the object;
+  the test does not establish one-pass traversal
+- native errors contain a simdjson code but no CJM portable error code,
+  expected type, or structured field path
+- the field mapping is coupled to simdjson's member-template specialization
+  surface and must be maintained explicitly
+
+The baseline does not test narrow-integer overflow, malformed JSON, trailing
+content, unknown fields, compile cost, or runtime performance. Those results
+must not be inferred from the three named cases.
 
 The C++20 `tag_invoke` path remains relevant because it is the pinned release's
 recommended custom-type interface for C++20 users. It is not reflection, but it
 would change the generated artifact's toolchain and customization-point
-contract. This issue may record that API difference without raising CJM's C++
-standard merely to compile the comparison.
+contract. This comparison records the API difference without adding an
+executable C++20 baseline or raising CJM's C++ standard merely to compile it.
 
 C++26 static reflection is not an acceptance baseline for this work. It asks the
 user compiler to discover model members, which is a different architecture from
@@ -198,9 +220,11 @@ CJM's build-time Metadata IR and generated-code approach. It may be studied in a
 future compiler experiment, but it must not justify replacing explicit generated
 code in the current backend program.
 
-The current scalar spike does not establish a compile-time or runtime
-performance result. Any later claim must measure the relevant path and label its
-C++ standard, compiler, semantic options, and API stability.
+The native baseline does not change the next generated-codec vertical slice.
+CJM should continue with explicit one-pass generated traversal, owned strings,
+optional presence, one nested generated model, and portable error paths. Any
+later compile-time or runtime performance claim must measure the relevant path
+and label its C++ standard, compiler, semantic options, and API stability.
 
 ---
 

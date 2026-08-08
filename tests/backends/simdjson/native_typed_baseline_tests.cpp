@@ -52,3 +52,27 @@ TEST_CASE("document_get.required_scalars", "[simdjson][baseline]") {
     REQUIRE(values.count == -15);
     REQUIRE(values.limit == 199);
 }
+
+TEST_CASE("document_get.missing_required_field", "[simdjson][baseline]") {
+    const simdjson::padded_string input(
+        std::string_view{R"({"enabled":true,"limit":199})"});
+    simdjson::ondemand::parser parser;
+    simdjson::ondemand::document document;
+
+    REQUIRE(parser.iterate(input).get(document) == simdjson::SUCCESS);
+
+    const auto result = document.get<NativeScalarValues>();
+    REQUIRE(result.error() == simdjson::NO_SUCH_FIELD);
+}
+
+TEST_CASE("document_get.scalar_type_mismatch", "[simdjson][baseline]") {
+    const simdjson::padded_string input(
+        std::string_view{R"({"enabled":true,"count":"-15","limit":199})"});
+    simdjson::ondemand::parser parser;
+    simdjson::ondemand::document document;
+
+    REQUIRE(parser.iterate(input).get(document) == simdjson::SUCCESS);
+
+    const auto result = document.get<NativeScalarValues>();
+    REQUIRE(result.error() == simdjson::INCORRECT_TYPE);
+}

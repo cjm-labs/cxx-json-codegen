@@ -218,6 +218,9 @@ control flow and error translation are understood.
 
 ## Work Package C - simdjson Native Baselines And Generated Vertical Slice
 
+Status: native C++17 scalar baseline completed; generated vertical slice
+pending.
+
 Before broader generated-codec claims, compare the generated path with the
 strongest relevant native paths in the pinned simdjson release.
 
@@ -251,6 +254,19 @@ The current design decision is:
 - a C++20 comparison must remain isolated and must not raise the standard for
   CJM core, default users, or the C++17 generated path
 - compile-time and runtime advantages remain unclaimed until measured
+
+The completed C++17 `document::get<T>` baseline records that:
+
+- native custom-type conversion still requires explicit field mapping
+- order-insensitive `object["field"]` lookup may rescan the object
+- required bool, signed integer, and unsigned integer conversion succeeds
+- a missing field returns `NO_SUCH_FIELD`
+- a scalar type mismatch returns `INCORRECT_TYPE`
+- native errors do not provide CJM's portable error code or structured path
+
+These observations preserve the existing recommendation. The next generated
+slice should extend CJM's explicit one-pass decoder rather than replace it with
+native model binding. The native specialization remains a test-only control.
 
 The first meaningful generated vertical slice should cover:
 

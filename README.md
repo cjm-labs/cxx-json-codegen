@@ -485,6 +485,8 @@ Current status:
 - v0.5.2 completed recursive schema coverage and the v0.6 runtime foundation
 - the first v0.6 simdjson On-Demand scalar decode spike is complete and proved
   that Metadata IR can drive an optional, one-pass generated decoder
+- the C++17 simdjson native custom-type baseline is complete and remains a
+  test-only comparison for API and error-shape differences
 - CJM has a parser -> semantic analysis -> Metadata IR pipeline with
   `nlohmann/json`, generated model-contract, and JSON Schema backends
 - First official C++ runtime integration backend: `nlohmann/json`
@@ -496,8 +498,8 @@ Current status:
 
 Next planned line:
 
-- v0.6 continues with simdjson runtime-native baselines and a generated-codec
-  vertical slice covering owned strings, optional presence, and one nested model
+- v0.6 continues with a simdjson generated-codec vertical slice covering owned
+  strings, optional presence, and one nested model
 - the first public v0.6 tag will be assigned only when the result is a
   user-consumable capability snapshot
 
