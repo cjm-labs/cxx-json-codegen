@@ -21,7 +21,7 @@ function(cjm_add_catch2_dependency)
   if (NOT TARGET Catch2::Catch2WithMain)
     message(
       FATAL_ERROR
-      "CJM_BUILD_TESTS=ON requires the Catch2::Catch2WithMain Cmake target"
+      "CJM_BUILD_TESTS=ON requires the Catch2::Catch2WithMain CMake target"
     )
   endif()
 endfunction()

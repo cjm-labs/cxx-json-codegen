@@ -1,3 +1,6 @@
+list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
+include(Catch)
+
 add_executable(cjm_tree_sitter_adapter_tests
   ${PROJECT_SOURCE_DIR}/tests/frontends/cxx/tree_sitter/adapter_tests.cpp
 )
@@ -296,3 +299,7 @@ add_test(
           ${PROJECT_BINARY_DIR}/examples/basic/generated/schemas/user.schema.json
           ${PROJECT_SOURCE_DIR}/tests/golden/basic_user.expected.schema.json
 )
+
+add_executable(cjm_metadata_named_tests ${PROJECT_SOURCE_DIR}/tests/core/ir/model_named_tests.cpp)
+target_link_libraries(cjm_metadata_named_tests PRIVATE cjm_metadata Catch2::Catch2WithMain)
+catch_discover_tests(cjm_metadata_named_tests TEST_PREFIX cjm_metadata_named_tests.)
