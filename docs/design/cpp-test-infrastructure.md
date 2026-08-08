@@ -1,6 +1,6 @@
 # Named C++ Test Infrastructure
 
-Status: Catch2 selected; implementation pending.
+Status: Implemented for the #114 test-infrastructure slice.
 
 This document defines CJM's C++ unit-test framework decision and the boundary
 between framework-based tests, CTest, and production builds.
@@ -108,6 +108,11 @@ CTest registration should use the official `Catch.cmake` module and
 default post-build discovery mode. A later cross-compilation requirement may
 justify pre-test discovery without changing test source contracts.
 
+The repository test declarations live under `tests/CMakeLists.txt`. The root
+`CMakeLists.txt` owns only the `CJM_BUILD_TESTS` boundary, Catch2 dependency
+setup, and `add_subdirectory(tests)`. This keeps production targets separate
+from developer-only test registration.
+
 ---
 
 # Naming Contract
@@ -142,6 +147,21 @@ CTest case
 This preserves concise direct filtering while keeping repository-wide CTest
 names unique.
 
+Focused CTest selection uses the target-prefixed name:
+
+```sh
+ctest --test-dir build/debug \
+  -R '^cjm_metadata_named_tests\.field_type\.records_array_extent$' \
+  --output-on-failure
+```
+
+Direct Catch2 execution uses the shorter case name:
+
+```sh
+./build/debug/tests/cjm_metadata_named_tests \
+  "field_type.records_array_extent"
+```
+
 ---
 
 # Migration Policy
@@ -164,10 +184,82 @@ must not disguise a legacy-suite migration.
 Catch2 supplies assertion context and failure reporting. CJM still owns the
 semantic shape of golden-output diagnostics.
 
-A later test-support slice will provide a reusable helper that reports a useful
+The reusable helper in `tests/support/golden_diff.hpp` reports a useful
 expected/actual mismatch location, including missing or extra trailing content.
-The helper remains under test ownership and is not exposed through production
-headers solely to make it testable.
+It remains under test ownership and is not exposed through production headers
+solely to make it testable.
+
+The helper reports:
+
+- first mismatch line and column
+- mismatch kind
+- expected and actual line text
+- missing trailing content
+- extra trailing content
+
+---
+
+# Focused Workflow
+
+Configure and build a Debug test tree before running focused cases:
+
+```sh
+cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
+```
+
+Run one exact discovered CTest case:
+
+```sh
+ctest --test-dir build/debug \
+  -R '^cjm_test_support_named_tests\.golden_diff\.reports_first_changed_character$' \
+  --output-on-failure
+```
+
+Run all repository tests:
+
+```sh
+ctest --test-dir build/debug --output-on-failure
+```
+
+Verify that a test-disabled build does not include the Catch2 boundary:
+
+```sh
+cmake -S . -B build/no-tests -DCJM_BUILD_TESTS=OFF
+cmake --build build/no-tests --target cjm
+```
+
+Do not run two configurations that share the same `FETCHCONTENT_BASE_DIR` in
+parallel. FetchContent population uses shared dependency directories and should
+be configured serially.
+
+---
+
+# Completion Evidence
+
+The #114 implementation was verified on
+`feature/114-named-cpp-test-infrastructure` with:
+
+```sh
+cmake -S . -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
+ctest --test-dir build/debug --output-on-failure
+```
+
+Result:
+
+```text
+100% tests passed, 0 tests failed out of 36
+```
+
+The test-disabled boundary was verified with:
+
+```sh
+cmake -S . -B build/no-tests -DCJM_BUILD_TESTS=OFF
+cmake --build build/no-tests --target cjm
+```
+
+The `build/no-tests` tree did not contain Catch2 targets or named test targets.
 
 ---
 
@@ -196,4 +288,3 @@ This design decision is complete when:
 - direct and CTest naming contracts are explicit
 - legacy-test coexistence and migration policy are explicit
 - golden diagnostics remain CJM-owned test support
-
