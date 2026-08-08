@@ -19,7 +19,13 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(CJM_BUILD_TESTS "Build CJM tests" ON)
+if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+  set(_CJM_BUILD_TESTS_DEFAULT ON)
+else()
+  set(_CJM_BUILD_TESTS_DEFAULT OFF)
+endif()
+
+option(CJM_BUILD_TESTS "Build CJM tests" ${_CJM_BUILD_TESTS_DEFAULT})
 option(CJM_ENABLE_SIMDJSON "Enable the experimental simdjson backend dependency" OFF)
 
 if (CJM_ENABLE_SIMDJSON)
@@ -108,6 +114,8 @@ target_link_libraries(cjm PRIVATE cjm_generator cjm_schema_generator cjm_semanti
 
 if (CJM_BUILD_TESTS)
   enable_testing()
+  include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CJMCatch2.cmake)
+  cjm_add_catch2_dependency()
 
   if (CJM_ENABLE_SIMDJSON)
     add_executable(cjm_simdjson_dependency_smoke_tests tests/backends/simdjson/dependency_smoke_tests.cpp)
