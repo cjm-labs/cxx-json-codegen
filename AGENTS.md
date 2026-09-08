@@ -853,10 +853,74 @@ roadmap features.
 Explain the high-level workflow first. Then identify the small functions that
 represent its stages and implement one stage at a time.
 
+At the start of every new AI assistant session in this repository, the assistant
+must treat this workflow as the default for non-trivial development tasks. Before
+proposing or applying implementation changes, the assistant must state the
+current branch, identify the active task and owning architectural layer, and show
+where the task belongs in the top-down call graph. It must then proceed bottom-up
+in small, independently testable slices. The maintainer does not need to restate
+this preference in each session or for each AI agent.
+
 Orchestration functions should expose important stages with numbered comments
 and delegate details to focused helpers. A function comment should state only
 what the function does. Do not fill comments with unrelated responsibilities or
 lists of things the function does not do.
+
+For non-trivial work, separate framework design from implementation:
+
+```text
+top-down design
+    define the complete workflow
+    draw the function call graph
+    define each function's name, signature, responsibility, inputs, outputs,
+    invariants, and dependencies
+    establish a reviewable orchestration skeleton
+
+bottom-up implementation
+    start with the leaf function that has the fewest dependencies
+    implement one function contract
+    add its focused test
+    verify it independently
+    move upward only after the dependency is understood and stable
+```
+
+The initial skeleton should make the intended architecture visible before
+implementation details obscure it. Unimplemented leaves must remain minimal and
+explicit; they must not pretend to provide complete behavior. Review the
+skeleton before filling in production logic.
+
+Do not substitute a sequence of disconnected parameter edits for top-down
+design. Before changing call sites across a function chain, show the final call
+graph and explain where the current function belongs in it.
+
+During bottom-up implementation, pair each function with one independently
+runnable test that proves its contract or observable behavior. Use Go-style
+table-driven cases when several inputs exercise the same contract. Each case
+should name the scenario and record the input, expected result, and expected
+error where applicable. Use separate test cases for meaningfully different
+contracts instead of accumulating unrelated branches in one large test.
+
+For C++ tests, express this pattern with focused Catch2 `TEST_CASE` definitions
+and `DYNAMIC_SECTION` table entries. CTest remains the repository-wide runner
+and should discover the individual Catch2 cases. Do not expose private
+production helpers only to test them; exercise them through the smallest stable
+module-level contract that makes their behavior observable.
+
+The preferred implementation and verification order is:
+
+```text
+leaf helpers
+    ↓
+container or composition helpers
+    ↓
+orchestration functions
+    ↓
+integration and golden tests
+```
+
+At every step, state which node of the approved call graph is being
+implemented, which dependencies are already complete, and what the focused test
+actually proves.
 
 ### 8. Give precise implementation guidance
 
