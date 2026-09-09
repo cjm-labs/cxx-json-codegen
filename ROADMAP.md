@@ -891,6 +891,9 @@ Remaining runtime backend work packages:
 
 - simdjson experimental backend MVP with nlohmann practical mapping parity,
   decode, encode, conformance, round-trip tests, and docs
+  - encode uses the official simdjson builder, not a new CJM JSON writer;
+    see [encode strategy](docs/design/simdjson-encode-strategy.md) for the
+    selected API boundary and semantic/error contract
 - Glaze metadata adapter evaluation after simdjson context is preserved
 - separate Glaze generated custom codec evaluation only if its documented API
   and evidence justify the maintenance cost

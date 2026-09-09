@@ -334,6 +334,13 @@ backend MVP.
 The encode target is practical mapping parity with the current nlohmann backend,
 subject only to documented parity blockers that fail closed during generation.
 
+Writer selection is settled: use simdjson v4.6.4's documented
+`simdjson::builder::string_builder` with explicit generated C++17 traversal.
+Do not implement a separate CJM JSON writer for this work package. See
+[simdjson Encode Strategy](simdjson-encode-strategy.md) for the #211 API/error
+contract and compatibility evidence. Writer selection does not imply
+encode implementation, conformance completion, or a performance conclusion.
+
 The encode strategy must prove:
 
 - deterministic object field order

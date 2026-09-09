@@ -21,7 +21,7 @@ The backend remains experimental because:
 - it is newly exposed;
 - it has not yet accumulated downstream adoption;
 - it has no performance conclusion;
-- its encode strategy still needs a backend-specific design decision;
+- its selected official-builder encode contract still needs implementation;
 - its conformance suite must prove parity before any stronger status.
 
 The default backend remains `nlohmann/json`.
@@ -133,7 +133,7 @@ must have generation-time diagnostics and documentation.
 | `Bool` | required | required | nlohmann parity |
 | `SignedInteger` | required | required | includes fixed-width targets and overflow checks |
 | `UnsignedInteger` | required | required | includes fixed-width targets and overflow checks |
-| `FloatingPoint` | required | required | nlohmann parity target; numeric policy must be documented |
+| `FloatingPoint` | required | required except accepted blocker | `float`/`double` encode; `long double` encode blocked as documented below |
 | `String` | required | required | decoded strings are model-owned |
 | `Enum` | required | required | JSON string enum mapping |
 | `Optional<T>` | required | required | for every supported `T` |
@@ -159,7 +159,7 @@ Valid blockers include:
 
 - simdjson On-Demand lifetime constraints that would make generated code unsafe;
 - forward-only traversal constraints that conflict with a required semantic;
-- missing encode writer strategy for a required JSON output shape;
+- a demonstrated limitation of the selected writer for a required output shape;
 - inability to produce portable diagnostics for a supported failure mode;
 - excessive implementation risk that would make the experimental backend less
   reliable than fail-closed behavior.
@@ -177,6 +177,14 @@ If a blocker is accepted, the backend must:
 - reject it during generation;
 - report the field name and C++ type spelling when applicable;
 - preserve all other supported mappings.
+
+Accepted encoder blocker (#211): emitted `long double` values, including nested
+compositions, must fail at generation time. The official v4.6.4 builder accepts
+the C++ type but formats it through `double`, without preserving additional
+precision/range. CJM does not silently narrow it or add a custom formatter.
+See [encode numeric boundary](simdjson-encode-strategy.md#floating-point-type-boundary).
+This restriction does not change Semantic Analysis or the default backend, and
+does not settle the separate decoder capability.
 
 ## Decode Contract
 
@@ -224,12 +232,18 @@ Required encode properties:
 - unordered maps must either document backend output order limits or use a
   deterministic ordering strategy selected by a child issue.
 
-The encode strategy is intentionally left to #211. The strategy may use a
-simdjson-provided writer surface if it is suitable, or a CJM-owned deterministic
-writer helper if that better preserves the product contract.
+The selected writer is the documented
+`simdjson::builder::string_builder` from the pinned simdjson v4.6.4 release.
+CJM generates model traversal and mapping rules; simdjson owns JSON escaping,
+numeric formatting, and the growable output buffer. A CJM-owned JSON writer is
+not required for this MVP.
 
-The MVP must not claim performance benefits from either strategy without a
-dedicated benchmark issue.
+The [simdjson Encode Strategy](simdjson-encode-strategy.md) specifies the C++17
+API, owned output, optional/null rules, strict non-finite/UTF-8 handling, and
+structured failures for #211. It also records the compatibility probes and
+their limits. This design is not an implemented encoder or a claim of complete
+nlohmann byte/failure parity. The MVP must not claim performance benefits
+without a dedicated benchmark issue.
 
 ## Diagnostics Contract
 
