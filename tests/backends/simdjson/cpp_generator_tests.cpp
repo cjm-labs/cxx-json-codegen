@@ -569,6 +569,33 @@ ProjectModel make_vector_user_defined_project() {
     return project;
 }
 
+// Build one root model containing a fixed array of generated models.
+ProjectModel make_array_user_defined_project() {
+    TypeModel item;
+    item.name = "Item";
+    item.qualified_name = "Item";
+    item.fields = {
+        make_required_field("id", FieldTypeKind::SignedInteger, "std::int64_t"),
+    };
+
+    auto items_field = make_required_field("items", FieldTypeKind::Array,
+                                           "std::array<Item, 2>");
+    items_field.type.qualified_name = "std::array";
+    items_field.type.arguments = {
+        FieldType{FieldTypeKind::UserDefined, "Item", "Item"},
+    };
+    items_field.type.array_extent = 2;
+
+    TypeModel order;
+    order.name = "FixedOrder";
+    order.qualified_name = "FixedOrder";
+    order.fields = {items_field};
+
+    ProjectModel project;
+    project.types = {item, order};
+    return project;
+}
+
 // Build one representative vertical-slice model.
 ProjectModel make_vertical_slice_project() {
     TypeModel address;
@@ -1153,9 +1180,9 @@ int main() {
             make_vector_user_defined_project());
         assert(result.success);
         assert(result.error.empty());
-        assert(result.header.find(
-                   "::simdjson::ondemand::object decoded_items;") !=
-               std::string::npos);
+        assert(
+            result.header.find("::simdjson::ondemand::object decoded_items;") !=
+            std::string::npos);
         assert(result.header.find("::Item decoded_items_value{};") !=
                std::string::npos);
         assert(result.header.find("detail::decode_object(decoded_items, "
@@ -1174,6 +1201,30 @@ int main() {
                       << result.header;
         }
         assert(result.header == expected);
+    }
+    {
+        const auto result = cjm::generator::simdjson::generate_header(
+            make_array_user_defined_project());
+        assert(result.success);
+        assert(result.error.empty());
+        assert(result.header.find(
+                   "::simdjson::ondemand::array decoded_items_array;") !=
+               std::string::npos);
+        assert(result.header.find("if (decoded_items_index >= 2)") !=
+               std::string::npos);
+        assert(result.header.find("::Item decoded_items_value{};") !=
+               std::string::npos);
+        assert(
+            result.header.find("::simdjson::ondemand::object decoded_items;") !=
+            std::string::npos);
+        assert(result.header.find("detail::decode_object(decoded_items, "
+                                  "decoded_items_value, error)") !=
+               std::string::npos);
+        assert(result.header.find(
+                   "value.items[decoded_items_index] = decoded_items_value;") !=
+               std::string::npos);
+        assert(result.header.find("if (decoded_items_index != 2)") !=
+               std::string::npos);
     }
     {
         const auto result = cjm::generator::simdjson::generate_header(

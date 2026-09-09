@@ -115,7 +115,8 @@ bool is_supported_array_field(const metadata::FieldType& type,
                               const std::vector<metadata::EnumModel>& enums) {
     return type.kind == metadata::FieldTypeKind::Array &&
            type.arguments.size() == 1 &&
-           is_supported_scalar_type(type.arguments[0], enums);
+           (is_supported_scalar_type(type.arguments[0], enums) ||
+            is_supported_user_defined_field(type.arguments[0]));
 }
 
 // Return whether a string-keyed map has a complete value decoder.
@@ -1057,6 +1058,72 @@ void generate_array_scalar_value_decode(
     write_line(out, indent_level, "}");
 }
 
+// Generate one user-defined-element fixed-array value decoder.
+void generate_array_user_defined_value_decode(
+    std::ostringstream& out, const metadata::FieldModel& field,
+    const metadata::FieldType& array_type,
+    const std::string& simdjson_value_expression,
+    const std::string& target_expression, std::size_t indent_level,
+    const GeneratedValuePath& path) {
+    const auto& element_type = array_type.arguments[0];
+    const std::string array_name = "decoded_" + field.name + "_array";
+    const std::string index_name = "decoded_" + field.name + "_index";
+    const std::string element_name = "decoded_" + field.name + "_element";
+    const std::string value_name = "decoded_" + field.name + "_value";
+    const std::string extent = std::to_string(array_type.array_extent);
+
+    write_line(out, indent_level,
+               "::simdjson::ondemand::array " + array_name + ";");
+    write_line(out, indent_level,
+               "runtime_error = " + simdjson_value_expression +
+                   ".get_array().get(" + array_name + ");");
+    write_line(out, indent_level, "if (runtime_error) {");
+    write_line(out, indent_level + 1,
+               "error.code = DecodeErrorCode::expected_array;");
+    generate_value_error_path(out, field, indent_level + 1, path);
+    write_line(out, indent_level + 1, "error.runtime_error = runtime_error;");
+    write_line(out, indent_level + 1, "return false;");
+    write_line(out, indent_level, "}");
+    write_line(out, 0, "");
+
+    write_line(out, indent_level, "std::size_t " + index_name + " = 0;");
+    write_line(out, indent_level,
+               "for (auto " + element_name + " : " + array_name + ") {");
+    write_line(out, indent_level + 1,
+               "if (" + index_name + " >= " + extent + ") {");
+    write_line(out, indent_level + 2,
+               "error.code = DecodeErrorCode::fixed_array_extent_mismatch;");
+    generate_value_error_path(out, field, indent_level + 2, path);
+    write_line(out, indent_level + 2, "return false;");
+    write_line(out, indent_level + 1, "}");
+
+    const auto element_path = extend_value_path(
+        path, GeneratedValuePathSegmentKind::index, index_name);
+    const auto element_type_name = metadata_type_name(element_type);
+    const auto generated_element_type_name =
+        element_type_name.rfind("::", 0) == 0 ? element_type_name
+                                              : "::" + element_type_name;
+    write_line(out, indent_level + 1,
+               generated_element_type_name + " " + value_name + "{};");
+
+    generate_user_defined_value_decode(out, field, element_name, value_name,
+                                       indent_level + 1, element_path);
+
+    write_line(out, indent_level + 1,
+               target_expression + "[" + index_name + "] = " + value_name +
+                   ";");
+    write_line(out, indent_level + 1, "++" + index_name + ";");
+    write_line(out, indent_level, "}");
+
+    write_line(out, indent_level,
+               "if (" + index_name + " != " + extent + ") {");
+    write_line(out, indent_level + 1,
+               "error.code = DecodeErrorCode::fixed_array_extent_mismatch;");
+    generate_value_error_path(out, field, indent_level + 1, path);
+    write_line(out, indent_level + 1, "return false;");
+    write_line(out, indent_level, "}");
+}
+
 // Generate one optional scalar field decoder.
 void generate_optional_field_decode(
     std::ostringstream& out, const metadata::FieldModel& field,
@@ -1137,6 +1204,19 @@ void generate_array_scalar_field_decode(
     write_line(out, 2, "}");
 }
 
+// Generate one required user-defined-element fixed-array field decoder.
+void generate_array_user_defined_field_decode(
+    std::ostringstream& out, const metadata::FieldModel& field) {
+    const std::string member_name = "value." + field.name;
+    write_line(out, 2, "if (key == \"" + field.json.name + "\") {");
+    generate_array_user_defined_value_decode(out, field, field.type,
+                                             "field.value()", member_name, 3,
+                                             GeneratedValuePath{});
+    write_line(out, 3, "has_" + field.name + " = true;");
+    write_line(out, 3, "continue;");
+    write_line(out, 2, "}");
+}
+
 // Generate one required nested object field decoder.
 void generate_user_defined_field_decode(std::ostringstream& out,
                                         const metadata::FieldModel& field) {
@@ -1171,8 +1251,13 @@ void generate_field_decode(std::ostringstream& out,
         }
         return;
     case metadata::FieldTypeKind::Array:
-        generate_array_scalar_field_decode(out, field, enums,
-                                           GeneratedValuePath{});
+        if (field.type.arguments[0].kind ==
+            metadata::FieldTypeKind::UserDefined) {
+            generate_array_user_defined_field_decode(out, field);
+        } else {
+            generate_array_scalar_field_decode(out, field, enums,
+                                               GeneratedValuePath{});
+        }
         return;
     case metadata::FieldTypeKind::Map:
         generate_map_field_decode(out, field, enums);
