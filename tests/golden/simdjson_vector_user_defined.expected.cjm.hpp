@@ -208,8 +208,9 @@ inline bool decode_object(
             value.items.clear();
             std::size_t decoded_items_index = 0;
             for (auto decoded_items_element : decoded_items_array) {
-                ::simdjson::ondemand::object decoded_items_object;
-                runtime_error = decoded_items_element.get_object().get(decoded_items_object);
+                ::Item decoded_items_value{};
+                ::simdjson::ondemand::object decoded_items;
+                runtime_error = decoded_items_element.get_object().get(decoded_items);
                 if (runtime_error) {
                     error.code = DecodeErrorCode::expected_object;
                     error.path.push_back(
@@ -219,8 +220,7 @@ inline bool decode_object(
                     error.runtime_error = runtime_error;
                     return false;
                 }
-                ::Item decoded_items_value{};
-                if (!detail::decode_object(decoded_items_object, decoded_items_value, error)) {
+                if (!detail::decode_object(decoded_items, decoded_items_value, error)) {
                     error.path.insert(
                         error.path.begin(),
                         {DecodePathSegmentKind::index, "", decoded_items_index});

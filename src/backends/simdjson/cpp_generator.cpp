@@ -744,18 +744,51 @@ void generate_vector_scalar_value_decode(
     write_line(out, indent_level, "}");
 }
 
+// Generate one user-defined value decoder.
+void generate_user_defined_value_decode(
+    std::ostringstream& out, const metadata::FieldModel& field,
+    const std::string& simdjson_value_expression,
+    const std::string& target_expression, std::size_t indent_level,
+    const GeneratedValuePath& path) {
+    // 1. Generate JSON object extraction and its type-error handling.
+    const std::string decoded_name = "decoded_" + field.name;
+
+    write_line(out, indent_level,
+               "::simdjson::ondemand::object " + decoded_name + ";");
+    write_line(out, indent_level,
+               "runtime_error = " + simdjson_value_expression +
+                   ".get_object().get(" + decoded_name + ");");
+    write_line(out, indent_level, "if (runtime_error) {");
+    write_line(out, indent_level + 1,
+               "error.code = DecodeErrorCode::expected_object;");
+    generate_value_error_path(out, field, indent_level + 1, path);
+    write_line(out, indent_level + 1, "error.runtime_error = runtime_error;");
+    write_line(out, indent_level + 1, "return false;");
+    write_line(out, indent_level, "}");
+
+    // 2. Generate the child decoder call.
+    write_line(out, indent_level,
+               "if (!detail::decode_object(" + decoded_name + ", " +
+                   target_expression + ", error)) {");
+
+    // 3. Generate outer-path prepending when the child decoder fails.
+    generate_prepend_value_error_path(out, path, indent_level + 1);
+    generate_prepend_field_error_path(out, field, indent_level + 1);
+    write_line(out, indent_level + 1, "return false;");
+    write_line(out, indent_level, "}");
+}
+
 // Generate one user-defined-element vector value decoder.
 void generate_vector_user_defined_value_decode(
     std::ostringstream& out, const metadata::FieldModel& field,
     const metadata::FieldType& vector_type,
     const std::string& simdjson_value_expression,
     const std::string& target_expression, std::size_t indent_level,
-    const std::optional<std::string>& map_key_expression = std::nullopt) {
+    const GeneratedValuePath& path) {
     const auto& element_type = vector_type.arguments[0];
     const std::string array_name = "decoded_" + field.name + "_array";
     const std::string index_name = "decoded_" + field.name + "_index";
     const std::string element_name = "decoded_" + field.name + "_element";
-    const std::string object_name = "decoded_" + field.name + "_object";
     const std::string value_name = "decoded_" + field.name + "_value";
 
     write_line(out, indent_level,
@@ -766,8 +799,7 @@ void generate_vector_user_defined_value_decode(
     write_line(out, indent_level, "if (runtime_error) {");
     write_line(out, indent_level + 1,
                "error.code = DecodeErrorCode::expected_array;");
-    generate_value_error_path(out, field, indent_level + 1, std::nullopt,
-                              map_key_expression);
+    generate_value_error_path(out, field, indent_level + 1, path);
     write_line(out, indent_level + 1, "error.runtime_error = runtime_error;");
     write_line(out, indent_level + 1, "return false;");
     write_line(out, indent_level, "}");
@@ -777,19 +809,8 @@ void generate_vector_user_defined_value_decode(
     write_line(out, indent_level, "std::size_t " + index_name + " = 0;");
     write_line(out, indent_level,
                "for (auto " + element_name + " : " + array_name + ") {");
-    write_line(out, indent_level + 1,
-               "::simdjson::ondemand::object " + object_name + ";");
-    write_line(out, indent_level + 1,
-               "runtime_error = " + element_name + ".get_object().get(" +
-                   object_name + ");");
-    write_line(out, indent_level + 1, "if (runtime_error) {");
-    write_line(out, indent_level + 2,
-               "error.code = DecodeErrorCode::expected_object;");
-    generate_value_error_path(out, field, indent_level + 2, index_name,
-                              map_key_expression);
-    write_line(out, indent_level + 2, "error.runtime_error = runtime_error;");
-    write_line(out, indent_level + 2, "return false;");
-    write_line(out, indent_level + 1, "}");
+    const auto element_path = extend_value_path(
+        path, GeneratedValuePathSegmentKind::index, index_name);
 
     const auto element_type_name = metadata_type_name(element_type);
     const auto generated_element_type_name =
@@ -797,19 +818,9 @@ void generate_vector_user_defined_value_decode(
                                               : "::" + element_type_name;
     write_line(out, indent_level + 1,
                generated_element_type_name + " " + value_name + "{};");
-    write_line(out, indent_level + 1,
-               "if (!detail::decode_object(" + object_name + ", " + value_name +
-                   ", error)) {");
 
-    generate_prepend_index_error_path(out, index_name, indent_level + 2);
-    if (map_key_expression.has_value()) {
-        generate_prepend_map_key_error_path(out, *map_key_expression,
-                                            indent_level + 2);
-    }
-    generate_prepend_field_error_path(out, field, indent_level + 2);
-
-    write_line(out, indent_level + 2, "return false;");
-    write_line(out, indent_level + 1, "}");
+    generate_user_defined_value_decode(out, field, element_name, value_name,
+                                       indent_level + 1, element_path);
 
     write_line(out, indent_level + 1,
                target_expression + ".push_back(" + value_name + ");");
@@ -870,7 +881,7 @@ void generate_map_value_decode(std::ostringstream& out,
             metadata::FieldTypeKind::UserDefined) {
             generate_vector_user_defined_value_decode(
                 out, field, value_type, entry_name + ".value()", value_name,
-                indent_level + 1, key_name);
+                indent_level + 1, mapped_path);
         } else {
             generate_vector_scalar_value_decode(
                 out, field, value_type, enums, entry_name + ".value()",
@@ -1104,7 +1115,8 @@ void generate_vector_user_defined_field_decode(
     const std::string member_name = "value." + field.name;
     write_line(out, 2, "if (key == \"" + field.json.name + "\") {");
     generate_vector_user_defined_value_decode(out, field, field.type,
-                                              "field.value()", member_name, 3);
+                                              "field.value()", member_name, 3,
+                                              GeneratedValuePath{});
     write_line(out, 3, "has_" + field.name + " = true;");
     write_line(out, 3, "continue;");
     write_line(out, 2, "}");
@@ -1123,40 +1135,6 @@ void generate_array_scalar_field_decode(
     write_line(out, 3, "has_" + field.name + " = true;");
     write_line(out, 3, "continue;");
     write_line(out, 2, "}");
-}
-
-// Generate one user-defined value decoder.
-void generate_user_defined_value_decode(
-    std::ostringstream& out, const metadata::FieldModel& field,
-    const std::string& simdjson_value_expression,
-    const std::string& target_expression, std::size_t indent_level,
-    const GeneratedValuePath& path) {
-    // 1. Generate JSON object extraction and its type-error handling.
-    const std::string decoded_name = "decoded_" + field.name;
-
-    write_line(out, indent_level,
-               "::simdjson::ondemand::object " + decoded_name + ";");
-    write_line(out, indent_level,
-               "runtime_error = " + simdjson_value_expression +
-                   ".get_object().get(" + decoded_name + ");");
-    write_line(out, indent_level, "if (runtime_error) {");
-    write_line(out, indent_level + 1,
-               "error.code = DecodeErrorCode::expected_object;");
-    generate_value_error_path(out, field, indent_level + 1, path);
-    write_line(out, indent_level + 1, "error.runtime_error = runtime_error;");
-    write_line(out, indent_level + 1, "return false;");
-    write_line(out, indent_level, "}");
-
-    // 2. Generate the child decoder call.
-    write_line(out, indent_level,
-               "if (!detail::decode_object(" + decoded_name + ", " +
-                   target_expression + ", error)) {");
-
-    // 3. Generate outer-path prepending when the child decoder fails.
-    generate_prepend_value_error_path(out, path, indent_level + 1);
-    generate_prepend_field_error_path(out, field, indent_level + 1);
-    write_line(out, indent_level + 1, "return false;");
-    write_line(out, indent_level, "}");
 }
 
 // Generate one required nested object field decoder.

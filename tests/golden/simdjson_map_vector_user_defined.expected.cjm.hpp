@@ -232,8 +232,9 @@ inline bool decode_object(
                 decoded_groups_mapped_value.clear();
                 std::size_t decoded_groups_index = 0;
                 for (auto decoded_groups_element : decoded_groups_array) {
-                    ::simdjson::ondemand::object decoded_groups_object;
-                    runtime_error = decoded_groups_element.get_object().get(decoded_groups_object);
+                    ::GroupedItem decoded_groups_value{};
+                    ::simdjson::ondemand::object decoded_groups;
+                    runtime_error = decoded_groups_element.get_object().get(decoded_groups);
                     if (runtime_error) {
                         error.code = DecodeErrorCode::expected_object;
                         error.path.push_back(
@@ -245,8 +246,7 @@ inline bool decode_object(
                         error.runtime_error = runtime_error;
                         return false;
                     }
-                    ::GroupedItem decoded_groups_value{};
-                    if (!detail::decode_object(decoded_groups_object, decoded_groups_value, error)) {
+                    if (!detail::decode_object(decoded_groups, decoded_groups_value, error)) {
                         error.path.insert(
                             error.path.begin(),
                             {DecodePathSegmentKind::index, "", decoded_groups_index});
