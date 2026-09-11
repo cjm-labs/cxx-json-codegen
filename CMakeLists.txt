@@ -71,7 +71,7 @@ target_include_directories(cjm_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_generator PUBLIC cxx_std_17)
 
 # simdjson generator library
-add_library(cjm_simdjson_generator src/backends/simdjson/cpp_generator.cpp)
+add_library(cjm_simdjson_generator src/backends/simdjson/cpp_generator.cpp src/backends/simdjson/decoder.cpp)
 target_link_libraries(cjm_simdjson_generator PUBLIC cjm_metadata)
 target_include_directories(cjm_simdjson_generator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_features(cjm_simdjson_generator PUBLIC cxx_std_17)
