@@ -39,6 +39,19 @@ if (CJM_ENABLE_SIMDJSON)
     TEST_PREFIX cjm_simdjson_native_tests.
   )
 
+  add_executable(cjm_simdjson_builder_smoke_tests
+    ${PROJECT_SOURCE_DIR}/tests/backends/simdjson/builder_smoke_tests.cpp
+  )
+  target_compile_features(cjm_simdjson_builder_smoke_tests PRIVATE cxx_std_17)
+  target_link_libraries(
+    cjm_simdjson_builder_smoke_tests
+    PRIVATE simdjson::simdjson Catch2::Catch2WithMain
+  )
+  catch_discover_tests(
+    cjm_simdjson_builder_smoke_tests
+    TEST_PREFIX cjm_simdjson_builder_smoke_tests.
+  )
+
   add_executable(cjm_simdjson_generator_tests
     ${PROJECT_SOURCE_DIR}/tests/backends/simdjson/cpp_generator_tests.cpp
   )
