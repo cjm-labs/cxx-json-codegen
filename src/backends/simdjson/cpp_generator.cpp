@@ -1,5 +1,6 @@
 #include "backends/simdjson/cpp_generator.hpp"
 #include "backends/simdjson/decoder.h"
+#include "backends/simdjson/encoder.h"
 
 #include <sstream>
 
@@ -22,19 +23,37 @@ GenerationResult generate_header(const metadata::ProjectModel& project) {
            << "#include <cstddef>\n"
            << "#include <cstdint>\n"
            << "#include <limits>\n"
+           << "#include <new>\n"
            << "#include <optional>\n"
+           << "#include <stdexcept>\n"
            << "#include <string>\n"
            << "#include <string_view>\n"
            << "#include <vector>\n"
            << "\n";
 
     detail::generate_decode_error_model(header);
+    header << "\n";
+    detail::generate_encode_error_model(header);
 
     for (const auto& type : project.types) {
         header << "\n";
         detail::generate_object_decode_function(header, type, project.enums);
         header << "\n";
         detail::generate_root_decode_function(header, type);
+        bool bool_only = true;
+        for (const auto& field : type.fields) {
+            if (!field.json.ignored &&
+                field.type.kind != metadata::FieldTypeKind::Bool) {
+                bool_only = false;
+                break;
+            }
+        }
+        if (bool_only) {
+            header << "\n";
+            detail::generate_bool_object_encode_function(header, type);
+            header << "\n";
+            detail::generate_root_encode_function(header, type);
+        }
     }
     return GenerationResult{true, header.str(), {}};
 }

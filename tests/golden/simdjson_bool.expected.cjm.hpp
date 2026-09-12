@@ -8,7 +8,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <new>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -55,6 +57,40 @@ template <typename T>
 std::optional<T> from_json(
     std::string_view input,
     DecodeError& error);
+
+} // namespace cjm::simdjson
+
+#endif
+
+#ifndef CJM_SIMDJSON_ENCODE_RUNTIME_TYPES_DEFINED
+#define CJM_SIMDJSON_ENCODE_RUNTIME_TYPES_DEFINED
+
+namespace cjm::simdjson {
+
+using EncodePathSegmentKind = DecodePathSegmentKind;
+using EncodePathSegment = DecodePathSegment;
+
+enum class EncodeErrorCode {
+    none,
+    invalid_utf8_string,
+    invalid_utf8_key,
+    non_finite_number,
+    invalid_enum_value,
+    output_failure,
+    allocation_failure,
+    size_limit_exceeded
+};
+
+struct EncodeError {
+    EncodeErrorCode code = EncodeErrorCode::none;
+    std::vector<EncodePathSegment> path;
+    ::simdjson::error_code runtime_error = ::simdjson::SUCCESS;
+};
+
+template <typename T>
+std::optional<std::string> to_json(
+    const T& value,
+    EncodeError& error);
 
 } // namespace cjm::simdjson
 
@@ -154,6 +190,61 @@ from_json<::BoolValues>(
 
     // 5. Return the completely decoded object.
     return value;
+}
+
+} // namespace cjm::simdjson
+
+namespace cjm::simdjson::detail {
+
+inline bool encode_object(
+    ::simdjson::builder::string_builder& builder,
+    const ::BoolValues& value,
+    EncodeError&) {
+    builder.start_object();
+    builder.escape_and_append_with_quotes("enabled");
+    builder.append_colon();
+    builder.append(value.enabled);
+    builder.end_object();
+    return true;
+}
+
+} // namespace cjm::simdjson::detail
+
+namespace cjm::simdjson {
+
+template <>
+inline std::optional<std::string>
+to_json<::BoolValues>(
+    const ::BoolValues& value,
+    EncodeError& error) {
+    error = {};
+    try {
+        ::simdjson::builder::string_builder builder;
+        const bool model_valid =
+            detail::encode_object(builder, value, error);
+        std::string_view view;
+        const auto runtime_error = builder.view().get(view);
+        if (runtime_error != ::simdjson::SUCCESS) {
+            error.path.clear();
+            error.code = EncodeErrorCode::output_failure;
+            error.runtime_error = runtime_error;
+            return std::nullopt;
+        }
+        if (!model_valid) {
+            return std::nullopt;
+        }
+        return std::string(view);
+    } catch (const std::bad_alloc&) {
+        error.path.clear();
+        error.code = EncodeErrorCode::allocation_failure;
+        error.runtime_error = ::simdjson::SUCCESS;
+        return std::nullopt;
+    } catch (const std::length_error&) {
+        error.path.clear();
+        error.code = EncodeErrorCode::size_limit_exceeded;
+        error.runtime_error = ::simdjson::SUCCESS;
+        return std::nullopt;
+    }
 }
 
 } // namespace cjm::simdjson

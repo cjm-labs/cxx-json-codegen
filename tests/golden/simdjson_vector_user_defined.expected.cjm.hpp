@@ -8,7 +8,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <new>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -55,6 +57,40 @@ template <typename T>
 std::optional<T> from_json(
     std::string_view input,
     DecodeError& error);
+
+} // namespace cjm::simdjson
+
+#endif
+
+#ifndef CJM_SIMDJSON_ENCODE_RUNTIME_TYPES_DEFINED
+#define CJM_SIMDJSON_ENCODE_RUNTIME_TYPES_DEFINED
+
+namespace cjm::simdjson {
+
+using EncodePathSegmentKind = DecodePathSegmentKind;
+using EncodePathSegment = DecodePathSegment;
+
+enum class EncodeErrorCode {
+    none,
+    invalid_utf8_string,
+    invalid_utf8_key,
+    non_finite_number,
+    invalid_enum_value,
+    output_failure,
+    allocation_failure,
+    size_limit_exceeded
+};
+
+struct EncodeError {
+    EncodeErrorCode code = EncodeErrorCode::none;
+    std::vector<EncodePathSegment> path;
+    ::simdjson::error_code runtime_error = ::simdjson::SUCCESS;
+};
+
+template <typename T>
+std::optional<std::string> to_json(
+    const T& value,
+    EncodeError& error);
 
 } // namespace cjm::simdjson
 

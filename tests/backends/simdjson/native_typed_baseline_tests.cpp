@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <string_view>
+#include <optional>
+#include <string>
 
 namespace {
 
@@ -11,6 +13,34 @@ struct NativeScalarValues {
     std::int64_t count = 0;
     std::uint64_t limit = 0;
 };
+
+struct NativeBoolValues {
+    bool enabled = false;
+};
+
+bool encode_bool_object(::simdjson::builder::string_builder& builder,
+                        const NativeBoolValues& value) {
+    builder.start_object();
+    builder.escape_and_append_with_quotes("enabled");
+    builder.append_colon();
+    builder.append(value.enabled);
+    builder.end_object();
+    return true;
+}
+
+std::optional<std::string> encode_bool_value(const NativeBoolValues& value) {
+    ::simdjson::builder::string_builder builder;
+
+    if (!encode_bool_object(builder, value)) {
+        return std::nullopt;
+    }
+
+    std::string_view view;
+    if (builder.view().get(view) != ::simdjson::SUCCESS) {
+        return std::nullopt;
+    }
+    return std::string(view);
+}
 
 } // namespace
 
@@ -75,4 +105,11 @@ TEST_CASE("document_get.scalar_type_mismatch", "[simdjson][baseline]") {
 
     const auto result = document.get<NativeScalarValues>();
     REQUIRE(result.error() == simdjson::INCORRECT_TYPE);
+}
+
+TEST_CASE("encode_bool_value.returns_owned_json", "[simdjson][baseline]") {
+    const auto output = encode_bool_value(NativeBoolValues{true});
+
+    REQUIRE(output.has_value());
+    REQUIRE(*output == R"({"enabled":true})");
 }

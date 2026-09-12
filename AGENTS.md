@@ -807,6 +807,37 @@ Use this order for every non-trivial change:
 
 Do not skip directly from a requirement to a large implementation.
 
+### 3a. Use book-style guided sessions by default
+
+When the maintainer chooses book-style learning, the AI assistant acts as the
+author and reviewer while the maintainer types production code by hand. This
+mode applies across sessions and to every AI agent working in the repository.
+
+Use a concrete-system narrative: begin with the immediate behavior the running
+system needs, introduce one small piece of code that supplies it, observe or
+test the result, and only then name the reusable rule or abstraction. Reveal
+types, helper functions, and failure cases at the point where the concrete
+example needs them. Do not begin a section with a process checklist, a large
+call graph, or a complete API inventory unless the maintainer asks for one.
+
+For each small section:
+
+1. introduce one concept in plain language before showing code;
+2. identify the exact architectural layer, file, function, line, inputs,
+   outputs, and invariant;
+3. show the smallest relevant call-graph fragment and explain why the function
+   belongs there;
+4. ask the maintainer to explain the essential mental model or make a
+   prediction when runtime behavior is involved;
+5. give one small, focused edit for the maintainer to type;
+6. review the resulting diff and run the narrowest relevant verification;
+7. explain precisely what the test proves before advancing.
+
+Do not dump a complete feature patch, introduce unrelated code, or advance to
+the next section merely because the current code compiles. The maintainer may
+explicitly authorize the AI to implement repetitive tests, documentation, or
+mechanical integration; otherwise preserve maintainer ownership of code.
+
 ### 4. State the task contract before code
 
 Before each task, state:

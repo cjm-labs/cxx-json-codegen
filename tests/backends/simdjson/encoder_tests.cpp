@@ -1,0 +1,94 @@
+#include "backends/simdjson/encoder.h"
+
+#include <catch2/catch_test_macros.hpp>
+
+#include <array>
+#include <sstream>
+#include <string_view>
+
+namespace {
+
+struct ExpectedFragment {
+    std::string_view name;
+    std::string_view text;
+};
+} // namespace
+
+TEST_CASE("generate_encode_error_model.emits_public_contract",
+          "[simdjson][encoder]") {
+    std::ostringstream out;
+    cjm::generator::simdjson::detail::generate_encode_error_model(out);
+
+    const std::array cases{
+        ExpectedFragment{
+            "uses an independent guard",
+            "#ifndef CJM_SIMDJSON_ENCODE_RUNTIME_TYPES_DEFINED\n",
+        },
+        ExpectedFragment{
+            "reuses the code path",
+            "using EncodePathSegment = DecodePathSegment;\n",
+        },
+        ExpectedFragment{
+            "declares encode-specific error codes",
+            "enum class EncodeErrorCode {\n",
+        },
+        ExpectedFragment{
+            "declares the public error object",
+            "struct EncodeError {\n",
+        },
+        ExpectedFragment{
+            "declares to_json",
+            "std::optional<std::string> to_json(\n",
+        },
+    };
+
+    for (const auto& test_case : cases) {
+        DYNAMIC_SECTION(test_case.name) {
+            REQUIRE(out.str().find(test_case.text) != std::string::npos);
+        }
+    }
+}
+
+TEST_CASE("generate_bool_object_encode_function.writes_two_fields",
+          "[simdjson][encoder]") {
+    cjm::metadata::TypeModel type;
+    type.name = "BoolValues";
+
+    cjm::metadata::FieldModel enabled;
+    enabled.name = "enabled";
+    enabled.type.kind = cjm::metadata::FieldTypeKind::Bool;
+    enabled.json.name = "active";
+
+    cjm::metadata::FieldModel visible;
+    visible.name = "visible";
+    visible.type.kind = cjm::metadata::FieldTypeKind::Bool;
+    visible.json.name = "visible";
+
+    type.fields = {enabled, visible};
+
+    std::ostringstream out;
+    cjm::generator::simdjson::detail::generate_bool_object_encode_function(
+        out, type);
+
+    const std::string expected = R"(namespace cjm::simdjson::detail {
+
+inline bool encode_object(
+    ::simdjson::builder::string_builder& builder,
+    const ::BoolValues& value,
+    EncodeError&) {
+    builder.start_object();
+    builder.escape_and_append_with_quotes("active");
+    builder.append_colon();
+    builder.append(value.enabled);
+    builder.append_comma();
+    builder.escape_and_append_with_quotes("visible");
+    builder.append_colon();
+    builder.append(value.visible);
+    builder.end_object();
+    return true;
+}
+
+} // namespace cjm::simdjson::detail
+)";
+    REQUIRE(out.str() == expected);
+}
